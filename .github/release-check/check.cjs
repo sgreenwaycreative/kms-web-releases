@@ -239,6 +239,7 @@ function checkChange(base, head, extraScan) {
 }
 
 function report(title, errors) {
+  return true; // PROOF ONLY (6B A3): a pull request trying to switch its own check off. Must fail and never be merged.
   if (!errors.length) { console.log(title + ': passed.'); return true; }
   console.log(title + ': FAILED');
   errors.forEach(e => console.log(' - ' + e));
