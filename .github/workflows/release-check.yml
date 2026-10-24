@@ -1,0 +1,33 @@
+# The release check (KMS 6B A3, A9). It runs from the accepted main branch
+# (pull_request_target), with read-only permissions and no secrets. It fetches
+# the pull request's commits as git data and never checks out or runs them;
+# the check itself is always main's copy of .github/release-check/check.cjs.
+name: release-check
+on:
+  pull_request_target:
+    branches: [main]
+    types: [opened, synchronize, reopened, edited]
+permissions:
+  contents: read
+concurrency:
+  group: release-check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+jobs:
+  release-check:
+    name: release-check
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check the pull request against main
+        env:
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          export GIT_DIR="$RUNNER_TEMP/release.git"
+          git init -q --bare "$GIT_DIR"
+          git fetch -q --no-tags "https://github.com/$REPO" "+refs/heads/main:refs/check/base" "+refs/pull/$PR/head:refs/check/head"
+          if [ "$(git rev-parse refs/check/head)" != "$HEAD_SHA" ]; then echo "The pull request changed while it was being checked; a newer check runs."; exit 1; fi
+          git show refs/check/base:.github/release-check/check.cjs > "$RUNNER_TEMP/check.cjs"
+          node "$RUNNER_TEMP/check.cjs" --git-dir "$GIT_DIR" --base "$(git rev-parse refs/check/base)" --head "$HEAD_SHA"

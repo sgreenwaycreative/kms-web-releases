@@ -1,0 +1,10 @@
+// Cloudflare Worker with static files only (KMS 6B D8): no Worker code.
+// Cloudflare's GitHub connection deploys the main branch; no token is stored here.
+{
+  "name": "kms-test",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./public",
+    "not_found_handling": "404-page"
+  }
+}

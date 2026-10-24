@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KMS</title>
+  <style>
+    :root { font-family:Arial,Helvetica,sans-serif; color:#213342; background:#f4f7f8; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-size:15px; }
+    button,input { font:inherit; }
+    button { border:0; border-radius:7px; padding:11px 16px; background:#146d70; color:#fff; font-weight:700; cursor:pointer; }
+    button:hover:not(:disabled) { background:#0d5456; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    button.secondary { background:#e8f0f1; color:#18545a; }
+    input { width:100%; border:1px solid #bdcbd0; border-radius:6px; background:#fff; padding:11px; }
+    label { display:block; font-weight:700; font-size:13px; margin:12px 0 6px; color:#3d5965; }
+    header { display:flex; align-items:center; gap:12px; padding:10px 18px; background:#fff; border-bottom:1px solid #d4e0e3; }
+    header strong { font-size:18px; }
+    .card { max-width:420px; margin:48px auto; background:#fff; border:1px solid #d8e2e5; border-radius:10px; padding:24px; }
+    .card h1 { font-size:22px; margin:0 0 6px; }
+    .muted { color:#607782; }
+    .error { color:#9a3d33; min-height:20px; margin:12px 0 0; }
+    [hidden] { display:none!important; }
+  </style>
+</head>
+<body>
+  <header><strong>KMS</strong><span id="restaurant" class="muted"></span></header>
+  <main>
+    <section id="opening" class="card"><p class="muted">Opening KMS…</p></section>
+    <section id="connect" class="card" hidden>
+      <h1>Connect this device</h1>
+      <p class="muted">Paste the KMS link the restaurant owner gave you. This device remembers it.</p>
+      <label for="connectUrl">KMS link</label><input id="connectUrl" autocomplete="off" spellcheck="false" placeholder="https://script.google.com/macros/s/…/exec">
+      <p style="margin-top:16px"><button id="connectButton" type="button">Connect</button></p>
+      <p id="connectError" class="error" role="alert"></p>
+    </section>
+    <section id="message" class="card" hidden>
+      <h1 id="messageTitle">KMS cannot open</h1>
+      <p id="messageText" role="alert"></p>
+      <p style="margin-top:16px"><button id="retryButton" type="button">Try again</button> <button id="otherButton" class="secondary" type="button">Use another KMS link</button></p>
+    </section>
+  </main>
+  <script>
+  // The KMS root page (6B D2). It finds this tab's restaurant, asks its script
+  // which version it runs (hello, D3) and opens the matching published folder,
+  // ui/<version>/. It never sends a sign-in token, never signs anyone in and
+  // never opens a screen: everything that speaks the rest of the protocol lives
+  // in the version folder.
+  (function() {
+    'use strict';
+    // The published versions, built in by tools/build-web.cjs: [{version, release}].
+    const PUBLISHED = [];
+    // A version becomes a path only if it has this form (6B D1).
+    const VERSION_PATTERN = /^\d+\.\d+\.\d+(-[a-z0-9.]{1,24})?$/;
+    const linkPattern = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+    // Browser storage shared by every published version (6B D6). Fields may be
+    // added, never removed or redefined.
+    const DEVICE = 'KMS_WEB_DEVICE', TAB = 'KMS_WEB_TAB', HELLO = 'KMS_WEB_HELLO', MAX_CONNECTIONS = 10;
+    const $ = id => document.getElementById(id);
+    const NOT_READY = 'KMS has been updated but its web page is not ready yet. Try again in a few minutes; if this continues, tell the owner.';
+    const OLDER = 'This restaurant\'s KMS is older than this web page. The owner needs to update it.';
+    const UNREADABLE = 'KMS answered with a version this web page cannot use. Nothing was opened. Tell the owner.';
+    const BLOCKED = 'This browser is blocking the storage KMS needs. Allow this site to store data (or leave private browsing), then try again.';
+
+    function view(id) { ['opening', 'connect', 'message'].forEach(name => { $(name).hidden = name !== id; }); }
+    function stop(text, options) {
+      options = options || {};
+      $('messageTitle').textContent = options.title || 'KMS cannot open';
+      $('messageText').textContent = text;
+      $('retryButton').hidden = options.retry === false;
+      $('otherButton').hidden = !options.other;
+      view('message');
+    }
+    function load(storage, key) { try { return JSON.parse(storage.getItem(key) || 'null'); } catch (error) { return null; } }
+    // Writes and reads back; false if the browser refused or changed it.
+    function keep(storage, key, value) {
+      try { const text = JSON.stringify(value); storage.setItem(key, text); return storage.getItem(key) === text; } catch (error) { return false; }
+    }
+    function tabRecord() {
+      const tab = load(sessionStorage, TAB);
+      return tab && tab.schema === 1 && typeof tab.id === 'string' && linkPattern.test(tab.url) ? tab : null;
+    }
+    function device() {
+      const record = load(localStorage, DEVICE);
+      return record && record.schema === 1 && Array.isArray(record.connections) ? record : {schema: 1, connections: [], last: ''};
+    }
+    function randomId() { return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
+    function setTab(connection) {
+      return keep(sessionStorage, TAB, {schema: 1, id: connection.id, url: connection.url, name: connection.name || ''});
+    }
+
+    // hello format 1 (6B D3): no token, no page version.
+    async function hello(url) {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 30000);
+      try {
+        const response = await fetch(url, {method: 'POST', credentials: 'omit', redirect: 'follow', signal: controller.signal,
+          headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({api: 1, call: 'hello'})});
+        if (!response.ok) throw new Error('KMS did not answer properly (' + response.status + ').');
+        try { return await response.json(); } catch (error) { throw new Error('KMS sent an answer this page could not read. The owner may need to approve the script again.'); }
+      } catch (error) {
+        if (error.name === 'AbortError') throw new Error('KMS took too long to answer. Check the connection.');
+        throw error;
+      } finally { clearTimeout(timer); }
+    }
+    // The withdrawn list (6B A1). The version page makes its own check before
+    // any sign-in, so the root opens the folder even if this read fails or
+    // takes over 5 seconds, its answer included.
+    const POLICY_WAIT_MS = 5000;
+    async function policy() {
+      const controller = new AbortController();
+      let timer;
+      const late = new Promise(resolve => { timer = setTimeout(() => { controller.abort(); resolve(null); }, POLICY_WAIT_MS); });
+      const read = (async () => {
+        const response = await fetch('/policy.json', {cache: 'no-store', credentials: 'omit', signal: controller.signal});
+        const value = response.ok ? await response.json() : null;
+        return value && value.schema === 1 && value.withdrawn && typeof value.withdrawn === 'object' ? value : null;
+      })().catch(() => null);
+      try { return await Promise.race([read, late]); } finally { clearTimeout(timer); }
+    }
+
+    // Picks the folder for this hello answer; never the nearest one by guesswork.
+    async function choose(tab, answer, retry) {
+      if (!answer.ok) { stop('KMS could not be reached: ' + (answer.error && answer.error.message || 'no answer') + '.', {other: true}); return; }
+      const value = answer.value;
+      // An answer without hello comes from a KMS older than 6B.
+      if (!value || typeof value !== 'object' || !Number.isSafeInteger(value.hello) || value.hello < 1) { stop(OLDER, {other: true}); return; }
+      const version = answer.serverVersion, release = value.release;
+      if (typeof version !== 'string' || !VERSION_PATTERN.test(version) || !Number.isSafeInteger(release) || release < 1) { stop(UNREADABLE, {other: true}); return; }
+      if (typeof value.name === 'string' && value.name) { $('restaurant').textContent = value.name; }
+      const rules = await policy(), withdrawn = !!(rules && Object.prototype.hasOwnProperty.call(rules.withdrawn, version));
+      const listed = PUBLISHED.find(entry => entry.version === version && entry.release === release);
+      if (listed && !withdrawn) {
+        // The version page reuses this answer for its first pause display (D2).
+        keep(sessionStorage, HELLO, {id: tab.id, at: Date.now(), answer: answer});
+        location.replace('/ui/' + version + '/' + (retry ? '#r' : ''));
+        return;
+      }
+      const newest = PUBLISHED.reduce((top, entry) => Math.max(top, entry.release), 0);
+      stop(!withdrawn && release > newest ? NOT_READY : OLDER, {other: true});
+    }
+
+    async function open(tab, retry) {
+      view('opening'); $('restaurant').textContent = tab.name || '';
+      let answer;
+      try { answer = await hello(tab.url); } catch (error) { stop('KMS could not be reached: ' + error.message, {other: true}); return; }
+      await choose(tab, answer, retry);
+    }
+
+    // Connecting from this tab sets this tab's restaurant and the one a new tab opens.
+    async function connect(url, retry) {
+      $('connectError').textContent = '';
+      if (!linkPattern.test(url)) { view('connect'); $('connectError').textContent = 'That is not a KMS link. It starts with https://script.google.com/macros/s/ and ends with /exec.'; return; }
+      $('connectButton').disabled = true;
+      try {
+        let answer;
+        try { answer = await hello(url); } catch (error) { view('connect'); $('connectError').textContent = 'KMS could not be reached with that link: ' + error.message; return; }
+        if (!answer.ok) { view('connect'); $('connectError').textContent = 'KMS could not be reached with that link: ' + (answer.error && answer.error.message || 'no answer'); return; }
+        const record = device(), known = record.connections.find(c => c && c.url === url);
+        const name = answer.value && typeof answer.value.name === 'string' ? answer.value.name : '';
+        const connection = {id: known ? known.id : randomId(), url: url, name: name, at: Date.now()};
+        record.connections = [connection].concat(record.connections.filter(c => c && c.url !== url)).slice(0, MAX_CONNECTIONS);
+        record.last = connection.id;
+        keep(localStorage, DEVICE, record);
+        if (!setTab(connection) || !tabRecord()) { stop(BLOCKED); return; }
+        view('opening');
+        await choose(tabRecord(), answer, retry);
+      } finally { $('connectButton').disabled = false; }
+    }
+
+    function start() {
+      const fragment = location.hash.slice(1), retry = fragment === 'r';
+      const link = new URLSearchParams(fragment).get('connect');
+      if (fragment) history.replaceState(null, '', location.pathname);
+      // Session storage holds this tab's restaurant. Without it KMS never falls
+      // back to the device's last restaurant (6B A2).
+      if (!keep(sessionStorage, 'KMS_WEB_PROBE', 1)) { stop(BLOCKED); return; }
+      try { sessionStorage.removeItem('KMS_WEB_PROBE'); } catch (error) {}
+      if (link) { connect(link, retry); return; }
+      let tab = tabRecord();
+      if (!tab) {
+        const record = device(), last = record.connections.find(c => c && c.id === record.last && linkPattern.test(c.url));
+        if (!last) { view('connect'); return; }
+        if (!setTab(last) || !(tab = tabRecord())) { stop(BLOCKED); return; }
+      }
+      open(tab, retry);
+    }
+
+    $('connectButton').addEventListener('click', () => connect($('connectUrl').value.trim()));
+    $('retryButton').addEventListener('click', start);
+    $('otherButton').addEventListener('click', () => { $('connectUrl').value = ''; view('connect'); });
+    start();
+  })();
+  </script>
+</body>
+</html>
