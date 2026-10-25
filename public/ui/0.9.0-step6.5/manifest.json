@@ -1,0 +1,41 @@
+{
+ "schema": 1,
+ "version": "0.9.0-step6.5",
+ "release": 1,
+ "source": "d98dfe5c604d21440afba7b155e62f6909772d38",
+ "screens": [
+  "InvoiceEntry",
+  "AllergenMatrix",
+  "OrderSheet",
+  "ConsoleDisplay",
+  "StockCount",
+  "IngredientManager",
+  "SupplierManager",
+  "PrepEditor",
+  "WeeklyReport",
+  "MenuPricing",
+  "CostReview",
+  "AllergenReview",
+  "Settings",
+  "OwnerStaff"
+ ],
+ "files": {
+  "index.html": "c91c03602127d64ef1db49d797fd346f0e92597c81af59dc0d625fc61506dad8",
+  "screens/AllergenMatrix.html": "52298517344f9c08b30808b00bb6a86aefc286f052328538cd9e3a7b9a939fa6",
+  "screens/AllergenReview.html": "7f776aed1bbc1a5742768c9ca1a9786b586526b83a23edc900ef00f2937282dd",
+  "screens/ConsoleDisplay.html": "4c62a1d71db8470f37a4dcaa6720caafe1364ab4f858591654280a3d4e6919b9",
+  "screens/CostReview.html": "755b4180fc703cb0f4f088942d298833d6d41472d05d5b5ab9a80559341088df",
+  "screens/IngredientManager.html": "14319da2bd7056ec08ec98bea0312e08ca4579e658a2ff809a81bac297838b6c",
+  "screens/InvoiceEntry.html": "59920dc31a88a161feb9f89c8807ff1ce6f408b1e2848bd16f66a8b0a9a7cf35",
+  "screens/MenuPricing.html": "8381454b605613e87ac5778f97449af882d5694f785361663df6946da3fe8cfb",
+  "screens/OrderSheet.html": "c3362ff2713875fb20100f52641dd0c495869bbc98970d482b88007a12686f87",
+  "screens/OwnerStaff.html": "a567190fb9422b53d04c8d37645a82e88dfe7f3c71ccda34c441d0c01c7e2b97",
+  "screens/PrepEditor.html": "971774a319e5dc2f46db448bc2cd26d6bc7958053fc4274decb49105a92314c4",
+  "screens/Settings.html": "9845db520e97785c0bdbd960f445214efec15b45d98827604e112c3a155d77c3",
+  "screens/StockCount.html": "e2abe59d426fcd9ee655a990ef1929beb31b1c28628e1e24ef3efb0ceef0c5fa",
+  "screens/SupplierManager.html": "d87b16b99b2ca559a390da4e043737ec158c67cfa7a34840ac99b3a54dc71fd7",
+  "screens/WeeklyReport.html": "d568e6050dba4b3bb5efdbd1da18fc507bba7e974edfea7a95c8b27427333368",
+  "vendor/heic-to.js": "c189220a7a1e87559758a48ab4700e55629fb23a4cb57489e1e8970be1b9d018"
+ },
+ "hash": "61259cb18138e183648588e9578932a4cf1b11e4db393917ff1a4060f3ba6574"
+}
