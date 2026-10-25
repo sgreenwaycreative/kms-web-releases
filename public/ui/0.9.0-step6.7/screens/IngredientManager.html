@@ -1,0 +1,1753 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+  <base target="_top">
+
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+
+  <style>
+
+    :root { color-scheme: light; }
+
+    * { box-sizing: border-box; }
+
+    body { margin:0; padding:22px; background:#f4f6f3; color:#243229; font:14px Arial,sans-serif; }
+
+    .panel { background:#fff; border:1px solid #d9e0da; border-radius:10px; padding:22px; }
+
+    h1 { margin:0 0 5px; font-size:25px; }
+
+    h2 { margin:22px 0 10px; font-size:17px; }
+
+    p { line-height:1.45; }
+
+    .muted { color:#66776b; }
+
+    .small { font-size:12px; }
+
+    #statusBar { position:sticky; top:0; z-index:5; padding:10px 12px; margin:-4px 0 15px; background:#eef2ed; border:1px solid #d5ddd5; border-radius:6px; }
+
+    #statusBar.error { color:#842029; background:#fff0f0; border-color:#e7b9b9; }
+
+    #statusBar.success { color:#235c37; background:#eef8ef; border-color:#bfdbbf; }
+
+    .toolbar { display:flex; flex-wrap:wrap; align-items:end; gap:9px; margin:18px 0; }
+
+    .toolbar .selector { flex:1 1 420px; }
+
+    .toolbar .search { flex:0 1 230px; }
+    .catalog-controls{display:flex;align-items:end;gap:12px;flex-wrap:wrap;margin:15px 0 10px}.catalog-controls>div{flex:1;min-width:160px}.catalog-controls .count{flex:none;min-width:0;color:#66776b;font-size:12px;padding-bottom:10px}.catalog-table{max-height:380px;overflow:auto;border:1px solid #d9e0da;border-radius:7px}.catalog-table table{border-collapse:collapse;width:100%;min-width:880px;font-size:12px}.catalog-table th{text-align:left;background:#eaf1eb;position:sticky;top:0;z-index:1;color:#546257;font-size:10px;text-transform:uppercase}.catalog-table th,.catalog-table td{padding:10px;border-bottom:1px solid #e3eae4;vertical-align:top}.catalog-table tr:last-child td{border-bottom:0}.catalog-table .number{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}.catalog-table .item-button{padding:0;background:transparent;color:#315b43;font-weight:bold;text-align:left}.catalog-table .item-button:disabled{background:transparent;color:#66776b}.catalog-table .item-ref{font-size:10px;color:#66776b;margin-top:4px}.catalog-table .review-needed{color:#9a6033}.catalog-table tr.selected{background:#f0f7f1}#catalogEmpty{text-align:center;padding:18px;color:#66776b}
+
+    label { display:block; margin:0 0 6px; color:#647568; font-size:12px; font-weight:bold; letter-spacing:.04em; }
+
+    input, select, textarea { width:100%; min-height:38px; padding:8px 9px; border:1px solid #cbd5cc; border-radius:5px; background:#fff; color:#243229; font:inherit; }
+
+    input[readonly] { background:#f2f4f2; color:#546257; }
+
+    select:disabled, input:disabled, textarea:disabled { background:#f1f3f1; color:#66776b; }
+
+    textarea { min-height:94px; resize:vertical; }
+
+    button { border:0; border-radius:6px; padding:9px 13px; background:#315b43; color:#fff; font:inherit; cursor:pointer; }
+
+    button.secondary { color:#2c4938; background:#e6ede7; }
+
+    button.danger { background:#9a3e38; }
+
+    button:disabled { background:#9aa69d; color:#fff; cursor:default; }
+
+    .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:18px; }
+
+    .form-grid { display:grid; grid-template-columns:repeat(3,minmax(150px,1fr)); gap:13px; }
+
+    .field.span-2 { grid-column:span 2; }
+
+    .field.full { grid-column:1/-1; }
+
+    .summary { display:grid; grid-template-columns:repeat(4,minmax(130px,1fr)); gap:10px; margin:18px 0; }
+
+    .summary-card { padding:12px; border:1px solid #dce4dc; border-radius:7px; background:#f8faf8; }
+
+    .summary-label { color:#647568; font-size:11px; font-weight:bold; text-transform:uppercase; letter-spacing:.06em; }
+
+    .summary-value { margin-top:7px; font-size:16px; font-weight:bold; overflow-wrap:anywhere; }
+
+    .notice { padding:11px 13px; border-radius:6px; background:#f1f6ef; border:1px solid #d9e6d6; color:#435b46; }
+
+    .warning { background:#fff7e8; border-color:#edddb8; color:#755927; }
+    .allergen-panel { margin:20px 0; padding:15px; border:1px solid #dce4dc; border-radius:8px; background:#fafbfa; }
+    .allergen-panel h2 { margin:0 0 6px; }
+    .allergen-review { max-width:280px; margin-top:12px; }
+    .allergen-row { display:grid; grid-template-columns:minmax(220px,1.3fr) minmax(190px,1fr) auto; gap:10px; align-items:end; margin-top:10px; }
+    .allergen-row button { min-height:38px; }
+    .allergen-empty { margin:12px 0 0; color:#66776b; }
+    .usage-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+
+    .usage-box { min-height:74px; border:1px solid #dce4dc; border-radius:7px; padding:12px; background:#fafbfa; }
+
+    .usage-box h3 { margin:0 0 8px; font-size:13px; color:#526457; }
+
+    .usage-list { margin:0; padding-left:18px; }
+
+    .usage-list li { margin:5px 0; }
+
+    .status-pill { display:inline-block; padding:4px 8px; border-radius:12px; background:#e6ede7; color:#315b43; font-size:12px; font-weight:bold; }
+
+    .status-pill.archived { background:#f4e8e6; color:#8a3933; }
+
+    .footer { display:flex; justify-content:space-between; align-items:center; gap:12px; margin-top:20px; padding-top:15px; border-top:1px solid #e2e7e2; }
+
+    @media (max-width:760px) {
+
+      body { padding:10px; }
+
+      .panel { padding:15px; }
+
+      .form-grid { grid-template-columns:1fr 1fr; }
+
+      .summary { grid-template-columns:1fr 1fr; }
+
+      .usage-grid { grid-template-columns:1fr; }
+      .allergen-row { grid-template-columns:1fr 1fr; }
+      .allergen-row button { grid-column:1/-1; justify-self:start; }
+    }
+
+    @media (max-width:480px) {
+
+      .form-grid { grid-template-columns:1fr; }
+
+      .field.span-2 { grid-column:auto; }
+
+    }
+
+  </style>
+
+<script>const SCREEN="IngredientManager",OWNER_SCREEN=false,OWNER_CALLS={"kmsSettingsGet":{"kind":"read"},"kmsBackupStatus":{"kind":"read"},"kmsBackupFinishReceipt":{"kind":"read"},"kmsBackupSignOutPreview":{"kind":"read"},"kmsBackupRetentionPreview":{"kind":"read"},"kmsRecoveryIssues":{"kind":"read"},"kmsOwnerStaffList":{"kind":"read"},"kmsSettingsSave":{"kind":"write","receipt":true},"kmsBackupStart":{"kind":"write"},"kmsBackupCancel":{"kind":"write","fresh":true},"kmsBackupAcknowledge":{"kind":"write"},"kmsBackupResume":{"kind":"write","fresh":true},"kmsBackupPin":{"kind":"write"},"kmsBackupScheduleSet":{"kind":"write"},"kmsBackupRestore":{"kind":"write","fresh":true},"kmsRecoveryResolve":{"kind":"write"},"kmsOwnerStaffAdd":{"kind":"write","fresh":true},"kmsOwnerStaffChange":{"kind":"write","fresh":true},"kmsOwnerStaffClose":{"kind":"write","fresh":true},"kmsForwardingGet":{"kind":"read"},"kmsForwardingSet":{"kind":"write","fresh":true},"kmsForwardingClear":{"kind":"write","fresh":true},"kmsBackupReconcile":{"kind":"write","fresh":true},"kmsBackupFinish":{"kind":"write","fresh":true},"kmsBackupUndoMove":{"kind":"write","fresh":true}};
+// Stand-in for google.script.run inside a KMS screen on the hosted web page
+// (design 3.1). The screen keeps calling google.script.run exactly as it does
+// in Sheets; each call is sent by the page shell (window.parent.KmsWeb) to the
+// restaurant's own script with fetch, no Google cookies, as text/plain.
+// The build inserts this before BrowserRecovery and UiStatus, with SCREEN,
+// OWNER_SCREEN and OWNER_CALLS (the owner call table in OwnerWeb.js) set.
+(function() {
+  'use strict';
+  const web = window.parent !== window && window.parent.KmsWeb;
+  if (!web) { document.documentElement.innerHTML = '<p style="font:16px Arial;padding:24px">Open KMS from its web page.</p>'; return; }
+  // Browser recovery copies belong to this workbook, this person and this screen.
+  window.KmsRecoveryContext = web.context(SCREEN);
+  // Recovery copies record the page release that wrote them (6B A2).
+  window.KmsWebRelease = web.release;
+  window.KmsPerformanceEnabled = true;
+  window.KmsSaveRecoveryEnabled = true;
+  // The screen hides actions this person's role cannot use. The server check is the real guard.
+  window.KmsStaffRole = web.role();
+  window.KmsWebPage = true;
+  window.KmsMaintenance = !!(web.maintenance && web.maintenance());
+  // The HEIC photo converter comes from this release's own folder (6B A4): the
+  // page's security policy allows no other site's scripts. Invoice Entry and
+  // the record editor use this hook; in Sheets they load it from jsDelivr.
+  window.kmsLoadHeicConverter = function() { return import(new URL('../vendor/heic-to.js', location.href).href); };
+  // UiStatus leaves time in the owner's Google sign-in box out of its 45-second timer.
+  window.KmsOwnerWait = function() { return web.ownerWait ? web.ownerWait() : null; };
+  // These refusals happen before KMS runs anything, so a save refused this way
+  // is certainly not saved and the form can say so.
+  // A withdrawn page (withdrawn) or an unchecked withdrawn list (policy) sends
+  // nothing, nor does a request whose screen or sign-in has changed (notSent).
+  const refusedBeforeKms = ['version', 'session', 'role', 'unavailable', 'binding', 'request', 'approval', 'withdrawn', 'policy', 'notSent'];
+  // Refusals are not failures: the screen shows a refusal state, not Save failed.
+  const refusals = refusedBeforeKms.concat(['backup', 'busy', 'locked', 'signIn', 'paused', 'pauseChanged', 'pauseState', 'notPaused']);
+
+  // A closed screen sends nothing and acts on nothing (6B A2): its frame has
+  // been removed from the page, and its requests belong to a sign-in or
+  // restaurant that may have changed.
+  function attached() { try { return !!(window.frameElement && window.frameElement.isConnected); } catch (error) { return false; } }
+
+  function failure(message, code) { const error = new Error(message); error.kmsCode = code || 'failed'; return error; }
+
+  function staffRequest(name, args) {
+    if (name === 'kmsPerformanceCall') return {call: 'read', method: String(args[0]), args: args[1] || []};
+    if (name === 'kmsOperationCall') return {call: 'save', method: String(args[0]), args: args[1] || [], operationId: args[2]};
+    if (name === 'kmsOperationStatus') return {call: 'status', method: String(args[0]), args: args[1] || [], operationId: args[2]};
+    return {call: 'read', method: name, args: args};
+  }
+
+  // Owner calls go by their own routes (slice 5E), never the staff ones.
+  function request(name, args) {
+    // On an owner screen the backup poll reads the owner's own status (R2),
+    // which also works while this page follows its own backup capture.
+    if (OWNER_SCREEN && name === 'kmsBackupActivity') return {body: {call: 'ownerRead', method: 'kmsBackupStatus', args: []}, pick: 'activity', background: true};
+    const body = staffRequest(name, args);
+    const owner = Object.prototype.hasOwnProperty.call(OWNER_CALLS, body.method) ? OWNER_CALLS[body.method] : null;
+    if (owner) body.call = body.call === 'status' ? 'ownerStatus' : owner.kind === 'write' ? 'ownerWrite' : 'ownerRead';
+    return {body: body, fresh: !!(owner && owner.fresh)};
+  }
+
+  // Development only: simulate a save whose confirmation is lost on the way
+  // back. Set sessionStorage KMS_WEB_FAULT to drop-next-save on a localhost page.
+  function dropThisSave(body) {
+    if (body.call !== 'save' || !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return false;
+    try {
+      if (window.parent.sessionStorage.getItem('KMS_WEB_FAULT') !== 'drop-next-save') return false;
+      window.parent.sessionStorage.removeItem('KMS_WEB_FAULT');
+      return true;
+    } catch (error) { return false; }
+  }
+
+  function dispatch(name, args, options) {
+    // Each request belongs to this screen and the sign-in it was made under
+    // (6B A2); the page checks that again before every step that sends or asks.
+    const ticket = attached() && web.ticket(window);
+    if (!ticket) return;
+    const routed = request(name, args), body = routed.body, save = name === 'kmsOperationCall';
+    function succeed(value) { if (options.success) options.success(value, options.userObject); }
+    function fail(error) { if (options.failure) options.failure(error, options.userObject); else console.error(error); }
+    // An owner call refused for want of the owner's Google sign-in asks for it,
+    // then is sent once more. The refusal came before KMS ran anything, so the
+    // second send is the first attempt (writes keep their request ID).
+    function send() {
+      return web.screenSend(body, ticket).then(function(answer) {
+        if (answer.ok || answer.stale || !answer.error || answer.error.code !== 'approval' || routed.background || !/^owner/.test(body.call)) return answer;
+        return web.ownerApproval({fresh: routed.fresh, message: answer.error.message}, ticket).then(function() { return web.screenSend(body, ticket); }, function(error) {
+          return {ok: false, error: {code: 'approval', message: error && error.message || answer.error.message}};
+        });
+      });
+    }
+    send().then(function(answer) {
+      if (!attached()) return;
+      if (dropThisSave(body)) { fail(failure('Simulated lost confirmation: the save reached KMS but its answer was dropped.', 'network')); return; }
+      if (answer.ok) {
+        if (save && answer.value && answer.value.outcome === 'saved') web.writeSucceeded();
+        succeed(routed.pick ? answer.value && answer.value[routed.pick] : answer.value); return;
+      }
+      const code = answer.error && answer.error.code, message = answer.error && answer.error.message || 'KMS could not finish this request.';
+      if (save && refusedBeforeKms.indexOf(code) >= 0) succeed({outcome: 'rejected', error: message, refusal: true});
+      else { const error = failure(message, code); if (refusals.indexOf(code) >= 0) error.kmsRefusal = true; fail(error); }
+    }, function(error) {
+      if (!attached()) return;
+      // No answer: for a save the outcome is unknown, and UiStatus checks it.
+      fail(failure(error && error.message || 'KMS could not be reached. Check the connection.', 'network'));
+    });
+  }
+
+  function runner(options) {
+    return new Proxy({}, {get: function(_target, name) {
+      if (name === 'withSuccessHandler') return function(handler) { return runner(Object.assign({}, options, {success: handler})); };
+      if (name === 'withFailureHandler') return function(handler) { return runner(Object.assign({}, options, {failure: handler})); };
+      if (name === 'withUserObject') return function(value) { return runner(Object.assign({}, options, {userObject: value})); };
+      return function() { dispatch(String(name), Array.from(arguments), options); };
+    }});
+  }
+
+  window.google = {script: {run: runner({}), host: {close: function() { web.closeScreen(); }, setWidth: function() {}, setHeight: function() {}}}};
+})();
+</script><style>
+ #kmsBrowserRecovery{position:fixed;left:22px;right:22px;bottom:80px;z-index:26;padding:12px 16px;background:#fff7e6;border:1px solid #d4b67b;border-radius:8px;font:14px/1.4 Arial,sans-serif;box-shadow:0 2px 10px #23374415}
+ #kmsBrowserRecovery p{margin:0 0 8px}#kmsBrowserRecovery button{margin:0 8px 0 0;padding:7px 10px}#kmsBrowserRecovery[hidden]{display:none}
+ @media print{#kmsBrowserRecovery{display:none!important}}
+</style>
+<script>
+// Recovery copies are local to this browser. They are never database records.
+window.KmsRecovery=(function(){
+ 'use strict';
+ const scope=window.KmsRecoveryContext,maxCopies=8,maxKeys=512,maxChars=750000;
+ const writer=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(16).slice(2);
+ // The web page's release (6B A2); null in Sheets. Each copy records it and
+ // its screen adapter's format, so a page never applies a copy it cannot read.
+ const release=Number.isSafeInteger(window.KmsWebRelease)?window.KmsWebRelease:null;
+ let lastText=null,lastOk=false;
+ let adapter,ownKey,storage,enabled=false,active=null,offered=new Set(),panel,timer,restoring=false,ready=false,copyFailed=false,initialized=false,suppressed=null,notice=false,storageFault=false,alive=true;
+ const prefix=scope&&scope.book&&scope.actor&&scope.screen?'KMS_RECOVERY_V1:'+scope.book+':'+scope.actor+':'+scope.screen+':':'';
+ function clone(value){return JSON.parse(JSON.stringify(value));}
+ function fields(ids){return ids.map(id=>{const el=document.getElementById(id);return el&&el.type!=='file'?[id,el.value,el.type==='checkbox'?el.checked:null]:null;}).filter(Boolean);}
+ function applyFields(values){(values||[]).forEach(([id,value,checked])=>{const el=document.getElementById(id);if(el&&el.type!=='file'){el.value=value;if(checked!==null)el.checked=checked;}});}
+ function take(state,keys){return Object.fromEntries(keys.map(key=>[key,clone(state[key]===undefined?null:state[key])]));}
+ function put(state,values){Object.keys(values).forEach(key=>state[key]=clone(values[key]));}
+ function show(text,actions){
+  notice=!active;
+  if(!document.body)return;
+  if(!panel){panel=document.createElement('aside');panel.id='kmsBrowserRecovery';panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');document.body.append(panel);}
+  panel.replaceChildren();const p=document.createElement('p');p.textContent=text;panel.append(p);
+  (actions||[]).forEach(([label,action])=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.addEventListener('click',guarded(action));panel.append(button);});
+  const footer=document.querySelector('.kms-activity-footer');panel.style.bottom=((footer?.getBoundingClientRect().height||66)+12)+'px';panel.hidden=false;
+ }
+ function hide(){notice=false;if(panel)panel.hidden=true;}
+ function guarded(fn,fallback){return function(...args){try{return fn(...args);}catch(error){storageFault=true;copyFailed=true;show('Browser recovery could not be accessed. Keep this window open until saves are confirmed; existing copies have not been discarded.',[]);return fallback;}};}
+ function read(key){const text=storage.getItem(key);try{if(!text)return null;const item=JSON.parse(text);if(item.schema!==1||item.book!==scope.book||item.actor!==scope.actor||item.screen!==scope.screen)return null;return item;}catch(error){return null;}}
+ function entries(){if(!enabled)return [];if(storage.length>maxKeys)throw Error('Browser recovery storage needs clearing');const keys=[];for(let i=0;i<storage.length;i++){const key=storage.key(i);if(key&&key.startsWith(prefix+'copy:'))keys.push(key);}return keys.map(key=>({key,item:read(key)})).filter(x=>x.item).sort((a,b)=>b.item.updated-a.item.updated);}
+ function init(){
+  if(initialized||!prefix)return;initialized=true;
+  if(['ConsoleDisplay','AllergenMatrix','OrderSheet'].includes(scope.screen))return;
+  try{storage=window.localStorage;const probe=prefix+'probe';storage.setItem(probe,writer);if(storage.getItem(probe)!==writer)throw Error('Read-back failed');storage.removeItem(probe);enabled=true;}
+  catch(error){enabled=false;show('Browser recovery is unavailable here. Keep this window open until saves are confirmed.',[]);}
+ }
+ function reserve(){
+  if(ownKey)return ownKey;
+  if(entries().length>=maxCopies)throw Error('Recovery copies are full. Restore or discard an earlier copy first.');
+  ownKey=prefix+'copy:'+writer;return ownKey;
+ }
+ function format(){return adapter&&Number.isSafeInteger(adapter.format)&&adapter.format>0?adapter.format:1;}
+ function write(item){
+  if(!enabled)return false;
+  item.release=release;if(item.draft)item.format=format();
+  try{const key=reserve(),text=JSON.stringify(item);if(text.length>maxChars)throw Error('Recovery copy is too large');storage.setItem(key,text);if(storage.getItem(key)!==text)throw Error('Recovery copy could not be verified');lastText=text;lastOk=true;return true;}
+  catch(error){lastOk=false;copyFailed=true;show('A browser recovery copy could not be kept. Your entries are still in this window. Keep it open until the save is confirmed.',active&&!active.item.operation?[['Discard earlier copy',discard],['Later',later]]:[['Review earlier copies',()=>{active=null;hide();offer();}]]);return false;}
+ }
+ function base(){return {schema:1,book:scope.book,actor:scope.actor,screen:scope.screen,writer,updated:Date.now(),draft:null,operation:null};}
+ function snapshot(){if(suppressed&&suppressed===JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id))))return null;if(!adapter||!adapter.ready()||!window.KmsStatus?.isDirty())return null;return {label:adapter.label(),value:clone(adapter.capture()),updated:Date.now()};}
+ function capture(){
+  clearTimeout(timer);if(!enabled||storageFault||restoring||!ready)return;
+  const draft=snapshot(),old=ownKey&&read(ownKey);
+  if(!draft&&!old?.operation){if(ownKey){storage.removeItem(ownKey);ownKey=null;}lastText=null;return;}
+  // Each window owns a separate key; another window's copy is never replaced.
+  if(old&&old.writer!==writer){ownKey=null;show('Another window is using this recovery slot. Keep your current form open.',[]);return;}
+  const item=old||base();item.updated=Date.now();
+  if(draft){const serial=JSON.stringify(draft.value);if(!item.draft||JSON.stringify(item.draft.value)!==serial)item.draft=draft;}
+  else if(!item.operation)item.draft=null;
+  write(item);
+ }
+ function schedule(){clearTimeout(timer);timer=setTimeout(guarded(capture),180);}
+ function operationStart(request){
+  if(!enabled||storageFault)return;
+  capture();const item=ownKey&&read(ownKey)||base();
+  item.operation={id:request.id,method:request.method,args:clone(request.args),started:Date.now(),draftAt:item.draft?.updated||0};item.updated=Date.now();write(item);
+ }
+ function keepDraftAfterSave(item,op,result){
+  if(item.draft&&/kmsSave(?:Prep|Dish)HtmlPhoto/.test(op.method)){
+   const state=item.draft.value.state;if(state?.recipe){['editToken','allergenReviewToken','photoFileId','photoFilename','photoStatus'].forEach(key=>{if(result[key]!==undefined)state.recipe[key]=result[key];});state.pendingPhotoChange=null;}
+   return !!state?.changed;
+  }
+  return !!(item.draft&&item.draft.updated>op.draftAt);
+ }
+ function operationEnd(request,outcome){
+  if(!enabled||!ownKey)return;
+  const item=read(ownKey);if(!item||item.writer!==writer||item.operation?.id!==request.id)return;
+  if(outcome.outcome==='resolved'){if(item.draft&&(outcome.resolution?.resolution==='Not saved, verified'||item.draft.updated>item.operation.draftAt)){item.operation=null;write(item);}else{storage.removeItem(ownKey);ownKey=null;}}else if(outcome.outcome==='saved'){
+   if(keepDraftAfterSave(item,item.operation,outcome.value||{})){item.operation=null;item.updated=Date.now();write(item);}
+   else{storage.removeItem(ownKey);ownKey=null;}
+  }else if(outcome.outcome==='rejected'){item.operation=null;item.updated=Date.now();write(item);}
+ }
+ // A copy from a newer page, or a draft format this screen has no explicit
+ // compatibility code for, is kept untouched: never applied, checked or deleted.
+ function newerRelease(item){return release!==null&&Number.isSafeInteger(item.release)&&item.release>release;}
+ function draftFormat(item){return item.format===undefined?1:item.format;}
+ function readable(item){const f=draftFormat(item);return f===format()||!!(adapter&&adapter.upgrade&&Object.prototype.hasOwnProperty.call(adapter.upgrade,f)&&typeof adapter.upgrade[f]==='function');}
+ function kept(item){
+  const newer=newerRelease(item)||Number.isSafeInteger(draftFormat(item))&&draftFormat(item)>format();
+  show(newer?'This entry was made with a newer KMS page. It is kept; open it after KMS is updated.':'This entry was made with a different KMS page and cannot be opened here. It is kept on this device.',[['Later',later]]);
+ }
+ function available(){return entries().find(x=>x.item.writer!==writer&&!offered.has(x.key));}
+ function offer(){
+  if(!enabled||active||notice||window.KmsStatus?.isBusy()||window.KmsStatus?.isDirty())return;
+  const next=available();if(!next)return;
+  active=next;const item=next.item;
+  if(newerRelease(item)){kept(item);return;}
+  if(item.operation){checkPrompt(item);return;}
+  if(!item.draft){storage.removeItem(next.key);active=null;offer();return;}
+  if(!ready||!adapter?.ready()){active=null;return;}
+  if(!readable(item)){kept(item);return;}
+  show('Recover unsaved '+item.draft.label+' from '+new Date(item.updated).toLocaleString()+'? Restoring brings back the form for review; it does not save it.',[['Restore edits',restore],['Discard copy',discard],['Later',later]]);
+ }
+ function checkPrompt(item){show('An earlier save for '+(item.draft?.label||'this screen')+' needs an outcome check. It will not be submitted again.',[['Check save outcome',check],['Later',later]]);}
+ // A save blocked by an unsettled earlier save must always lead back to its
+ // outcome check, even after Later or while the form has entries (item 7b).
+ function showPending(){
+  if(!enabled)return false;
+  if(active?.item.operation){if(!panel||panel.hidden)(newerRelease(active.item)?kept:checkPrompt)(active.item);return true;}
+  const next=entries().find(x=>x.item.operation);if(!next)return false;
+  offered.delete(next.key);active=next;(newerRelease(next.item)?kept:checkPrompt)(next.item);return true;
+ }
+ function later(){if(active)offered.add(active.key);active=null;hide();}
+ function discard(){
+  if(!active||active.item.operation||newerRelease(active.item)||active.item.draft&&!readable(active.item))return;
+  if(!confirm('Discard this browser recovery copy? Saved database records will not change.'))return;
+  storage.removeItem(active.key);active=null;hide();offer();
+ }
+ function restore(){
+  if(!active?.item.draft||active.item.operation||!adapter||!adapter.ready()||window.KmsStatus.isBusy()||newerRelease(active.item)||!readable(active.item))return;
+  if(window.KmsStatus.isDirty()&&!confirm('Restore this earlier copy and discard the current unsaved form?'))return;
+  const selected=active;restoring=true;
+  // An earlier format reaches the screen only through its compatibility code.
+  const f=draftFormat(selected.item),value=f===format()?clone(selected.item.draft.value):adapter.upgrade[f](clone(selected.item.draft.value));
+  try{adapter.restore(value);
+   // Retain the original copy until its restored successor is safely stored.
+   restoring=false;capture();const successor=ownKey&&read(ownKey);
+   if(successor?.draft)storage.removeItem(selected.key);
+   active=null;show('Edits restored for review. Nothing has been saved. If this record changed elsewhere, reload and compare before saving.',[['Dismiss',hide]]);
+  }catch(error){show('The copy could not be restored: '+(error.message||String(error))+'. It has been retained.',[['Later',later]]);}
+  finally{restoring=false;window.KmsStatus.refresh();}
+ }
+ function check(){
+  if(!active?.item.operation||newerRelease(active.item))return;
+  const selected=active,op=selected.item.operation,finish=window.KmsStatus.begin('Checking save…',false);
+  show('Checking the earlier save. No business changes are being repeated.',[]);
+  let finished=false;const timeout=setTimeout(()=>{if(finished||!alive)return;finished=true;finish(Error('Save outcome check timed out'));if(active===selected)show('The outcome check did not finish. The save has not been repeated.',[['Check again',check],['Later',later]]);},45000);
+  const complete=()=>{if(finished||!alive)return false;finished=true;clearTimeout(timeout);return true;};
+  google.script.run.withSuccessHandler(guarded(outcome=>{
+   if(!complete())return;finish();if(active!==selected)return;
+   if(outcome?.outcome==='resolved'){const retain=selected.item.draft&&(outcome.resolution?.resolution==='Not saved, verified'||selected.item.draft.updated>op.draftAt);if(retain){selected.item.operation=null;storage.setItem(selected.key,JSON.stringify(selected.item));}else storage.removeItem(selected.key);active=null;show('The workbook owner reconciled this save. '+(retain?'Your unsaved copy remains available for review.':'Open or reload the saved record before making another change.'),[['Dismiss',()=>{hide();offer();}]]);}
+   else if(outcome?.outcome==='saved'){
+    const result=outcome.value||{},record=result.record||result,id=record.id||record.key||result.id||'';
+    selected.item.operation=null;
+    if(keepDraftAfterSave(selected.item,op,result)){storage.setItem(selected.key,JSON.stringify(selected.item));active=null;show('The earlier save completed'+(id?' ('+id+')':'')+'. Unsaved edits remain available for review.',[['Review edits',()=>{hide();offer();}]]);}
+    else{storage.removeItem(selected.key);active=null;show('The earlier save completed'+(id?' ('+id+')':'')+'. Open or reload that saved record to see its current values.',[['Dismiss',()=>{hide();offer();}]]);}
+   }else if(outcome?.outcome==='rejected'){
+    // A rejected check is a definite answer: say so, then offer any draft (item 7a).
+    const item=selected.item,said='The earlier save did not happen. Nothing was saved by it.';item.operation=null;
+    if(!item.draft){storage.removeItem(selected.key);active=null;show(said+' You can enter the change again.',[['Dismiss',()=>{hide();offer();}]]);}
+    else{storage.setItem(selected.key,JSON.stringify(item));
+     if(ready&&adapter?.ready())show(said+' Recover unsaved '+item.draft.label+' from '+new Date(item.updated).toLocaleString()+'? Restoring brings back the form for review; it does not save it.',[['Restore edits',restore],['Discard copy',discard],['Later',later]]);
+     else{active=null;show(said+' Your unsaved copy remains available for review.',[['Dismiss',()=>{hide();offer();}]]);}}
+   }else show('This write is still unconfirmed. Keep this recovery copy and ask the workbook owner to investigate. Do not enter the same invoice or recipe again.',[['Check again',check],['Later',later]]);
+  })).withFailureHandler(guarded(error=>{if(!complete())return;finish(error);if(active===selected)show('The outcome check did not finish. The save has not been repeated.',[['Check again',check],['Later',later]]);})).kmsOperationStatus(op.method,op.args,op.id);
+ }
+ function refresh(){
+  if(!adapter){if(enabled){ready=true;offer();}return;}
+  if(!ready&&adapter.ready())ready=true;offer();
+  schedule();
+ }
+ function register(value){adapter=value;init();refresh();}
+ // Do not start network calls on every keypress or poll the database for drafts.
+ document.addEventListener('DOMContentLoaded',guarded(()=>{init();if(!adapter){ready=true;offer();}}),{once:true});
+ ['input','change','click'].forEach(type=>document.addEventListener(type,()=>Promise.resolve().then(guarded(refresh))));
+ window.addEventListener('pagehide',()=>{guarded(capture)();alive=false;});document.addEventListener('visibilitychange',guarded(()=>{if(document.hidden)capture();}));
+ window.addEventListener('beforeunload',event=>{guarded(capture)();if(window.KmsStatus?.isDirty()||window.KmsStatus?.isBusy()){event.preventDefault();event.returnValue='';}});
+ // True only when this window's latest copy was written and read back
+ // unchanged, and is still there; false after a storage fault, a failed
+ // write, or when recovery is unavailable (6B A2).
+ function persisted(){
+  if(!enabled||storageFault||!lastOk||!ownKey||lastText===null)return false;
+  return storage.getItem(ownKey)===lastText;
+ }
+ function discardCurrent(){const item=ownKey&&read(ownKey);if(item?.operation)return false;suppressed=JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id)));if(ownKey){storage.removeItem(ownKey);ownKey=null;}return true;}
+ return {discardCurrent:guarded(discardCurrent,false),suppressCurrent:()=>{suppressed=JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id)));},register:guarded(register),refresh:guarded(refresh),capture:guarded(capture),operationStart:guarded(operationStart),operationEnd:guarded(operationEnd),fields,applyFields,take,put,
+  persisted:guarded(persisted,false),hasPending:()=>!!active?.item.operation,showPending:guarded(showPending,false),pendingSaves:guarded(()=>storageFault||enabled&&entries().some(x=>x.item.operation),true),available:()=>enabled&&!copyFailed};
+})();
+</script>
+<style>
+  .kms-activity-footer {
+    position:fixed!important; inset:auto 0 0!important; width:auto!important; margin:0!important;
+    box-sizing:border-box; background:#fff; border-top:1px solid #d4e0e3;
+    padding:11px 22px!important; z-index:20; min-height:66px;
+  }
+  .kms-activity-actions { padding-right:344px; box-sizing:border-box; }
+  .kms-activity-footer.kms-activity-simple { padding-right:366px!important; }
+  .kms-activity-footer .kms-activity-actions { margin-top:0; }
+  body[data-kms-layout="console"] .kms-activity-footer { position:relative!important; inset:auto!important; flex:none; }
+  #kmsActivity {
+    position:absolute; right:22px; bottom:11px; height:44px; width:328px;
+    display:flex; align-items:center; justify-content:flex-end; gap:16px;
+    font:600 24px/1.3 Arial,Helvetica,sans-serif; color:#526973; white-space:nowrap;
+  }
+  #kmsActivity[data-state="busy"],#kmsActivity[data-state="maintenance"] { color:#186d70; }
+  #kmsActivity[data-state="warning"],#kmsActivity[data-state="dirty"] { color:#876018; }
+  #kmsActivity[data-state="success"] { color:#286c46; }
+  #kmsActivity[data-state="error"] { color:#9a3d33; }
+  .kms-activity-icon { width:28px; height:28px; box-sizing:border-box; flex:none; display:inline-flex; align-items:center; justify-content:center; }
+  #kmsActivity[data-state="busy"] .kms-activity-icon,#kmsActivity[data-state="maintenance"] .kms-activity-icon {
+    border:4px solid #d3e5e5; border-top-color:#186d70; border-radius:50%;
+    animation:kms-activity-spin .8s linear infinite;
+  }
+  #kmsActivity[data-state="maintenance"] > span:last-child { font-size:20px;line-height:1.1;white-space:pre-line; }
+  @keyframes kms-activity-spin { to { transform:rotate(360deg); } }
+  @media(prefers-reduced-motion:reduce) { #kmsActivity[data-state="busy"] .kms-activity-icon,#kmsActivity[data-state="maintenance"] .kms-activity-icon { animation-duration:2.4s; } }
+  @media(max-width:760px) {
+    .kms-activity-footer { padding-left:12px!important; padding-right:12px!important; }
+    /* On smaller displays give the larger status its own space below actions. */
+    .kms-activity-actions { padding-right:0; padding-bottom:58px; }
+    .kms-activity-footer.kms-activity-simple { padding-right:12px!important; }
+    body[data-kms-layout="console"] .kms-activity-footer { padding-bottom:66px!important; }
+    #kmsActivity { right:12px; width:min(328px, calc(100vw - 24px)); }
+  }
+  @media print {
+    .kms-activity-footer,#kmsActivity,#kmsSaveRecovery { display:none!important; }
+    .kms-activity-content { padding-bottom:0!important; }
+  }
+</style>
+<script>
+// History date changes are local: no server call and no draft data changes.
+window.KmsHistoryDates=(function(){
+  function yearFrom(value,direction){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return '';
+    const date=new Date(value+'T00:00:00Z');if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==value)return '';
+    const year=date.getUTCFullYear()+direction,month=date.getUTCMonth(),day=Math.min(date.getUTCDate(),new Date(Date.UTC(year,month+1,0)).getUTCDate());
+    return new Date(Date.UTC(year,month,day)).toISOString().slice(0,10);
+  }
+  function bind(from,to){
+    if(!from||!to)return;
+    from.addEventListener('change',function(){const end=yearFrom(from.value,1);if(end)to.value=end;});
+    to.addEventListener('change',function(){const end=yearFrom(from.value,1);if(to.value&&end&&(to.value<from.value||to.value>end))from.value=yearFrom(to.value,-1);});
+  }
+  document.addEventListener('DOMContentLoaded',function(){[['historyFrom','historyTo'],['fromDate','toDate']].forEach(ids=>bind(document.getElementById(ids[0]),document.getElementById(ids[1])));},{once:true});
+  return {yearFrom:yearFrom};
+})();
+// Native Apps Script runners are immutable. Wrap each chain rather than modifying
+// google.script.run, and finish only when its callback has finished as well.
+window.KmsStatus = (function() {
+  'use strict';
+  const pending = new Map();
+  let alive=true;window.addEventListener('pagehide',function(){alive=false;},{once:true});
+  let badge, label, icon, dirtyCheck = function() { return false; };
+  let nextId = 0, failure = '', savedUntil = 0, savedTimer, cycleWrote = false;
+  const recoverable = new Set(['kmsSavePrepHtmlRecipe','kmsSaveDishHtmlRecord','kmsSavePrepHtmlPhoto','kmsSaveDishHtmlPhoto',
+    'kmsSaveIngredientHtmlRecord','kmsSupplierSave','kmsInvoiceSave','kmsInvoiceVoid','kmsInvoiceSavePhoto','kmsInvoiceRemovePhoto','kmsStocktakeSave','kmsStocktakeCorrect',
+    'kmsWeeklySave','kmsWeeklyCorrect','kmsMenuPricingSave','kmsSettingsSave','kmsMarkSelectedAllergensReviewed',
+    'kmsMarkSupplierAllergensReviewed','kmsMarkIngredientAllergensReviewed','kmsMarkRecipeAllergensReviewed','kmsCostReviewMark']);
+  let unresolved = null, recoveryPanel;
+  let maintenance=window.KmsMaintenanceInitial||null,maintenanceTimer,maintenanceReading=false;
+  const maintenanceListeners=new Set();
+  function maintenanceOwner(){try{return window.parent!==window&&window.parent.KmsApp&&typeof window.parent.KmsStatus?.maintenance==='function'&&window.parent.KmsStatus||null;}catch(error){return null;}}
+  function maintenanceState(){const owner=maintenanceOwner();return owner?owner.maintenance():maintenance;}
+  // F: while a job runs, a last update over 3 minutes before the server's answer
+  // is shown as not recently confirmed (its time), instead of freezing or guessing.
+  // A fixed 24-hour HH:MM in the device's own time zone, whatever its language.
+  function clock(at){const d=new Date(at);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+  function maintenanceQuiet(value){const at=Date.parse(value?.updated||value?.latest?.updated||'');if(!(value?.capturing||value?.restoring)||!Number.isFinite(at)||!(value.observedAt-at>180000))return '';return clock(at);}
+  function scheduleMaintenance(){
+    clearTimeout(maintenanceTimer);const value=maintenanceState();
+    if(alive&&!maintenanceOwner()&&!document.hidden&&(value?.capturing||value?.restoring))maintenanceTimer=setTimeout(checkMaintenance,20000);
+  }
+  function setMaintenance(value){
+    const owner=maintenanceOwner();if(owner){owner.setMaintenance(value);return;}
+    if(!value||!Number.isFinite(value.observedAt))return;
+    // A refused answer changes nothing here; the poll that asked schedules the
+    // next one itself, so refusing never stops the polling.
+    // F: an answer with a lower status revision is older, whatever its time; an
+    // answer without one is judged by when the server read it, and keeps the
+    // revision already seen, so a later, older answer is still refused.
+    if(maintenance){const a=value.revision,b=maintenance.revision;
+      if(typeof a==='number'&&typeof b==='number'&&a!==b){if(a<b)return;}
+      else if(value.observedAt<maintenance.observedAt)return;
+      if(typeof a!=='number'&&typeof b==='number')value=Object.assign({},value,{revision:b});}
+    maintenance=value;render();maintenanceListeners.forEach(fn=>fn());scheduleMaintenance();
+  }
+  function checkMaintenance(){
+    if(!alive||maintenanceOwner()||maintenanceReading)return;maintenanceReading=true;let done=false;
+    const timeout=setTimeout(()=>failed(),45000);
+    function failed(){if(done||!alive)return;done=true;clearTimeout(timeout);maintenanceReading=false;if(maintenance)maintenance=Object.assign({},maintenance,{uncertain:true});render();maintenanceListeners.forEach(fn=>fn());scheduleMaintenance();}
+    try{google.script.run.withSuccessHandler(value=>{if(done||!alive)return;done=true;clearTimeout(timeout);maintenanceReading=false;setMaintenance(value);scheduleMaintenance();}).withFailureHandler(failed).kmsBackupActivity();}catch(error){failed();}
+  }
+  function observeMaintenance(method,result){
+    if(result?.activity)setMaintenance(result.activity);
+    else if(result?.backup?.activity)setMaintenance(result.backup.activity);
+    else if(/^kmsBackup(?:Start|Restore|Resume|Cancel)$/.test(method)&&result?.updated)setMaintenance({observedAt:Date.parse(result.updated),updated:result.updated,capturing:result.kind==='Backup'&&result.status==='Capturing',restoring:result.kind==='Restore'&&result.status==='Restoring',status:result.status,id:result.id});
+  }
+  window.addEventListener('pagehide',()=>{clearTimeout(maintenanceTimer);maintenanceListeners.clear();},{once:true});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(maintenanceTimer);else if(maintenanceState()?.capturing||maintenanceState()?.restoring)checkMaintenance();});
+  function formValues() {
+    return JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(function(input) {
+      return [input.id,input.name,input.value,input.type==='checkbox'?input.checked:null];
+    }));
+  }
+  function recoveryNotice(message, request) {
+    if(!recoveryPanel) {
+      recoveryPanel=document.createElement('div');recoveryPanel.id='kmsSaveRecovery';
+      recoveryPanel.style.cssText='position:fixed;left:22px;right:22px;bottom:80px;padding:12px 16px;background:#fff7e6;border:1px solid #d4b67b;border-radius:8px;z-index:25;font:14px/1.4 Arial,sans-serif;';
+      const explanation=document.createElement('span'),check=document.createElement('button');
+      check.type='button';check.textContent='Check save outcome';check.style.marginLeft='12px';
+      check.addEventListener('click',function(){if(unresolved&&unresolved.check&&!pending.size)unresolved.check();});
+      recoveryPanel.append(explanation,check);document.body.appendChild(recoveryPanel);
+    }
+    recoveryPanel.firstChild.textContent=message;recoveryPanel.hidden=false;
+    const footer=document.querySelector('.kms-activity-footer');
+    recoveryPanel.style.bottom=((footer&&footer.getBoundingClientRect().height||66)+12)+'px';
+    recoveryPanel.lastChild.hidden=!request;
+  }
+  function clearRecovery(request) {
+    request.completed=true;
+    if(unresolved===request)unresolved=null;
+    if(recoveryPanel)recoveryPanel.hidden=true;
+  }
+  function newOperationId() {
+    const bytes=new Uint8Array(16);window.crypto.getRandomValues(bytes);
+    return Date.now()+'-'+Array.from(bytes,function(value){return value.toString(16).padStart(2,'0');}).join('');
+  }
+  function dirty() { return !!dirtyCheck(); }
+  function render() {
+    if (!badge) return;
+    let text = 'Ready', kind = 'ready';
+    if (pending.size) {
+      const tasks = Array.from(pending.values());
+      const task = tasks.find(function(t) { return t.write; }) || tasks[tasks.length - 1];
+      text = task.label; kind = 'busy';
+    } else if (failure) { text = failure; kind = /^(Saved|Refused|Signed out)/.test(failure)?'warning':'error'; }
+    else if (maintenanceState()?.capturing||maintenanceState()?.restoring) {const value=maintenanceState();const quiet=maintenanceQuiet(value);text=value.uncertain?'Backup status unconfirmed\nCheck Settings':quiet?'Progress not recently confirmed\nLast update '+quiet:value.capturing?'Backup capturing…\nSaves paused':'Restoring backup…\nOriginal saves available';kind='maintenance';}
+    else if (dirty()) { text = 'Unsaved changes'; kind = 'dirty'; }
+    else if (Date.now() < savedUntil) { text = 'Saved'; kind = 'success'; }
+    if (badge.dataset.state !== kind) badge.dataset.state = kind;
+    const busyValue = kind === 'busy' || kind === 'maintenance' ? 'true' : 'false';
+    if (badge.getAttribute('aria-busy') !== busyValue) badge.setAttribute('aria-busy', busyValue);
+    // Avoid repeated live-region announcements on every keystroke or click.
+    if (label.textContent !== text) label.textContent = text;
+    const symbol = kind === 'success' ? '✓' : kind === 'error' ? '!' : kind === 'dirty' ? '•' : '';
+    if (icon.textContent !== symbol) icon.textContent = symbol;
+  }
+  function refresh() { Promise.resolve().then(function(){render();if(window.KmsRecovery)window.KmsRecovery.refresh();}); }
+  function begin(text, write) {
+    if (!pending.size) { failure = ''; savedUntil = 0; cycleWrote = false; clearTimeout(savedTimer); }
+    const id = ++nextId;
+    pending.set(id, {label:text, write:!!write}); render();
+    return function(error) {
+      // An await continuation may start its follow-up read. Keep that inside the
+      // same activity cycle, just like requests started directly in a callback.
+      Promise.resolve().then(function() {
+        const task = pending.get(id);
+        if (!task) return;
+        pending.delete(id);
+        if (error) failure = error.kmsRefusal ? (error.kmsCode==='session' ? 'Signed out' : 'Refused') : error.kmsOutcome==='unknown' ? 'Save unconfirmed' : error.kmsOutcome==='savedViewError' ? 'Saved; reload form' : task.label === 'Preparing photo…' ? 'Photo failed' : task.label === 'Processing backup…' ? 'Backup action failed' : task.write ? 'Save failed' : 'Load failed';
+        else if (task.write) { cycleWrote = true; try { document.dispatchEvent(new CustomEvent('kms-write-succeeded')); } catch (ignored) {} }
+        if (!pending.size && cycleWrote && !failure) {
+          savedUntil = Date.now() + 2500;
+          savedTimer = setTimeout(refresh, 2550);
+        }
+        refresh();
+      });
+    };
+  }
+  function operation(method, args) {
+    const write = /Save|Mark|Accept|Void|Correct|Archive|Delete|Remove|Finalis|Resolve/.test(method);
+    const payload = args[0];
+    const finalise = write && payload && payload.status === 'Finalised';
+    return {write:write, label:/^kmsBackup(?:Start|Restore|Resume|Cancel|Pin)$/.test(method)?'Processing backup…':method==='kmsRecoveryResolve'?'Reconciling…':method==='kmsDesktopShortcutInstaller' ? 'Preparing installer…' : finalise ? 'Finalising…' : /Void/.test(method) ? 'Voiding…' : /Accept/.test(method) || write && payload && payload.status === 'Accepted' ? 'Accepting…' : write ? 'Saving…' : /PreviewUsage/.test(method) ? 'Reviewing usage…' : 'Loading…'};
+  }
+  function run(options) {
+    options = options || {};
+    return new Proxy({}, {get:function(_target, method) {
+      if (method === 'withSuccessHandler') return function(handler) { return run(Object.assign({}, options, {success:handler})); };
+      if (method === 'withFailureHandler') return function(handler) { return run(Object.assign({}, options, {failure:handler})); };
+      if (method === 'withUserObject') return function(value) { return run(Object.assign({}, options, {userObject:value})); };
+      return function() {
+        const args = Array.from(arguments);
+        // Internal screen shortcuts stay inside the shared KMS window. Do not
+        // start a child RPC activity cycle before its navigation guard runs.
+        const navigation = window.KmsEmbedded && window.KmsEmbedded.navigateMethod(String(method));
+        if (navigation) {
+          Promise.resolve(navigation).then(function(result) { if (options.success) options.success(result, options.userObject); }, function(error) { if (options.failure) options.failure(error, options.userObject); else console.error(error); });
+          return;
+        }
+        const task = operation(String(method), args);
+        if(task.write&&maintenanceState()?.capturing){const error=new Error('Backup capture is in progress; saves are paused. Your edits remain in this form. Wait for capture to finish, then save again.');if(options.failure)options.failure(error,options.userObject);else console.error(error);render();return;}
+        let finish = options.background && !task.write ? function() {} : begin(task.label, task.write);
+        const started=Date.now();let suppliedInitial=false,settled=false,watchdog;
+        function stopWatchdog(){clearTimeout(watchdog);}
+        // 45 seconds of KMS time: on the web page, time in the owner's Google
+        // sign-in box does not count, and the resent request gets a full 45 seconds.
+        function arm(fire){stopWatchdog();const armed=Date.now();const tick=function(){const owner=window.KmsOwnerWait&&window.KmsOwnerWait();
+          if(owner&&owner.waiting){watchdog=setTimeout(tick,1000);return;}
+          const ended=owner&&owner.endedAt||0,left=ended>armed?45000-(Date.now()-ended):0;if(left>0){watchdog=setTimeout(tick,left);return;}fire();};
+          watchdog=setTimeout(tick,45000);}
+        function trace(outcome){if(window.KmsPerformanceEnabled)console.log('KMS browser '+String(method)+': '+(Date.now()-started)+(suppliedInitial?' ms initial response wait (':' ms round trip (')+outcome+')');}
+        const onFailure = function(error) {
+          if(!alive||!window.document||settled)return;if(!error||error.kmsOutcome!=='unknown')settled=true;stopWatchdog();
+          trace('failed');
+          try { if (options.failure) options.failure(error, options.userObject); else console.error(error); }
+          finally { finish(error || new Error('Request failed')); }
+        };
+        try {
+          const onSuccess = function(result) {
+            if(!alive||!window.document||settled)return;settled=true;stopWatchdog();
+            trace('completed');observeMaintenance(String(method),result);
+            let callbackError;const callbackStarted=Date.now();
+            try { if (options.success) options.success(result, options.userObject); }
+            catch (error) { callbackError = error; throw error; }
+            finally {
+              if(window.KmsPerformanceEnabled)console.log('KMS browser '+String(method)+': '+(Date.now()-callbackStarted)+' ms result handling');
+              finish(callbackError);
+            }
+          };
+          if(window.KmsSaveRecoveryEnabled&&recoverable.has(String(method))) {
+            if(!unresolved&&window.KmsRecovery?.pendingSaves()){const offered=window.KmsRecovery.showPending&&window.KmsRecovery.showPending();const blocked=new Error(offered?'An earlier save needs an outcome check first. Use Check save outcome in the recovery panel.':'An earlier save needs an outcome check before another change can be saved.');blocked.kmsRefusal=true;onFailure(blocked);return;}
+            const serial=JSON.stringify(args),key=String(method)+'|'+serial;
+            if(unresolved?.confirmed){const error=new Error('The earlier save completed. Reload the saved record before saving again.');error.kmsOutcome='savedViewError';onFailure(error);return;}
+            // A busy reply proves only that this delivery did nothing; another
+            // delivery of the same ID may have saved (Codex F3). The ID is kept
+            // until a receipt settles it: an unchanged form resends it, and a
+            // changed form first asks for its outcome.
+            if(unresolved&&unresolved.busy&&unresolved.key!==key) {
+              const earlier=unresolved;settled=true;
+              const notSent=function(text){settled=false;onFailure(new Error((text?text+' ':'')+'Your earlier save has not been confirmed yet, so this change was not sent. Your entries remain in this form. Try again in a moment.'));};
+              arm(function(){notSent('KMS did not answer.');});
+              google.script.run.withSuccessHandler(function(outcome){
+                if(!alive||!window.document||!settled)return;stopWatchdog();
+                const result=outcome&&outcome.outcome;
+                if(result==='rejected'){if(window.KmsRecovery)window.KmsRecovery.operationEnd(earlier,outcome);clearRecovery(earlier);finish();run(options)[method].apply(null,args);return;}
+                if(result==='saved'||result==='resolved'){settled=false;earlier.busy=false;earlier.confirmed=true;if(window.KmsRecovery)window.KmsRecovery.operationEnd(earlier,outcome);const error=new Error('The earlier save completed. Reload the saved record before saving again.');error.kmsOutcome='savedViewError';onFailure(error);return;}
+                if(result==='unknown'&&!outcome.busy){settled=false;earlier.busy=false;earlier.sent=true;const error=new Error((outcome.error||'The earlier save is unconfirmed.')+' Use Check save outcome before continuing.');error.kmsOutcome='unknown';recoveryNotice(error.message,earlier);onFailure(error);return;}
+                notSent(outcome&&outcome.error||'');
+              }).withFailureHandler(function(){if(!alive||!window.document||!settled)return;notSent('KMS could not check it.');})
+                .kmsOperationStatus(earlier.method,earlier.args,earlier.id);
+              return;
+            }
+            if(unresolved&&unresolved.busy){unresolved.busy=false;unresolved.sent=false;}
+            if(unresolved&&unresolved.key!==key) {
+              const error=new Error('An earlier save is unconfirmed. Check save outcome before making another change.');error.kmsOutcome='unknown';onFailure(error);return;
+            }
+            const request=unresolved||{id:newOperationId(),method:String(method),args:JSON.parse(serial),key:key,form:formValues()};
+            unresolved=request;
+            function unknown(error,reason) {
+              stopWatchdog();
+              if(!alive||!window.document||request.completed||request.confirmed)return;
+              request.failureReported=true;
+              const detail=new Error((reason?reason+' ':'')+'The save outcome is unconfirmed. Your entries remain in this form. Use Check save outcome before continuing.');
+              detail.kmsOutcome='unknown';recoveryNotice(detail.message,request);onFailure(detail);
+            }
+            function receive(outcome) {
+              if(!alive||!window.document||request.completed)return;
+              if(!outcome||!outcome.outcome){unknown();return;}
+              if(outcome.outcome==='resolved'){stopWatchdog();request.confirmed=true;if(window.KmsRecovery){window.KmsRecovery.operationEnd(request,outcome);window.KmsRecovery.suppressCurrent();}const error=new Error('The workbook owner has reconciled this save. Reload the saved record before making another change.');error.kmsOutcome='savedViewError';recoveryNotice(error.message,null);finish(error);return;}
+              if(outcome.outcome==='saved') {
+                stopWatchdog();request.confirmed=true;
+                if(window.KmsRecovery)window.KmsRecovery.operationEnd(request,outcome);
+                if(request.failureReported&&options.awaited||formValues()!==request.form) {
+                  const result=outcome.value||{},record=result.record||result;
+                  const detail=new Error('Saved'+(record.id?' as '+record.id:'')+'. '+(formValues()!==request.form?'Later edits remain unsaved. Copy those edits, then reload the saved record before saving again.':'Reload the saved record before continuing; the earlier request is already complete.'));
+                  detail.kmsOutcome='savedViewError';if(window.KmsRecovery)window.KmsRecovery.suppressCurrent();recoveryNotice(detail.message,null);finish(detail);return;
+                }
+                try{onSuccess(outcome.value);clearRecovery(request);if(outcome.warning){failure='Saved; check notice';recoveryNotice(outcome.warning,null);refresh();}}
+                catch(error){error.kmsOutcome='savedViewError';recoveryNotice('Your save completed, but the display could not refresh. Reload the saved record before saving again.',null);finish(error);console.error(error);}
+                return;
+              }
+              if(outcome.outcome==='rejected') {stopWatchdog();if(window.KmsRecovery)window.KmsRecovery.operationEnd(request,outcome);clearRecovery(request);const rejected=new Error(outcome.error||'Save rejected. No changes were made.');if(outcome.refusal)rejected.kmsRefusal=true;onFailure(rejected);return;}
+              // Busy: this delivery did nothing, but the save keeps its ID (see above).
+              if(outcome.outcome==='busy') {stopWatchdog();request.busy=true;if(recoveryPanel)recoveryPanel.hidden=true;const busy=new Error(outcome.error||'KMS is busy. Nothing was saved by this request. Try again in a moment.');busy.kmsRefusal=true;busy.kmsCode='busy';onFailure(busy);return;}
+              unknown(null,outcome.busy&&outcome.error);
+            }
+            function check() {
+              if(request.completed||request.confirmed)return;
+              arm(function(){unknown();});
+              google.script.run.withSuccessHandler(receive).withFailureHandler(unknown)
+                .kmsOperationStatus(request.method,request.args,request.id);
+            }
+            request.check=function(){settled=false;finish=begin('Checking save…',true);check();};
+            if(request.sent){check();return;}
+            request.sent=true;
+            if(window.KmsRecovery)window.KmsRecovery.operationStart(request);
+            arm(function(){recoveryNotice('This save is taking longer than usual. Checking its outcome; it will not be submitted again.',request);check();});
+            google.script.run.withSuccessHandler(receive).withFailureHandler(check)
+              .kmsOperationCall(request.method,request.args,request.id);
+            return;
+          }
+          arm(function(){onFailure(new Error(/^kmsBackup(?:Start|Restore|Resume|Cancel|Pin)$/.test(String(method))?'The backup request has not been confirmed. Check backup status before retrying; it may still be running.':'This load did not finish. Your current entries have not been replaced. Try loading again.'));});
+          const initial=window.KmsEmbedded&&window.KmsEmbedded.takeInitial&&window.KmsEmbedded.takeInitial(String(method),args);
+          if(initial) {
+            suppliedInitial=true;
+            Promise.resolve(initial.response || initial).then(function(outcome){
+              if(outcome.error)onFailure(new Error(outcome.error));else onSuccess(outcome.value);
+            });
+          } else {
+            const runner=google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure);
+            if(window.KmsPerformanceEnabled)runner.kmsPerformanceCall(String(method),args);
+            else runner[method].apply(runner,args);
+          }
+        } catch (error) { onFailure(error); }
+      };
+    }});
+  }
+  function mount() {
+    const body = document.body;
+    let footer = body.dataset.kmsFooter && document.querySelector(body.dataset.kmsFooter);
+    if (!footer) { footer = document.createElement('footer'); body.appendChild(footer); footer.className = 'kms-activity-simple'; }
+    footer.classList.add('kms-activity-footer');
+    const actions = body.dataset.kmsActions && document.querySelector(body.dataset.kmsActions);
+    if (actions) { footer.classList.remove('kms-activity-simple'); if (!footer.contains(actions)) footer.appendChild(actions); actions.classList.add('kms-activity-actions'); }
+    else footer.classList.add('kms-activity-simple');
+    // Long explanations belong in the content, so they cannot cover the badge or
+    // make a save/failure resize the action bar. Retain the existing message ID.
+    const detail = body.dataset.kmsDetail && document.querySelector(body.dataset.kmsDetail);
+    if (detail && footer.contains(detail)) {
+      const content = document.querySelector(body.dataset.kmsContent || 'main') || body;
+      content.appendChild(detail); detail.style.cssText = 'display:block;margin:12px 0;font-size:12px;line-height:1.4;';
+    }
+    badge = document.createElement('div'); badge.id = 'kmsActivity'; badge.setAttribute('role','status'); badge.setAttribute('aria-live','polite'); badge.setAttribute('aria-atomic','true');
+    icon = document.createElement('span'); icon.className = 'kms-activity-icon'; icon.setAttribute('aria-hidden','true');
+    label = document.createElement('span'); badge.append(icon,label); footer.appendChild(badge);
+    const content = document.querySelector(body.dataset.kmsContent || 'main') || body;
+    content.classList.add('kms-activity-content');
+    // Console already has a flex layout and a separate scrolling main pane.
+    function fit() { if (body.dataset.kmsLayout !== 'console') content.style.paddingBottom = (footer.getBoundingClientRect().height + 22) + 'px'; }
+    fit(); window.addEventListener('resize',fit);
+    if (window.ResizeObserver) new ResizeObserver(fit).observe(footer);
+    if (detail) new MutationObserver(refresh).observe(detail,{childList:true,subtree:true,characterData:true});
+    ['input','change','click'].forEach(function(event) { document.addEventListener(event,refresh); });
+    const owner=maintenanceOwner();if(owner){const unsubscribe=owner.subscribeMaintenance(render);window.addEventListener('pagehide',unsubscribe,{once:true});if(window.KmsMaintenanceInitial)owner.setMaintenance(window.KmsMaintenanceInitial);}else scheduleMaintenance();
+    render();
+  }
+  document.addEventListener('DOMContentLoaded',mount,{once:true});
+  return {maintenance:maintenanceState,maintenanceQuiet:maintenanceQuiet,clock:clock,setMaintenance:setMaintenance,subscribeMaintenance:function(fn){const owner=maintenanceOwner();if(owner)return owner.subscribeMaintenance(fn);maintenanceListeners.add(fn);return ()=>maintenanceListeners.delete(fn);},run:run, begin:begin, refresh:refresh, isDirty:dirty, hasUnsaved:function() { return dirty()||Array.from(pending.values()).some(function(task){return task.write;})||!!(unresolved&&!unresolved.confirmed)||!!(window.KmsRecovery&&window.KmsRecovery.hasPending()); }, isBusy:function() { return pending.size>0||!!(unresolved&&!unresolved.confirmed&&!unresolved.busy)||!!(window.KmsRecovery&&window.KmsRecovery.hasPending()); }, setDirtyCheck:function(check) { dirtyCheck = check; refresh(); }};
+})();
+</script>
+</head>
+
+<body data-kms-actions="#ingredientActions" data-kms-detail="#statusBar" data-kms-content="body">
+
+  <main class="panel">
+
+    <div id="statusBar" role="status">Loading Ingredients…</div>
+
+    <h1>Ingredient Manager</h1>
+
+    <p class="muted">Manage the Ingredient Master used by Prep recipes, Dishes, costing, and printable specifications.</p>
+
+    <div id="testDataNotice" class="notice warning small" hidden><strong>TEST DATA — NOT FOR SERVICE.</strong> Allergen entries in this workbook are placeholders and must be replaced and checked before operational use.</div>
+
+    <div class="notice small">Price and usable-yield changes update costing wherever this Ingredient ID is used, including archived recipe revisions. Archived records therefore show current prices.</div>
+
+
+
+    <div class="toolbar">
+
+      <div class="search">
+
+        <label for="searchInput">Find ingredient</label>
+
+        <input id="searchInput" type="search" placeholder="Search name or ID" autocomplete="off">
+
+      </div>
+
+      <div class="selector">
+
+        <label for="ingredientSelect">Ingredient</label>
+
+        <select id="ingredientSelect"><option value="">Loading…</option></select>
+
+      </div>
+
+      <button id="newButton" class="secondary" type="button">Start new ingredient</button>
+
+      <button id="reloadButton" class="secondary" type="button">Reload</button>
+      <button id="catalogButton" class="secondary" type="button" aria-expanded="true">Hide ingredient list</button>
+
+    </div>
+
+    <section id="catalog" aria-label="Ingredient overview">
+      <div class="catalog-controls"><div><label for="catalogSupplier">Supplier</label><select id="catalogSupplier"><option value="">All suppliers</option></select></div><div><label for="catalogStatus">Status</label><select id="catalogStatus"><option value="Active">Active</option><option value="Archived">Archived</option><option value="">All statuses</option></select></div><span id="catalogCount" class="count"></span></div>
+      <div class="catalog-table"><table><thead><tr><th>Ingredient</th><th>Supplier</th><th class="number">Pack size</th><th class="number" id="catalogPriceHeading">Pack price</th><th class="number">Cost / usable unit</th><th>Review</th><th>Status</th></tr></thead><tbody id="catalogRows"></tbody></table><div id="catalogEmpty" hidden>No matching ingredients.</div></div>
+      <p class="small muted">Select an ingredient to edit its details below. Search by name, ID or supplier using Find ingredient.</p>
+    </section>
+
+
+
+    <section id="ingredientDetails" aria-label="Ingredient details">
+
+      <div id="createHint" class="notice warning small" hidden style="margin:0 0 13px">
+
+        <strong>This is a new, unsaved Ingredient.</strong> Complete the details, then choose <strong>Create ingredient</strong> below. The ID and all details are saved together; nothing is added to the sheet until then.
+
+      </div>
+
+      <div class="form-grid">
+
+        <div class="field span-2">
+
+          <label for="nameInput">Ingredient name</label>
+
+          <input id="nameInput" maxlength="160" autocomplete="off">
+
+        </div>
+
+        <div class="field">
+
+          <label for="baseUnitInput">Base unit</label>
+
+          <select id="baseUnitInput"><option value="">Choose a unit…</option></select>
+
+        </div>
+
+        <div class="field">
+          <label for="supplierInput">Supplier</label>
+          <select id="supplierInput" aria-describedby="supplierLockNotice"><option value="">Choose a supplier…</option></select>
+          <p id="supplierLockNotice" class="small muted" hidden>Used on invoices. Create a new ingredient for a different supplier.</p>
+        </div>
+
+        <div class="field">
+          <label for="supplierItemRefInput">Supplier item reference</label>
+          <input id="supplierItemRefInput" maxlength="160" autocomplete="off" placeholder="Optional invoice reference">
+        </div>
+
+        <div class="field">
+
+          <label for="packQuantityInput">Pack quantity</label>
+
+          <input id="packQuantityInput" type="number" min="0" step="any" inputmode="decimal">
+
+        </div>
+
+        <div class="field">
+
+          <label for="packCostInput">Pack cost</label>
+
+          <input id="packCostInput" type="number" min="0" step="0.01" inputmode="decimal">
+
+        </div>
+
+        <div class="field">
+
+          <label for="usableQuantityInput">Measured usable quantity</label>
+
+          <input id="usableQuantityInput" type="number" min="0" step="any" inputmode="decimal">
+
+        </div>
+
+        <div class="field">
+
+          <label for="priceDateInput">Price date</label>
+
+          <input id="priceDateInput" type="date">
+
+        </div>
+
+        <div class="field full">
+
+          <label for="specificationInput">Specification / buying notes</label>
+
+          <textarea id="specificationInput" maxlength="3000" placeholder="Optional buying, quality, or preparation specification"></textarea>
+
+        </div>
+
+      </div>
+
+
+
+      <div class="summary" aria-live="polite">
+
+        <div class="summary-card"><div class="summary-label">Ingredient ID</div><div id="idValue" class="summary-value">—</div></div>
+
+        <div class="summary-card"><div class="summary-label">Usable yield</div><div id="yieldValue" class="summary-value">—</div></div>
+
+        <div class="summary-card"><div class="summary-label">Cost per usable unit</div><div id="costValue" class="summary-value">—</div></div>
+
+        <div class="summary-card"><div class="summary-label">Data check / status</div><div id="checkValue" class="summary-value">—</div></div>
+
+      </div>
+
+
+
+      <div id="unitLockNotice" class="notice warning small" hidden>Base unit is locked because this Ingredient is already referenced. If the unit is genuinely different, create a new Ingredient ID.</div>
+
+      <div class="allergen-panel">
+        <h2>Allergens</h2>
+        <p class="muted small">Record supplier allergen information for this ingredient. Prep recipes and dishes inherit these allergens automatically. Use Cross-contact risk only where a supplier risk has been identified.</p>
+        <div class="field allergen-review">
+          <label for="allergenReviewInput">Allergen information</label>
+          <select id="allergenReviewInput">
+            <option value="Needs review">Needs review</option>
+            <option value="Reviewed">Reviewed</option>
+            <option value="TEST DATA">TEST DATA — not for service</option>
+          </select>
+        </div>
+        <div id="allergenRows"></div>
+        <div class="actions"><button id="addAllergenButton" class="secondary" type="button">Add allergen</button></div>
+      </div>
+
+      <h2>Where this Ingredient is used</h2>
+      <button id="retryUsageButton" class="secondary" type="button" hidden>Retry usage check</button>
+
+      <div class="usage-grid">
+
+        <div class="usage-box">
+
+          <h3>Active Prep recipes and Dishes</h3>
+
+          <div id="activeUses" class="muted small">Select an Ingredient to view its usage.</div>
+
+        </div>
+
+        <div class="usage-box">
+
+          <h3>Draft, Tested, and Archived records</h3>
+
+          <div id="otherUses" class="muted small">Select an Ingredient to view its usage.</div>
+
+        </div>
+
+      </div>
+
+
+
+      <div id="ingredientActions" class="actions">
+
+        <button id="saveButton" type="button">Save changes</button>
+
+        <button id="archiveButton" class="danger" type="button">Archive ingredient</button>
+
+        <button id="reactivateButton" class="secondary" type="button">Reactivate ingredient</button>
+
+        <button id="closeButton" class="secondary" type="button">Close</button>
+
+      </div>
+
+      <div id="archiveHint" class="notice warning small" hidden style="margin-top:10px"></div>
+
+      <div class="footer small muted">
+
+        <span>Ingredients are archived rather than deleted so recipe references and costing remain intact.</span>
+
+        <span id="modeLabel">Select an Ingredient</span>
+
+      </div>
+
+    </section>
+
+  </main>
+
+
+
+  <script>
+
+    (function() {
+
+      'use strict';
+      // On the web page a Chef views ingredients; a Manager changes them (the server checks too).
+      const canSave = !window.KmsStaffRole || window.KmsStaffRole === 'Manager' || window.KmsStaffRole === 'Owner';
+      const state = {records:[], units:[], suppliers:[], allergenOptions:[], allergenStatusOptions:[], testData:false, current:null, allergens:[], isNew:false, busy:false, dirty:false, catalogOpen:true, currency:''};
+      state.usageGeneration = 0;
+      state.usagePending = false;
+      state.usageError = '';
+  KmsStatus.setDirtyCheck(function() { return !!(state.dirty); });
+      const byId = function(id) { return document.getElementById(id); };
+
+      const statusBar = byId('statusBar');
+
+      const inputs = {
+
+        name:byId('nameInput'), unit:byId('baseUnitInput'), packQuantity:byId('packQuantityInput'),
+
+        packCost:byId('packCostInput'), usableQuantity:byId('usableQuantityInput'),
+        priceDate:byId('priceDateInput'), specification:byId('specificationInput'), allergenReview:byId('allergenReviewInput'),
+        supplier:byId('supplierInput'), supplierItemRef:byId('supplierItemRefInput')
+      };
+
+
+
+      function todayIso() {
+
+        const now = new Date();
+
+        const offset = now.getTimezoneOffset() * 60000;
+
+        return new Date(now.getTime() - offset).toISOString().slice(0, 10);
+
+      }
+
+      function showStatus(message, kind) {
+
+        statusBar.textContent = message || '';
+
+        statusBar.className = kind || '';
+
+      }
+
+      function optionalNumber(value) {
+
+        if (value === '' || value === null || value === undefined) return null;
+
+        const number = Number(value);
+
+        return isFinite(number) ? number : null;
+
+      }
+
+      function displayNumber(value, decimals) {
+
+        const number = optionalNumber(value);
+
+        return number === null ? '—' : number.toFixed(decimals);
+
+      }
+
+      function getAllUses(record) {
+
+        return (record && record.activeUses || []).concat(record && record.otherUses || []);
+
+      }
+
+      function renderComputed() {
+
+        const pack = optionalNumber(inputs.packQuantity.value);
+
+        const cost = optionalNumber(inputs.packCost.value);
+
+        const usable = optionalNumber(inputs.usableQuantity.value);
+
+        const yieldPct = pack > 0 && usable > 0 ? (usable / pack) * 100 : null;
+
+        const unitCost = usable > 0 && cost !== null ? cost / usable : null;
+
+        byId('yieldValue').textContent = yieldPct === null ? '—' : yieldPct.toFixed(1) + '%';
+
+        byId('costValue').textContent = unitCost === null ? '—' : displayNumber(unitCost, 4);
+
+        if (pack === null || cost === null || usable === null) byId('checkValue').textContent = 'MISSING INPUT';
+
+        else if (pack <= 0 || cost < 0 || usable <= 0 || usable > pack) byId('checkValue').textContent = 'CHECK INPUT';
+
+        else byId('checkValue').textContent = 'OK';
+
+        const status = state.isNew ? 'Active' : (state.current && state.current.status || 'Active');
+
+        byId('checkValue').textContent += ' · ' + status;
+
+      }
+
+      function renderUnitOptions(selected) {
+
+        const select = inputs.unit;
+
+        select.replaceChildren();
+
+        const placeholder = document.createElement('option');
+
+        placeholder.value = '';
+
+        placeholder.textContent = 'Choose a unit…';
+
+        select.appendChild(placeholder);
+
+        const options = state.units.slice();
+
+        if (selected && options.indexOf(selected) < 0) options.push(selected);
+
+        options.forEach(function(unit) {
+
+          const option = document.createElement('option');
+
+          option.value = unit;
+
+          option.textContent = unit;
+
+          select.appendChild(option);
+
+        });
+
+        select.value = selected || '';
+
+      }
+
+      function renderSupplierOptions(selected) {
+        const select = inputs.supplier;
+        select.replaceChildren();
+        const placeholder = document.createElement('option');
+        placeholder.value = '';
+        placeholder.textContent = 'Choose a supplier…';
+        select.appendChild(placeholder);
+        state.suppliers.forEach(function(supplier) {
+          if (supplier.status !== 'Active' && supplier.id !== selected) return;
+          const item = document.createElement('option');
+          item.value = supplier.id;
+          item.textContent = supplier.name + (supplier.status !== 'Active' ? ' (Archived)' : '');
+          select.appendChild(item);
+        });
+        select.value = selected || '';
+      }
+
+      function renderUses(container, uses) {
+
+        container.replaceChildren();
+
+        if (!uses || !uses.length) {
+
+          const none = document.createElement('span');
+
+          none.className = 'muted small';
+
+          none.textContent = 'No saved recipe or dish references.';
+
+          container.appendChild(none);
+
+          return;
+
+        }
+
+        const list = document.createElement('ul');
+
+        list.className = 'usage-list small';
+
+        uses.forEach(function(use) {
+
+          const item = document.createElement('li');
+
+          const revision = use.revision ? ' v' + use.revision : '';
+
+          const status = use.status ? ' — ' + use.status : '';
+
+          item.textContent = use.type + ' · ' + (use.name || use.id || 'record') + revision + status;
+
+          list.appendChild(item);
+
+        });
+
+        container.appendChild(list);
+
+      }
+
+      function renderRecord(record) {
+
+        state.current = record ? Object.assign({}, record) : null;
+
+        state.isNew = !record;
+
+        state.dirty = false;
+
+        inputs.name.value = record ? record.name || '' : '';
+
+        inputs.packQuantity.value = record && record.packQuantity !== null ? record.packQuantity : '';
+
+        inputs.packCost.value = record && record.packCost !== null ? record.packCost : '';
+
+        inputs.usableQuantity.value = record && record.measuredUsableQuantity !== null ? record.measuredUsableQuantity : '';
+
+        inputs.priceDate.value = record && record.priceDate || (record ? '' : todayIso());
+
+        inputs.specification.value = record && record.specification || '';
+        inputs.supplierItemRef.value = record && record.supplierItemRef || '';
+        renderSupplierOptions(record && record.supplierId || '');
+        byId('supplierLockNotice').hidden = !(record && record.supplierLocked);
+        inputs.allergenReview.value = record && record.allergenReview || 'Needs review';
+        state.allergens = record && Array.isArray(record.allergens) ? record.allergens.map(function(item) { return Object.assign({}, item); }) : [];
+        byId('testDataNotice').hidden = !state.testData;
+        renderUnitOptions(record && record.baseUnit || '');
+
+        byId('idValue').textContent = record ? record.id : 'Assigned after creation';
+
+        byId('modeLabel').textContent = record ? (record.id + ' · ' + record.status) : 'Unsaved new Ingredient';
+
+        byId('saveButton').textContent = state.isNew ? 'Create ingredient' : 'Save changes';
+
+        byId('createHint').hidden = !state.isNew;
+
+        byId('archiveButton').hidden = !canSave || state.isNew || (record && record.status === 'Archived');
+
+        byId('reactivateButton').hidden = !canSave || state.isNew || (record && record.status !== 'Archived');
+
+        updateBusyControls();
+
+        renderUsage();
+        renderAllergenRows();
+        renderComputed();
+
+        setFieldsDisabled(state.busy);
+
+        if (!record) showStatus(canSave ? 'No Ingredient is saved yet. Enter its details, then choose Create ingredient below.' : 'Choose an ingredient to view it.', '');
+
+        else showStatus('Loaded ' + record.name + ' (' + record.id + ').' + (canSave ? '' : ' View only: ask a manager to change ingredients.'), '');
+        ensureUsage();
+
+      }
+
+      function usageUnknown() {
+        return !!(state.current && state.current.usageLoaded === false);
+      }
+
+      function renderUsage() {
+        const record = state.current, unknown = usageUnknown();
+        const message = state.usageError
+          ? 'Recipe usage could not be checked. Retry before changing the base unit or archiving.'
+          : 'Checking recipe usage… You can edit and save the other fields.';
+        ['activeUses','otherUses'].forEach(function(id) {
+          if (!record) byId(id).textContent = 'Select an Ingredient to view its usage.';
+          else if (unknown) byId(id).textContent = message;
+          else renderUses(byId(id), record[id]);
+        });
+        byId('retryUsageButton').hidden = !unknown || !state.usageError;
+        byId('retryUsageButton').disabled = state.busy || state.usagePending;
+        const locked = !!record && (unknown || getAllUses(record).length > 0);
+        byId('unitLockNotice').hidden = !locked;
+        byId('unitLockNotice').textContent = unknown
+          ? 'Base unit stays locked until recipe usage has been checked.'
+          : 'Base unit is locked because this Ingredient is already referenced. If the unit is different, create a new Ingredient ID.';
+        const hint = byId('archiveHint');
+        hint.hidden = !record || record.status === 'Archived';
+        hint.textContent = unknown ? 'Archiving is available once recipe usage has been checked.'
+          : record && record.activeUses && record.activeUses.length
+            ? 'Archiving is blocked while this Ingredient is used by an Active Prep recipe or Dish. Replace it there first.'
+            : 'Archiving removes this Ingredient from new selections. Existing records keep their reference and use current prices.';
+        setFieldsDisabled(state.busy);
+        updateBusyControls();
+      }
+
+      function ensureUsage() {
+        if (state.busy || !usageUnknown() || state.usagePending || state.usageError) return;
+        const generation = state.usageGeneration;
+        state.usagePending = true;
+        KmsStatus.run({background:true})
+          .withSuccessHandler(function(index) {
+            if (generation !== state.usageGeneration) return;
+            state.usagePending = false;
+            state.records.forEach(function(record) {
+              // Preserve usage returned by a later authoritative save.
+              if (record.usageLoaded !== false) return;
+              const usage = index[record.id] || {activeUses:[],otherUses:[]};
+              record.activeUses = usage.activeUses;
+              record.otherUses = usage.otherUses;
+              record.usageLoaded = true;
+            });
+            if (state.current && state.current.usageLoaded === false) {
+              const record = state.records.find(function(item) { return item.id === state.current.id; });
+              if (record) Object.assign(state.current, {activeUses:record.activeUses,otherUses:record.otherUses,usageLoaded:record.usageLoaded});
+            }
+            // Never render the full form here: the user may already be editing.
+            renderUsage();
+          })
+          .withFailureHandler(function(error) {
+            if (generation !== state.usageGeneration) return;
+            state.usagePending = false;
+            state.usageError = error && error.message || String(error);
+            renderUsage();
+          })
+          .kmsGetIngredientUsage();
+      }
+
+      byId('retryUsageButton').addEventListener('click', function() {
+        state.usageError = '';
+        renderUsage();
+        ensureUsage();
+      });
+
+      function updateBusyControls() {
+        byId('saveButton').hidden = !canSave;
+        byId('newButton').hidden = !canSave;
+
+        byId('archiveButton').disabled = state.busy || usageUnknown() || !!(state.current && state.current.activeUses && state.current.activeUses.length);
+        byId('retryUsageButton').disabled = state.busy || state.usagePending;
+
+        byId('reactivateButton').disabled = state.busy;
+
+        byId('saveButton').disabled = state.busy;
+
+        byId('newButton').disabled = state.busy;
+
+        byId('reloadButton').disabled = state.busy;
+
+        byId('ingredientSelect').disabled = state.busy;
+
+        byId('searchInput').disabled = state.busy;
+        byId('catalogButton').disabled = state.busy;
+        byId('catalogSupplier').disabled = state.busy;
+        byId('catalogStatus').disabled = state.busy;
+        byId('catalogRows').querySelectorAll('button').forEach(function(button) { button.disabled=state.busy; });
+
+      }
+
+      function setFieldsDisabled(disabled) {
+        disabled = disabled || !canSave;
+
+        inputs.name.disabled = disabled;
+
+        inputs.packQuantity.disabled = disabled;
+
+        inputs.packCost.disabled = disabled;
+
+        inputs.usableQuantity.disabled = disabled;
+
+        inputs.priceDate.disabled = disabled;
+
+        inputs.specification.disabled = disabled;
+        inputs.supplier.disabled = disabled || !!(state.current && state.current.supplierLocked && !state.isNew);
+        inputs.supplierItemRef.disabled = disabled;
+        inputs.allergenReview.disabled = disabled;
+        Array.prototype.forEach.call(byId('allergenRows').querySelectorAll('select,button'), function(control) { control.disabled = disabled; });
+        byId('addAllergenButton').disabled = disabled;
+        if (state.current && (usageUnknown() || getAllUses(state.current).length) && !state.isNew) inputs.unit.disabled = true;
+
+        else inputs.unit.disabled = disabled;
+
+      }
+
+      function renderSelector() {
+
+        const select = byId('ingredientSelect');
+
+        const selected = state.current ? state.current.id : '';
+
+        const search = byId('searchInput').value.trim().toLocaleLowerCase();
+
+        const matches = state.records.filter(function(record) {
+
+          return !search || (record.name + ' ' + record.id + ' ' + record.baseUnit + ' ' + (record.supplierName || '')).toLocaleLowerCase().indexOf(search) >= 0;
+
+        });
+
+        select.replaceChildren();
+
+        const placeholder = document.createElement('option');
+
+        placeholder.value = '';
+
+        placeholder.textContent = matches.length ? 'Choose an Ingredient…' : 'No matching Ingredients';
+
+        select.appendChild(placeholder);
+
+        matches.forEach(function(record) {
+
+          const option = document.createElement('option');
+
+          option.value = record.id;
+
+          option.textContent = record.name + ' · ' + (record.supplierName || 'No supplier') + ' · ' + record.id + (record.status === 'Archived' ? ' (Archived)' : '');
+
+          select.appendChild(option);
+
+        });
+
+        select.value = matches.some(function(record) { return record.id === selected; }) ? selected : '';
+        renderCatalog();
+
+      }
+
+      function showCatalog(open) {
+        state.catalogOpen=open;byId('catalog').hidden=!open;
+        byId('catalogButton').textContent=open?'Hide ingredient list':'Browse ingredient list';
+        byId('catalogButton').setAttribute('aria-expanded',String(open));
+      }
+
+      function renderCatalog() {
+        const supplier=byId('catalogSupplier'),selected=supplier.value;
+        supplier.replaceChildren(new Option('All suppliers',''));
+        state.suppliers.forEach(function(item) { supplier.add(new Option(item.name,item.id)); });supplier.value=selected;
+        byId('catalogPriceHeading').textContent='Pack price'+(state.currency?' ('+state.currency+')':'');
+        const search=byId('searchInput').value.trim().toLocaleLowerCase(),status=byId('catalogStatus').value;
+        const rows=state.records.filter(function(record) { return (!supplier.value||record.supplierId===supplier.value)&&(!status||record.status===status)&&(!search||(record.name+' '+record.id+' '+record.baseUnit+' '+record.supplierName).toLocaleLowerCase().includes(search)); });
+        const body=byId('catalogRows');body.replaceChildren();
+        function cell(text,cls) { const td=document.createElement('td');td.textContent=text;if(cls)td.className=cls;return td; }
+        function number(value,digits) { return typeof value==='number'&&isFinite(value)?value.toLocaleString(undefined,{maximumFractionDigits:digits,minimumFractionDigits:digits===2?2:0}):'—'; }
+        rows.forEach(function(record) {
+          const tr=document.createElement('tr'),name=cell(''),button=document.createElement('button'),ref=document.createElement('div');
+          tr.classList.toggle('selected',!!state.current&&state.current.id===record.id);button.type='button';button.className='item-button';button.textContent=record.name;button.disabled=state.busy;
+          button.addEventListener('click',function() { if(state.busy||!chooseRecord(record.id))return;showCatalog(false);byId('ingredientSelect').value=record.id;byId('ingredientDetails').scrollIntoView({block:'start'}); });
+          ref.className='item-ref';ref.textContent=record.id+(record.supplierItemRef?' · '+record.supplierItemRef:'');name.append(button,ref);
+          const review=cell(record.allergenReview||'Needs review',record.allergenReview==='Needs review'?'review-needed':'');
+          if(record.dataCheck&&record.dataCheck!=='OK'){const note=document.createElement('div');note.className='item-ref';note.textContent=record.dataCheck;review.append(note);}
+          tr.append(name,cell(record.supplierName||'No supplier'),cell(number(record.packQuantity,3)+' '+record.baseUnit,'number'),cell(number(record.packCost,2),'number'),cell(number(record.costPerUsableUnit,6)+' / '+record.baseUnit,'number'),review,cell(record.status));body.append(tr);
+        });
+        byId('catalogCount').textContent=rows.length+' of '+state.records.length+' ingredients';byId('catalogEmpty').hidden=!!rows.length;showCatalog(state.catalogOpen);
+      }
+
+      function loadRecords(keepId) {
+
+        state.busy = true;
+        state.usageGeneration++;
+        state.usagePending = false;
+        state.usageError = '';
+
+        renderRecord(state.current);
+
+        showStatus('Loading Ingredients…', '');
+
+        KmsStatus.run()
+
+          .withSuccessHandler(function(data) {
+
+            state.recoveryReady=true;
+            state.records = data.records || [];
+
+            state.units = data.units || [];
+            state.suppliers = data.suppliers || [];
+            state.allergenOptions = data.allergenOptions || [];
+            state.allergenStatusOptions = data.allergenStatusOptions || [];
+            state.testData = data.testData === true;
+            state.currency = data.currency || '';
+            state.busy = false;
+
+            renderSelector();
+
+            const wanted = keepId || (state.current && state.current.id);
+
+            const selected = state.records.filter(function(record) { return record.id === wanted; })[0];
+
+            renderRecord(selected || null);
+
+            if (!state.records.length) showStatus('No Ingredients were found. Choose Start new ingredient to add the first one.', '');
+
+          })
+
+          .withFailureHandler(function(error) {
+
+            state.busy = false;
+
+            renderRecord(state.current);
+
+            showStatus(error && error.message ? error.message : String(error), 'error');
+
+          })
+
+          .kmsListIngredientHtmlRecords();
+
+      }
+
+      function getFormPayload(status) {
+
+        return {
+
+          isNew:state.isNew,
+
+          id:state.current && state.current.id || '',
+          editToken:state.current && state.current.editToken || '',
+
+          name:inputs.name.value,
+
+          baseUnit:inputs.unit.value,
+
+          packQuantity:inputs.packQuantity.value,
+
+          packCost:inputs.packCost.value,
+
+          measuredUsableQuantity:inputs.usableQuantity.value,
+
+          priceDate:inputs.priceDate.value,
+
+          specification:inputs.specification.value,
+          supplierId:inputs.supplier.value,
+          supplierItemRef:inputs.supplierItemRef.value,
+          allergenReview:inputs.allergenReview.value,
+          allergens:state.allergens.map(function(item) { return {allergen:item.allergen, status:item.status}; }),
+          status:status || (state.current && state.current.status) || 'Active'
+
+        };
+
+      }
+
+      function save(status) {
+
+        if (state.busy) return;
+
+        if (status === 'Archived' && !window.confirm('Archive this Ingredient? It will no longer be available for new recipe lines. Existing recipe references and costs will remain, using current prices.')) return;
+
+        if (status === 'Active' && state.current && state.current.status === 'Archived' &&
+
+            !window.confirm('Reactivate this Ingredient so it can be selected for new recipe and dish lines?')) return;
+
+        state.busy = true;
+
+        setFieldsDisabled(true);
+
+        updateBusyControls();
+
+        showStatus(status === 'Archived' ? 'Checking Active usage and archiving…' : status === 'Active' && state.current && state.current.status === 'Archived' ? 'Reactivating…' : state.isNew ? 'Creating Ingredient and saving all details…' : 'Saving Ingredient changes…', '');
+
+        KmsStatus.run()
+
+          .withSuccessHandler(function(result) {
+
+            state.busy = false;
+
+            const record = result.record;
+
+            const index = state.records.findIndex(function(item) { return item.id === record.id; });
+            if (record.usageLoaded === false && index >= 0) {
+              const previous = state.records[index];
+              record.activeUses = previous.activeUses;
+              record.otherUses = previous.otherUses;
+              record.usageLoaded = previous.usageLoaded;
+            }
+
+            if (index >= 0) state.records[index] = record;
+
+            else state.records.push(record);
+
+            state.records.sort(function(a, b) { return a.name.localeCompare(b.name) || a.id.localeCompare(b.id); });
+
+            renderRecord(record);
+
+            renderSelector();
+
+            showStatus(result.message || 'Ingredient saved.', 'success');
+
+          })
+
+          .withFailureHandler(function(error) {
+
+            state.busy = false;
+
+            setFieldsDisabled(false);
+
+            updateBusyControls();
+
+            showStatus('Save failed. Your browser edits are still here: ' + (error && error.message ? error.message : String(error)), 'error');
+
+          })
+
+          .kmsSaveIngredientHtmlRecord(getFormPayload(status));
+
+      }
+
+      function startNew() {
+
+        if (state.dirty && !window.confirm('Discard these unsaved Ingredient changes?')) return;
+
+        byId('searchInput').value = '';
+
+        renderSelector();
+
+        byId('ingredientSelect').value = '';
+
+        renderRecord(null);
+
+        showCatalog(false);
+
+        inputs.name.focus();
+
+      }
+
+      function chooseRecord(id) {
+
+        if (!id) return false;
+
+        if (state.dirty && !window.confirm('Discard these unsaved Ingredient changes?')) {
+
+          renderSelector();
+
+          return false;
+
+        }
+
+        const record = state.records.filter(function(item) { return item.id === id; })[0];
+
+        if (record) { renderRecord(record);renderCatalog();return true; }
+        return false;
+
+      }
+
+      function option(select, value, label) {
+        const item = document.createElement('option');
+        item.value = value;
+        item.textContent = label;
+        select.appendChild(item);
+      }
+      function renderAllergenRows() {
+        const container = byId('allergenRows');
+        container.replaceChildren();
+        if (!state.allergens.length) {
+          const empty = document.createElement('p');
+          empty.className = 'allergen-empty small';
+          empty.textContent = 'No allergen lines added.';
+          container.appendChild(empty);
+          return;
+        }
+        state.allergens.forEach(function(line, index) {
+          const row = document.createElement('div');
+          row.className = 'allergen-row';
+          const allergenWrap = document.createElement('div');
+          const allergenLabel = document.createElement('label');
+          allergenLabel.textContent = 'Allergen ' + (index + 1);
+          const allergenSelect = document.createElement('select');
+          option(allergenSelect, '', 'Choose an allergen…');
+          state.allergenOptions.forEach(function(value) { option(allergenSelect, value, value); });
+          allergenSelect.value = line.allergen || '';
+          allergenSelect.disabled = state.busy;
+          allergenSelect.setAttribute('aria-label', 'Allergen ' + (index + 1));
+          allergenSelect.addEventListener('change', function() { line.allergen = allergenSelect.value; state.dirty = true; });
+          allergenWrap.appendChild(allergenLabel);
+          allergenWrap.appendChild(allergenSelect);
+          const statusWrap = document.createElement('div');
+          const statusLabel = document.createElement('label');
+          statusLabel.textContent = 'Information';
+          const statusSelect = document.createElement('select');
+          option(statusSelect, '', 'Choose…');
+          state.allergenStatusOptions.forEach(function(value) { option(statusSelect, value, value); });
+          statusSelect.value = line.status || '';
+          statusSelect.disabled = state.busy;
+          statusSelect.setAttribute('aria-label', 'Allergen information for line ' + (index + 1));
+          statusSelect.addEventListener('change', function() { line.status = statusSelect.value; state.dirty = true; });
+          statusWrap.appendChild(statusLabel);
+          statusWrap.appendChild(statusSelect);
+          const remove = document.createElement('button');
+          remove.type = 'button';
+          remove.className = 'danger';
+          remove.textContent = 'Remove';
+          remove.disabled = state.busy;
+          remove.addEventListener('click', function() {
+            state.allergens.splice(index, 1);
+            state.dirty = true;
+            renderAllergenRows();
+          });
+          row.appendChild(allergenWrap);
+          row.appendChild(statusWrap);
+          row.appendChild(remove);
+          container.appendChild(row);
+        });
+      }
+      byId('addAllergenButton').addEventListener('click', function() {
+        if (state.busy) return;
+        state.allergens.push({allergen:'', status:''});
+        state.dirty = true;
+        renderAllergenRows();
+      });
+      inputs.allergenReview.addEventListener('change', function() { state.dirty = true; });
+
+      [inputs.name, inputs.unit, inputs.packQuantity, inputs.packCost, inputs.usableQuantity, inputs.priceDate, inputs.specification, inputs.allergenReview, inputs.supplier, inputs.supplierItemRef].forEach(function(input) {
+        input.addEventListener('input', function() {
+
+          state.dirty = true;
+
+          renderComputed();
+
+        });
+
+        input.addEventListener('change', function() {
+
+          state.dirty = true;
+
+          renderComputed();
+
+        });
+
+      });
+
+      [inputs.packQuantity, inputs.packCost, inputs.usableQuantity].forEach(function(input) {
+
+        input.addEventListener('change', function() { inputs.priceDate.value = todayIso(); });
+
+      });
+
+      byId('searchInput').addEventListener('input', renderSelector);
+      byId('catalogSupplier').addEventListener('change',renderCatalog);
+      byId('catalogStatus').addEventListener('change',renderCatalog);
+      byId('catalogButton').addEventListener('click',function() { showCatalog(!state.catalogOpen); });
+
+      byId('ingredientSelect').addEventListener('change', function() { chooseRecord(this.value); });
+
+      byId('newButton').addEventListener('click', startNew);
+
+      byId('reloadButton').addEventListener('click', function() {
+
+        if (state.dirty && !window.confirm('Reload from Sheets and discard unsaved browser edits?')) return;
+
+        loadRecords(state.current && state.current.id);
+
+      });
+
+      byId('saveButton').addEventListener('click', function() { save(); });
+
+      byId('archiveButton').addEventListener('click', function() { save('Archived'); });
+
+      byId('reactivateButton').addEventListener('click', function() { save('Active'); });
+
+      byId('closeButton').addEventListener('click', function() {
+
+        if (state.busy) return;
+
+        if(window.KmsWebPage)return google.script.host.close();
+        if (state.dirty && !window.confirm('Discard unsaved Ingredient changes and close?')) return;
+
+        if(window.KmsRecovery)KmsRecovery.discardCurrent();google.script.host.close();
+
+      });
+
+      renderRecord(null);
+
+      if(window.KmsRecovery)KmsRecovery.register({ready:()=>!!state.recoveryReady,label:()=> 'ingredient '+(inputs.name.value||'(new ingredient)'),
+        capture:()=>({current:state.current,isNew:state.isNew,allergens:state.allergens,fields:KmsRecovery.fields(Object.values(inputs).map(input=>input.id))}),
+        restore:copy=>{renderRecord(copy.current);state.isNew=copy.isNew;state.allergens=copy.allergens;KmsRecovery.applyFields(copy.fields);state.dirty=true;showCatalog(false);renderAllergenRows();renderComputed();updateBusyControls();}
+      });
+      loadRecords('');
+
+    })();
+
+  </script>
+
+</body>
+
+</html>
