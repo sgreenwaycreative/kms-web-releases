@@ -19,13 +19,15 @@ const FOLDER_FILE = /^(index\.html|manifest\.json|screens\/[A-Za-z][A-Za-z0-9]{0
 const VENDOR_PINS = Object.freeze({'vendor/heic-to.js': 'c189220a7a1e87559758a48ab4700e55629fb23a4cb57489e1e8970be1b9d018'});
 const ROOT_FILES = ['public/404.html', 'public/_headers', 'public/index.html', 'public/policy.json'];
 // No pull request may change these. Changing the check or the hosting settings
-// is a deliberate owner act outside the ruleset, recorded in the LOG.
-const LOCKED = path => path.startsWith('.github/') || path === 'wrangler.jsonc';
+// (wrangler.jsonc and the Worker, A5) is a deliberate owner act outside the
+// ruleset, recorded in the LOG.
+const LOCKED = path => path.startsWith('.github/') || path === 'wrangler.jsonc' || path === 'worker.js';
 const WITHDRAWN_CODES = ['defect', 'security'];
 // The approved public/_headers (D8, A1), byte for byte: the security policy on
-// every path, the root and policy revalidated, version folders immutable. Any
-// other text fails, so a change to the policy is a change to this check, which
-// is an owner act. tools/build-web.cjs writes the same text (tested).
+// every path, the root and policy revalidated. Version folders get their cache
+// rule from worker.js, by response status (A5). Any other text fails, so a
+// change to the policy is a change to this check, which is an owner act.
+// tools/build-web.cjs writes the same text (tested).
 const HEADERS = [
   '/*',
   "  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; frame-src 'self' https://accounts.google.com/gsi/; img-src 'self' data: blob:; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'self'",
@@ -34,8 +36,7 @@ const HEADERS = [
   '/', '  Cache-Control: no-cache',
   '/index.html', '  Cache-Control: no-cache',
   '/404.html', '  Cache-Control: no-cache',
-  '/policy.json', '  Cache-Control: no-store',
-  '/ui/*', '  Cache-Control: public, max-age=31536000, immutable'
+  '/policy.json', '  Cache-Control: no-store'
 ].join('\n') + '\n';
 const MANIFEST_KEYS = ['schema', 'version', 'release', 'source', 'screens', 'files', 'hash'];
 const ENTRY_KEYS = ['version', 'release', 'source', 'tree', 'hash'];
@@ -131,7 +132,7 @@ function checkState(snap, extraScan) {
     if (folder) { if (!VERSION_PATTERN.test(folder[1]) || !FOLDER_FILE.test(folder[2])) errors.push(path + ' is not an allowed release file.'); }
     else if (!LOCKED(path) && path !== 'registry.json' && !ROOT_FILES.includes(path)) errors.push(path + ' is not an allowed file in the release repository.');
   });
-  ROOT_FILES.concat(['registry.json', 'wrangler.jsonc', '.github/release-check/check.cjs', '.github/workflows/release-check.yml']).forEach(path => {
+  ROOT_FILES.concat(['registry.json', 'wrangler.jsonc', 'worker.js', '.github/release-check/check.cjs', '.github/workflows/release-check.yml']).forEach(path => {
     if (!snap.files[path]) errors.push(path + ' is missing.');
   });
   if (errors.length) return {errors, registry: null};

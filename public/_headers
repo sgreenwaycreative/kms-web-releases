@@ -10,5 +10,3 @@
   Cache-Control: no-cache
 /policy.json
   Cache-Control: no-store
-/ui/*
-  Cache-Control: public, max-age=31536000, immutable
