@@ -55,10 +55,11 @@
   (function() {
     'use strict';
     // The published versions, built in by tools/build-web.cjs: [{version, release}].
-    const PUBLISHED = [{"version":"0.9.0-step6.5","release":1},{"version":"0.9.0-step6.6","release":2}];
+    const PUBLISHED = [{"version":"0.9.0-step6.5","release":1},{"version":"0.9.0-step6.6","release":2},{"version":"0.9.0-step6.7","release":3}];
     // A version becomes a path only if it has this form (6B D1).
     const VERSION_PATTERN = /^\d+\.\d+\.\d+(-[a-z0-9.]{1,24})?$/;
     const linkPattern = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+    const addressEnd = url => (/\/s\/([A-Za-z0-9_-]+)\/exec$/.exec(url) || ['', ''])[1].slice(-7);
     // Browser storage shared by every published version (6B D6). Fields may be
     // added, never removed or redefined.
     const DEVICE = 'KMS_WEB_DEVICE', TAB = 'KMS_WEB_TAB', HELLO = 'KMS_WEB_HELLO', SESSION = 'KMS_WEB_SESSION', NAMES = 'KMS_WEB_NAMES', MAX_CONNECTIONS = 10;
@@ -131,9 +132,15 @@
         const response = await fetch(url, {method: 'POST', credentials: 'omit', redirect: 'follow', signal: controller.signal,
           headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({api: 1, call: 'hello'})});
         if (!response.ok) throw new Error('KMS did not answer properly (' + response.status + ').');
-        try { return await response.json(); } catch (error) { throw new Error('KMS sent an answer this page could not read. The owner may need to approve the script again.'); }
+        // A time-out or lost connection while the answer arrives keeps its own wording (Astra).
+        try { return await response.json(); } catch (error) {
+          if (error && (error.name === 'AbortError' || error.name === 'TypeError')) throw error;
+          throw new Error('KMS sent an answer this page could not read. The owner may need to approve the script again.');
+        }
       } catch (error) {
         if (error.name === 'AbortError') throw new Error('KMS took too long to answer. Check the connection.');
+        // The browser's own network error ("Failed to fetch") means nothing to staff (6C.1 B4).
+        if (error && error.name === 'TypeError') throw new Error('No answer came back. Check the link and the internet connection.');
         throw error;
       } finally { clearTimeout(timer); }
     }
@@ -220,9 +227,12 @@
         const known = device().connections.find(c => c && c.url === url);
         const name = answer.value && typeof answer.value.name === 'string' ? answer.value.name : '';
         if (current && current.url !== url) {
-          const asked = await ask('Connect this device to ' + (name || 'another KMS') + '?', 'This device is connected to ' + (current.name || 'another KMS') +
-            '. Connecting it to ' + (name || 'the new one') + ' signs this tab out. Unsaved entries stay on this device for the person who made them and are never shown at the other restaurant.',
-            'Connect to ' + (name || 'it'), 'Stay on ' + (current.name || 'the current KMS'));
+          // Two KMS with the same name (a restored copy) are told apart by the end of each address (6C.1 B5).
+          const same = (current.name || '') === name, mark = u => same ? ' (address …' + addressEnd(u) + ')' : '';
+          const there = (name || 'another KMS') + mark(url), here = (current.name || 'another KMS') + mark(current.url);
+          const asked = await ask('Connect this device to ' + there + '?', 'This device is connected to ' + here +
+            '. Connecting it to ' + (name ? there : 'the new one' + mark(url)) + ' signs this tab out. Unsaved entries stay on this device for the person who made them and are never shown at the other restaurant.',
+            'Connect to ' + (name ? there : 'it' + mark(url)), 'Stay on ' + (current.name ? here : 'the current KMS' + mark(current.url)));
           if (!asked) { if (setTab(current) && tabRecord()) open(tabRecord(), retry); else stop(BLOCKED); return; }
         }
         const connection = Object.assign({id: known ? known.id : randomId(), url: url, name: name, at: Date.now()},
