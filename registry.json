@@ -7,6 +7,13 @@
    "source": "d98dfe5c604d21440afba7b155e62f6909772d38",
    "tree": "6c59f2c5c642e1ab1ee23f54d0ae318ad2aacddc",
    "hash": "61259cb18138e183648588e9578932a4cf1b11e4db393917ff1a4060f3ba6574"
+  },
+  {
+   "version": "0.9.0-step6.6",
+   "release": 2,
+   "source": "06f29bee8b50c3265da765078c0c6041a0610ac5",
+   "tree": "d2ee64dc5e1e883166ece9c80e6dd8609fbf5bc8",
+   "hash": "2072fb93258137ef9b99dcb6ac1d4893845f92598536f7ef161bd619c3012c67"
   }
  ]
 }

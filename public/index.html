@@ -35,6 +35,11 @@
       <p style="margin-top:16px"><button id="connectButton" type="button">Connect</button></p>
       <p id="connectError" class="error" role="alert"></p>
     </section>
+    <section id="question" class="card" hidden>
+      <h1 id="questionTitle"></h1>
+      <p id="questionText"></p>
+      <p style="margin-top:16px"><button id="questionYes" type="button"></button> <button id="questionNo" class="secondary" type="button"></button></p>
+    </section>
     <section id="message" class="card" hidden>
       <h1 id="messageTitle">KMS cannot open</h1>
       <p id="messageText" role="alert"></p>
@@ -50,20 +55,32 @@
   (function() {
     'use strict';
     // The published versions, built in by tools/build-web.cjs: [{version, release}].
-    const PUBLISHED = [{"version":"0.9.0-step6.5","release":1}];
+    const PUBLISHED = [{"version":"0.9.0-step6.5","release":1},{"version":"0.9.0-step6.6","release":2}];
     // A version becomes a path only if it has this form (6B D1).
     const VERSION_PATTERN = /^\d+\.\d+\.\d+(-[a-z0-9.]{1,24})?$/;
     const linkPattern = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
     // Browser storage shared by every published version (6B D6). Fields may be
     // added, never removed or redefined.
-    const DEVICE = 'KMS_WEB_DEVICE', TAB = 'KMS_WEB_TAB', HELLO = 'KMS_WEB_HELLO', MAX_CONNECTIONS = 10;
+    const DEVICE = 'KMS_WEB_DEVICE', TAB = 'KMS_WEB_TAB', HELLO = 'KMS_WEB_HELLO', SESSION = 'KMS_WEB_SESSION', NAMES = 'KMS_WEB_NAMES', MAX_CONNECTIONS = 10;
+    // The public identity in hello format 2 (6C): opaque, never a workbook or script ID.
+    const PUBLIC_ID = /^[A-Za-z0-9_-]{22}$/;
     const $ = id => document.getElementById(id);
     const NOT_READY = 'KMS has been updated but its web page is not ready yet. Try again in a few minutes; if this continues, tell the owner.';
     const OLDER = 'This restaurant\'s KMS is older than this web page. The owner needs to update it.';
     const UNREADABLE = 'KMS answered with a version this web page cannot use. Nothing was opened. Tell the owner.';
     const BLOCKED = 'This browser is blocking the storage KMS needs. Allow this site to store data (or leave private browsing), then try again.';
 
-    function view(id) { ['opening', 'connect', 'message'].forEach(name => { $(name).hidden = name !== id; }); }
+    function view(id) { ['opening', 'connect', 'question', 'message'].forEach(name => { $(name).hidden = name !== id; }); }
+    // A choice on the page; resolves true for the first button.
+    function ask(title, text, yes, no) {
+      return new Promise(resolve => {
+        $('questionTitle').textContent = title; $('questionText').textContent = text;
+        $('questionYes').textContent = yes; $('questionNo').textContent = no;
+        $('questionYes').onclick = () => { view('opening'); resolve(true); };
+        $('questionNo').onclick = () => { view('opening'); resolve(false); };
+        view('question'); $('questionNo').focus();
+      });
+    }
     function stop(text, options) {
       options = options || {};
       $('messageTitle').textContent = options.title || 'KMS cannot open';
@@ -89,6 +106,23 @@
     function setTab(connection) {
       return keep(sessionStorage, TAB, {schema: 1, id: connection.id, url: connection.url, name: connection.name || ''});
     }
+    function lastConnection() {
+      const record = device();
+      return record.connections.find(c => c && c.id === record.last && linkPattern.test(c.url)) || null;
+    }
+    // hello format 2's public identity, or {} from an older KMS.
+    function identity(value) {
+      return value && value.hello >= 2 && PUBLIC_ID.test(value.business) && PUBLIC_ID.test(value.installation) ? {business: value.business, installation: value.installation} : {};
+    }
+    // Remembers a restaurant on this device (at most 10) and makes it the one a
+    // new tab opens. replaces: a connection this one takes over (a moved KMS).
+    function remember(connection, replaces) {
+      const record = device();
+      record.connections = [connection].concat(record.connections.filter(c => c && c.url !== connection.url && c.id !== connection.id && c.id !== replaces)).slice(0, MAX_CONNECTIONS);
+      record.last = connection.id;
+      return keep(localStorage, DEVICE, record);
+    }
+    const NOT_REMEMBERED = 'This browser would not let KMS remember the new restaurant on this device, so nothing changed. Allow this site to store data (or leave private browsing), then try again.';
 
     // hello format 1 (6B D3): no token, no page version.
     async function hello(url) {
@@ -128,6 +162,7 @@
       const version = answer.serverVersion, release = value.release;
       if (typeof version !== 'string' || !VERSION_PATTERN.test(version) || !Number.isSafeInteger(release) || release < 1) { stop(UNREADABLE, {other: true}); return; }
       if (typeof value.name === 'string' && value.name) { $('restaurant').textContent = value.name; }
+      if (!retry && await moved(tab, answer)) return;
       const rules = await policy(), withdrawn = !!(rules && Object.prototype.hasOwnProperty.call(rules.withdrawn, version));
       const listed = PUBLISHED.find(entry => entry.version === version && entry.release === release);
       if (listed && !withdrawn) {
@@ -140,6 +175,30 @@
       stop(!withdrawn && release > newest ? NOT_READY : OLDER, {other: true});
     }
 
+    // KMS has moved (6C): this address names another one. The device checks the
+    // new address itself and asks first; it never follows silently, and no
+    // sign-in is carried over. Resolves true when the new address took over.
+    async function moved(tab, answer) {
+      const value = answer.value, target = value.forward, own = identity(value);
+      if (!own.business || typeof target !== 'string' || target === tab.url || !linkPattern.test(target)) return false;
+      const known = device().connections.find(c => c && c.id === tab.id);
+      if (known && known.business && known.business !== own.business) return false;
+      let other;
+      try { other = await hello(target); } catch (error) { return false; }
+      const next = other && other.ok ? other.value : null, theirs = identity(next);
+      // Same business, not a test copy, and not forwarding somewhere else again.
+      if (!next || theirs.business !== own.business || next.test !== false || next.forward && next.forward !== target) return false;
+      const name = typeof next.name === 'string' && next.name ? next.name : tab.name || 'This restaurant';
+      if (!await ask('KMS has moved', name + ' now uses a new KMS address. Use it on this device? Everyone signs in again there.', 'Use the new address', 'Not now')) return false;
+      const connection = Object.assign({id: randomId(), url: target, name: next.name || '', at: Date.now()}, theirs);
+      if (!remember(connection, tab.id)) { stop(NOT_REMEMBERED); return true; }
+      try { const names = localStorage.getItem(NAMES + ':' + tab.id); if (names) localStorage.setItem(NAMES + ':' + connection.id, names); } catch (error) {}
+      try { sessionStorage.removeItem(SESSION); } catch (error) {}
+      if (!setTab(connection) || !tabRecord()) { stop(BLOCKED); return true; }
+      await choose(tabRecord(), other, false);
+      return true;
+    }
+
     async function open(tab, retry) {
       view('opening'); $('restaurant').textContent = tab.name || '';
       let answer;
@@ -147,8 +206,10 @@
       await choose(tab, answer, retry);
     }
 
-    // Connecting from this tab sets this tab's restaurant and the one a new tab opens.
-    async function connect(url, retry) {
+    // Connecting from this tab sets this tab's restaurant and the one a new tab
+    // opens. current: the restaurant a connect link would replace (6C), asked
+    // about first; its sign-in on this tab is dropped, never sent anywhere.
+    async function connect(url, retry, current) {
       $('connectError').textContent = '';
       if (!linkPattern.test(url)) { view('connect'); $('connectError').textContent = 'That is not a KMS link. It starts with https://script.google.com/macros/s/ and ends with /exec.'; return; }
       $('connectButton').disabled = true;
@@ -156,12 +217,26 @@
         let answer;
         try { answer = await hello(url); } catch (error) { view('connect'); $('connectError').textContent = 'KMS could not be reached with that link: ' + error.message; return; }
         if (!answer.ok) { view('connect'); $('connectError').textContent = 'KMS could not be reached with that link: ' + (answer.error && answer.error.message || 'no answer'); return; }
-        const record = device(), known = record.connections.find(c => c && c.url === url);
+        const known = device().connections.find(c => c && c.url === url);
         const name = answer.value && typeof answer.value.name === 'string' ? answer.value.name : '';
-        const connection = {id: known ? known.id : randomId(), url: url, name: name, at: Date.now()};
-        record.connections = [connection].concat(record.connections.filter(c => c && c.url !== url)).slice(0, MAX_CONNECTIONS);
-        record.last = connection.id;
-        keep(localStorage, DEVICE, record);
+        if (current && current.url !== url) {
+          const asked = await ask('Connect this device to ' + (name || 'another KMS') + '?', 'This device is connected to ' + (current.name || 'another KMS') +
+            '. Connecting it to ' + (name || 'the new one') + ' signs this tab out. Unsaved entries stay on this device for the person who made them and are never shown at the other restaurant.',
+            'Connect to ' + (name || 'it'), 'Stay on ' + (current.name || 'the current KMS'));
+          if (!asked) { if (setTab(current) && tabRecord()) open(tabRecord(), retry); else stop(BLOCKED); return; }
+        }
+        const connection = Object.assign({id: known ? known.id : randomId(), url: url, name: name, at: Date.now()},
+          known && known.business ? {business: known.business, installation: known.installation} : {}, identity(answer.value));
+        // Remembered first: a move off another restaurant that the device record
+        // cannot hold changes nothing (new tabs would still open the old one).
+        const moving = !!(current && current.url !== url);
+        if (!remember(connection)) {
+          if (moving) { stop(NOT_REMEMBERED); return; }
+          // A first connection: nothing older to keep, so this tab may go on alone.
+          if (!await ask('Only this tab will be connected', 'This browser would not let KMS remember ' + (name || 'this KMS') + ' on this device, so a new tab will ask for the KMS link again. You can still use KMS in this tab.',
+            'Continue in this tab', 'Not now')) { view('connect'); return; }
+        }
+        if (moving) { try { sessionStorage.removeItem(SESSION); } catch (error) {} }
         if (!setTab(connection) || !tabRecord()) { stop(BLOCKED); return; }
         view('opening');
         await choose(tabRecord(), answer, retry);
@@ -176,17 +251,18 @@
       // back to the device's last restaurant (6B A2).
       if (!keep(sessionStorage, 'KMS_WEB_PROBE', 1)) { stop(BLOCKED); return; }
       try { sessionStorage.removeItem('KMS_WEB_PROBE'); } catch (error) {}
-      if (link) { connect(link, retry); return; }
+      if (link) { connect(link, retry, tabRecord() || lastConnection()); return; }
       let tab = tabRecord();
       if (!tab) {
-        const record = device(), last = record.connections.find(c => c && c.id === record.last && linkPattern.test(c.url));
+        const last = lastConnection();
         if (!last) { view('connect'); return; }
         if (!setTab(last) || !(tab = tabRecord())) { stop(BLOCKED); return; }
       }
       open(tab, retry);
     }
 
-    $('connectButton').addEventListener('click', () => connect($('connectUrl').value.trim()));
+    // Typing a link moves the device off its restaurant just as a connect link does.
+    $('connectButton').addEventListener('click', () => connect($('connectUrl').value.trim(), false, tabRecord() || lastConnection()));
     $('retryButton').addEventListener('click', start);
     $('otherButton').addEventListener('click', () => { $('connectUrl').value = ''; view('connect'); });
     start();
