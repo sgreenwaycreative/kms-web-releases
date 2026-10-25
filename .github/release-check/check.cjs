@@ -16,7 +16,8 @@ const VERSION_PATTERN = /^\d+\.\d+\.\d+(-[a-z0-9.]{1,24})?$/;
 // Files in a version folder: the page, its manifest, screens and pinned vendor files.
 const FOLDER_FILE = /^(index\.html|manifest\.json|screens\/[A-Za-z][A-Za-z0-9]{0,63}\.html|vendor\/[a-z0-9][a-z0-9.-]{0,63}\.js)$/;
 // Vendored files are checked by their exact hash instead of the content scan.
-const VENDOR_PINS = Object.freeze({'vendor/heic-to.js': 'c189220a7a1e87559758a48ab4700e55629fb23a4cb57489e1e8970be1b9d018'});
+const VENDOR_PINS = Object.freeze({'vendor/heic-to.js': 'c189220a7a1e87559758a48ab4700e55629fb23a4cb57489e1e8970be1b9d018',
+  'vendor/qrcode.js': '79ec86f82856005b1c887905cfccfcfbec3821ca61c7fd5a952faa5f778f791c'});
 const ROOT_FILES = ['public/404.html', 'public/_headers', 'public/index.html', 'public/policy.json'];
 // No pull request may change these. Changing the check or the hosting settings
 // (wrangler.jsonc and the Worker, A5) is a deliberate owner act outside the
