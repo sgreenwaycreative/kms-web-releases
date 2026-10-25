@@ -1,0 +1,854 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KMS</title>
+  <style>
+    :root { font-family:Arial,Helvetica,sans-serif; color:#213342; background:#f4f7f8; }
+    * { box-sizing:border-box; }
+    html,body { margin:0; height:100%; }
+    body { display:flex; flex-direction:column; font-size:15px; }
+    button,input { font:inherit; }
+    button { border:0; border-radius:7px; padding:11px 16px; background:#146d70; color:#fff; font-weight:700; cursor:pointer; }
+    button:hover:not(:disabled) { background:#0d5456; }
+    button:disabled { opacity:.5; cursor:not-allowed; }
+    button.secondary { background:#e8f0f1; color:#18545a; }
+    input { width:100%; border:1px solid #bdcbd0; border-radius:6px; background:#fff; padding:11px; }
+    label { display:block; font-weight:700; font-size:13px; margin:12px 0 6px; color:#3d5965; }
+    header { display:flex; align-items:center; gap:12px; padding:10px 18px; background:#fff; border-bottom:1px solid #d4e0e3; }
+    header strong { font-size:18px; }
+    #who { margin-left:auto; color:#46606b; }
+    main { flex:1; min-height:0; position:relative; }
+    .card { max-width:420px; margin:48px auto; background:#fff; border:1px solid #d8e2e5; border-radius:10px; padding:24px; }
+    .card h1 { font-size:22px; margin:0 0 6px; }
+    .muted { color:#607782; }
+    .error { color:#9a3d33; min-height:20px; margin:12px 0 0; }
+    .names { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    .names button { padding:6px 10px; }
+    .card.wide { max-width:760px; margin:28px auto; }
+    .groups { margin-top:6px; }
+    .group h2 { font-size:14px; text-transform:uppercase; letter-spacing:.04em; color:#607782; margin:20px 0 8px; }
+    .tiles { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); }
+    .tiles button { text-align:left; padding:16px; font-size:16px; }
+    #homePause { background:#fff3d9; color:#765520; border:1px solid #e2c98d; border-radius:8px; padding:10px; margin:12px 0 0; }
+    #screen { position:absolute; inset:0; width:100%; height:100%; border:0; background:#f4f7f8; }
+    #notice { padding:10px 18px; background:#fbe4e1; color:#7d2e25; border-bottom:1px solid #e0a9a1; font-weight:700; }
+    #banner { padding:10px 18px; background:#fff3d9; color:#765520; border-bottom:1px solid #e2c98d; display:flex; gap:12px; align-items:center; flex-wrap:wrap; }
+    #overlay { position:absolute; inset:0; background:#213342aa; display:flex; align-items:flex-start; justify-content:center; z-index:5; }
+    #dialog { position:fixed; inset:0; background:#213342aa; display:flex; align-items:flex-start; justify-content:center; z-index:10; }
+    #dialog button.danger { background:#9a3d33; }
+    [hidden] { display:none!important; }
+    @media print { header,#banner,#overlay,#dialog { display:none!important; } main { position:static; } #screen { position:static; height:auto; } }
+  </style>
+</head>
+<body>
+  <header><strong>KMS</strong><span id="restaurant" class="muted"></span><span id="who"></span><button id="homeButton" class="secondary" type="button" hidden>Home</button><button id="signOutButton" class="secondary" type="button" hidden>Sign out</button></header>
+  <div id="notice" role="alert" hidden><span id="noticeText"></span></div>
+  <div id="banner" role="status" hidden><span id="bannerText"></span><button id="bannerAction" type="button" hidden></button></div>
+  <main>
+    <section id="stopped" class="card" hidden>
+      <h1>KMS cannot open</h1>
+      <p id="stoppedText" role="alert"></p>
+    </section>
+    <section id="signIn" class="card" hidden>
+      <h1 id="signInTitle">Sign in</h1>
+      <p id="signInNote" class="muted">Use your name and 6-digit PIN.</p>
+      <div id="pauseBox" role="status" hidden><p id="pauseLine"></p><button id="pauseCheck" class="secondary" type="button">Check again</button></div>
+      <form id="signInForm">
+        <label for="staffName">Name</label><input id="staffName" autocomplete="off" spellcheck="false" maxlength="60">
+        <div id="recentNames" class="names"></div>
+        <label for="staffPin">PIN</label><input id="staffPin" type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="\d{6}">
+        <p style="margin-top:18px"><button id="signInButton" type="submit">Sign in</button></p>
+      </form>
+      <button id="maintenanceSignIn" class="secondary" type="button" hidden>Owner: sign in for maintenance</button>
+      <button id="ordinarySignIn" class="secondary" type="button" hidden>Back to ordinary sign-in</button>
+      <p id="signInError" class="error" role="alert"></p>
+    </section>
+    <section id="home" class="card wide" hidden>
+      <h1 id="homeTitle">KMS</h1>
+      <p id="homeWho" class="muted"></p>
+      <p id="homePause" role="status" hidden></p>
+      <div id="tiles" class="groups"></div>
+      <p style="margin-top:22px"><button id="homeSignOut" class="secondary" type="button">Sign out</button></p>
+    </section>
+    <section id="ownerCheck" class="card" hidden>
+      <h1>Confirm it is you</h1>
+      <p id="ownerCheckNote" class="muted">Owner screens need a Google sign-in by the account that owns this KMS workbook.</p>
+      <div id="ownerLink" hidden>
+        <label for="ownerLinkCode">Linking code</label><input id="ownerLinkCode" autocomplete="off" spellcheck="false" maxlength="20" placeholder="XXXX-XXXX-XXXX">
+        <p class="muted">First time only. In the workbook choose KMS &gt; Maintenance &gt; Link owner Google account. The code works once and lasts 10 minutes. Enter it, then continue with Google.</p>
+      </div>
+      <div id="ownerGoogle" style="margin-top:16px;min-height:44px"></div>
+      <p style="margin-top:16px"><button id="ownerConfirm" type="button" hidden>Link and confirm</button> <button id="ownerRetry" type="button" hidden>Try again</button> <button id="ownerCancel" class="secondary" type="button">Cancel</button></p>
+      <p id="ownerError" class="error" role="alert"></p>
+    </section>
+    <iframe id="screen" title="KMS screen" hidden></iframe>
+    <div id="overlay" hidden></div>
+  </main>
+  <div id="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" hidden>
+    <section class="card"><h1 id="dialogTitle"></h1><p id="dialogText"></p>
+      <p style="margin-top:16px"><button id="dialogKeep" type="button"></button> <button id="dialogDiscard" class="danger" type="button"></button></p></section>
+  </div>
+  <script>
+  // The KMS web page shell for one published version (6B D1). The root page
+  // chose this tab's restaurant and this folder; the shell keeps the sign-in
+  // for this browser tab only and sends every call to that restaurant's own
+  // script. Screens run in the frame below and reach the shell through
+  // window.KmsWeb.
+  (function() {
+    'use strict';
+    const APP_VERSION = '0.9.0-step6.6', APP_RELEASE = Number('2');
+    // The screens in this release, with the lowest role that may use each
+    // (tools/build-web.cjs). Tiles are a comfort only: the server decides.
+    const SCREENS = [{"name":"InvoiceEntry","label":"Input invoice","role":"Chef","group":"Daily"},{"name":"StockCount","label":"Stock count","role":"Chef","group":"Daily"},{"name":"OrderSheet","label":"Weekly order sheet","role":"Chef","group":"Daily"},{"name":"ConsoleDisplay","label":"Recipe console","role":"Chef","group":"Recipes"},{"name":"PrepEditor","label":"Record editor","role":"Chef","group":"Recipes"},{"name":"AllergenMatrix","label":"Allergen matrix","role":"Chef","group":"Recipes"},{"name":"IngredientManager","label":"Ingredients","role":"Chef","group":"Records"},{"name":"SupplierManager","label":"Suppliers","role":"Chef","group":"Records"},{"name":"WeeklyReport","label":"Weekly sales and GP","role":"Manager","group":"Manager"},{"name":"MenuPricing","label":"Menu pricing","role":"Manager","group":"Manager"},{"name":"CostReview","label":"Cost review","role":"Manager","group":"Manager"},{"name":"AllergenReview","label":"Allergen review","role":"Manager","group":"Manager"},{"name":"Settings","label":"Settings, backup and save recovery","role":"Owner","group":"Owner","maintenance":true},{"name":"OwnerStaff","label":"Staff","role":"Owner","group":"Owner"},{"name":"OwnerDevices","label":"Connect a device and KMS address","role":"Owner","group":"Owner","maintenance":true}], ROLES = ['Chef', 'Manager', 'Owner'];
+    // Browser storage shared by every published version (6B D6).
+    const TAB = 'KMS_WEB_TAB', SESSION = 'KMS_WEB_SESSION', NAMES = 'KMS_WEB_NAMES', HELLO = 'KMS_WEB_HELLO';
+    const linkPattern = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+    const $ = id => document.getElementById(id);
+    let currentScreen = '';
+    let acceptedPause = null, pauseTimer = null, maintenanceMode = false, maintenanceTimer = null;
+    // Each hello or pauseStatus request is numbered; only an answer to a request
+    // newer than the one last applied is used, so a late answer never wins.
+    let pauseAsked = 0, pauseApplied = 0;
+
+    // Keep this wording identical to kmsBackupPauseLine_ in BackupService.js.
+    function pauseLine(v) {
+      if(v.paused===null)return 'KMS cannot confirm whether it is paused for a backup or restore. Try again shortly.';
+      if(v.state==='moved')return 'KMS has moved to a restored copy. Ask the owner for the new link.';
+      if(v.state==='waiting')return v.kind==='Restore'?v.stage+'.':'A backup stopped and KMS is paused until the owner checks it. Last update '+v.updated+'.';
+      return (v.kind==='Restore'?'Restore':'Backup')+' in progress since '+v.since+'. KMS is paused. Last update '+v.updated+'.';
+    }
+    // An answer is refused only when it is provably older: a lower revision, or
+    // (with a revision unknown) an earlier update time when both times are known.
+    // An unknown answer to a newer request is accepted, so a pause that has ended
+    // is never kept on screen because the status record disagrees (Astra, 60a5e12).
+    function acceptPause(next, asked) {
+      if (!next || ![true, false, null].includes(next.paused)) return;
+      if (asked <= pauseApplied) return;
+      const old = acceptedPause;
+      if (old) {
+        if (typeof old.revision === 'number' && typeof next.revision === 'number') {
+          if (next.revision < old.revision) return;
+        } else {
+          const at = Date.parse(next.updatedAt || ''), before = Date.parse(old.updatedAt || '');
+          if (Number.isFinite(at) && Number.isFinite(before) && at < before) return;
+        }
+      }
+      pauseApplied = asked; acceptedPause = next; renderPause();
+    }
+    function renderPause() {
+      const paused = acceptedPause && acceptedPause.paused !== false;
+      $('pauseBox').hidden = !paused;
+      $('pauseLine').textContent = paused ? pauseLine(acceptedPause) : '';
+      $('maintenanceSignIn').hidden = !acceptedPause || acceptedPause.paused !== true || maintenanceMode;
+      // The launcher shows the last pause KMS reported, without asking again.
+      $('homePause').hidden = !paused; $('homePause').textContent = paused ? pauseLine(acceptedPause) : '';
+      clearTimeout(pauseTimer);
+      // While the sign-in form shows, so a backup that starts later is noticed.
+      if (!$('signIn').hidden) pauseTimer = setTimeout(refreshPause, 30000);
+    }
+    async function refreshPause() {
+      const asked = ++pauseAsked;
+      try { const answer = await send({call: 'pauseStatus'}); if (answer.ok) acceptPause(answer.value, asked); } catch (error) {}
+      renderPause();
+    }
+    // The root's hello answer, if it is this tab's and under 30 seconds old (6B D2).
+    function handedOver() {
+      const record = load(sessionStorage, HELLO), tab = connection();
+      keep(sessionStorage, HELLO, null);
+      return record && tab && record.id === tab.id && Date.now() - record.at >= 0 && Date.now() - record.at < 30000 &&
+        record.answer && record.answer.ok && record.answer.serverVersion === APP_VERSION ? record.answer : null;
+    }
+    async function helloPause() {
+      const asked = ++pauseAsked;
+      try { const answer = handedOver() || await send({call: 'hello'}); if (answer.ok) { acceptPause(answer.value.pause, asked); forwarded(answer.value); } } catch (error) {}
+    }
+    // KMS has moved (6C): the owner set a new address. The root page checks it
+    // and asks before using it, so this page only offers to go back there.
+    function forwarded(value) {
+      const tab = connection();
+      if (!tab || !value || typeof value.forward !== 'string' || !linkPattern.test(value.forward) || value.forward === tab.url) return;
+      banner('KMS has moved to a new address. Reload KMS to check it and carry on there.', 'Reload KMS', async function() {
+        if (!await leave('reload KMS')) return;
+        closeScreen(); location.assign('/');
+      });
+    }
+    function signInMode(maintenance) {
+      maintenanceMode = maintenance;
+      $('signInTitle').textContent = maintenance ? 'Maintenance sign-in' : 'Sign in';
+      $('signInNote').textContent = maintenance ? 'Owner only. Name and Owner PIN, then a Google sign-in.' : 'Use your name and 6-digit PIN.';
+      $('ordinarySignIn').hidden = !maintenance; renderPause();
+    }
+    function maintenanceClock() {
+      clearTimeout(maintenanceTimer);
+      const current = session();
+      if (!current || !current.maintenance) return;
+      const left = current.endsAt - Date.now();
+      if (left <= 0) { sessionEnded('Maintenance sign-in ended after 15 minutes. Sign in again if needed.'); return; }
+      maintenanceTimer = setTimeout(maintenanceClock, left);
+    }
+
+    function load(storage, key) { try { return JSON.parse(storage.getItem(key) || 'null'); } catch (error) { return null; } }
+    // Writes (or removes) and reads back; false if the browser refused or changed it.
+    function keep(storage, key, value) {
+      try { if (value === null) { storage.removeItem(key); return storage.getItem(key) === null; } const text = JSON.stringify(value); storage.setItem(key, text); return storage.getItem(key) === text; } catch (error) { return false; }
+    }
+    // This tab's restaurant, set by the root page.
+    const connection = () => { const tab = load(sessionStorage, TAB); return tab && tab.schema === 1 && typeof tab.id === 'string' && linkPattern.test(tab.url) ? tab : null; };
+    // A sign-in belongs to the restaurant it was issued for (6B D6). Any other
+    // is dropped, so its token is never sent to this tab's restaurant.
+    const session = () => {
+      const current = load(sessionStorage, SESSION), tab = connection();
+      if (current && (!tab || current.connection !== tab.id)) { keep(sessionStorage, SESSION, null); return null; }
+      return current;
+    };
+    // The tab's epoch rises on every sign-in, sign-out and switch (6B A2). Each
+    // request freezes its restaurant, link, token and epoch when it is sent, and
+    // an answer from an older epoch or another restaurant is never applied.
+    let epoch = 0;
+    const isCurrent = frozen => frozen.epoch === epoch && (connection() || {}).id === frozen.id;
+    function freeze() {
+      const tab = connection(), current = session();
+      return tab ? {id: tab.id, url: tab.url, token: current && current.token || '', maintenance: !!(current && current.maintenance), epoch: epoch} : null;
+    }
+
+    // The withdrawn list (6B A1, A8). This check is advisory: the server's
+    // exact-version check is the real boundary. It is read before any sign-in
+    // or request carrying a token, every 10 minutes and whenever the tab
+    // becomes visible. A withdrawn page never reloads or navigates by itself.
+    const POLICY_EVERY = 600000, POLICY_FRESH = 900000, WRITES = ['save', 'ownerWrite', 'ownerApprove'];
+    const WITHDRAWN = 'This version of the KMS page has been withdrawn. Your entries are kept on this device. The owner needs to update KMS.';
+    const UNCHECKED = 'An earlier save\'s outcome could not be checked from this page. It is kept on this device and will be checked after KMS is updated.';
+    const POLICY_WAIT = 'KMS cannot check its web page right now. Saving waits until it can.';
+    let policyAt = 0, policyReading = null, policyRetry = null, policyWaiting = false, withdrawn = null;
+    let recoveryFailed = false, approvalWanted = false, approvalLinked = false;
+    function readPolicy() {
+      if (!policyReading) policyReading = (async () => {
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
+        try {
+          const response = await fetch('/policy.json', {cache: 'no-store', credentials: 'omit', signal: controller.signal});
+          const value = response.ok ? await response.json() : null;
+          if (!value || value.schema !== 1 || !value.withdrawn || typeof value.withdrawn !== 'object') throw new Error('unreadable');
+          policyAt = Date.now(); policyWaiting = false; clearTimeout(policyRetry);
+          const code = Object.prototype.hasOwnProperty.call(value.withdrawn, APP_VERSION) ? value.withdrawn[APP_VERSION] : null;
+          // Only defect permits the recovery checks; any other code permits none.
+          withdrawn = code === null ? null : code === 'defect' ? 'defect' : 'security';
+        } catch (error) {
+          if (policyWaiting) { clearTimeout(policyRetry); policyRetry = setTimeout(readPolicy, 30000); }
+        } finally { clearTimeout(timer); policyReading = null; renderNotice(); }
+      })();
+      return policyReading;
+    }
+    function renderNotice() {
+      const lines = [];
+      if (withdrawn) { lines.push(WITHDRAWN); if ((withdrawn !== 'defect' || recoveryFailed) && records().count) lines.push(UNCHECKED); }
+      else if (policyWaiting) lines.push(POLICY_WAIT);
+      $('notice').hidden = !lines.length; $('noticeText').textContent = lines.join(' ');
+    }
+    // Unresolved records on this device: saves with an unknown outcome (recovery
+    // copies, keyed by workbook and person) and pending backup-finish choices.
+    function records(context) {
+      const ops = [], finish = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i) || '';
+          if (key.startsWith('KMS_RECOVERY_V1:') && key.includes(':copy:')) {
+            if (context && !key.startsWith('KMS_RECOVERY_V1:' + context.book + ':' + context.actor + ':')) continue;
+            const item = load(localStorage, key);
+            if (item && item.operation) ops.push(item.operation);
+          } else if (key.startsWith('KMS_BACKUP_FINISH_PENDING:')) {
+            if (context && key !== 'KMS_BACKUP_FINISH_PENDING:' + context.book) continue;
+            const item = load(localStorage, key);
+            if (item && item.requestId) finish.push(item);
+          }
+        }
+      } catch (error) {}
+      return {ops: ops, finish: finish, count: ops.length + finish.length};
+    }
+    const recoveryCheck = body => body.call === 'status' || body.call === 'ownerStatus' || body.call === 'ownerRead' && body.method === 'kmsBackupFinishReceipt';
+    // The recovery set (6B A8): on a page withdrawn as a defect that holds an
+    // unresolved record, only that record's own outcome checks, the sign-in and
+    // owner approval they need, and sign-out. Every server check is unchanged.
+    function allowedWhileWithdrawn(body) {
+      if (body.call === 'signOut') return true;
+      if (withdrawn !== 'defect') return false;
+      const current = session(), mine = records(current && current.context);
+      if (body.call === 'signIn') return !current && records().count > 0;
+      if (!current || !mine.count) return false;
+      if (body.call === 'status' || body.call === 'ownerStatus') {
+        return mine.ops.some(op => op.id === body.operationId && op.method === body.method && JSON.stringify(op.args) === JSON.stringify(body.args));
+      }
+      if (body.call === 'ownerRead') return body.method === 'kmsBackupFinishReceipt' && Array.isArray(body.args) && !!body.args[0] && mine.finish.some(f => f.requestId === body.args[0].requestId);
+      // Owner approval only after a check was refused for want of it, and only
+      // for an owner account already linked: no first-time linking here.
+      if (body.call === 'ownerNonce') return approvalWanted;
+      if (body.call === 'ownerApprove') return approvalWanted && approvalLinked && !body.linkCode;
+      return false;
+    }
+    const refusal = (code, message) => ({ok: false, error: {code: code, message: message}});
+    // Null to send now, a refusal, or (only when the list must be read first)
+    // a promise of one; the usual path adds no delay before the request.
+    function gate(body) {
+      if (body.call === 'signOut') return null;
+      const needed = !policyAt && body.call !== 'hello' && body.call !== 'pauseStatus' || WRITES.indexOf(body.call) >= 0 && Date.now() - policyAt >= POLICY_FRESH;
+      return needed ? readPolicy().then(() => checked(body)) : checked(body);
+    }
+    function checked(body) {
+      if (withdrawn && !allowedWhileWithdrawn(body)) { renderNotice(); return refusal('withdrawn', WITHDRAWN + ' Nothing was sent.'); }
+      // A write without a recent read of the list is refused, not held back and
+      // sent later: the screen's outcome check must never find "nothing saved"
+      // while a delayed save is still waiting. The list is read again shortly.
+      if (WRITES.indexOf(body.call) >= 0 && Date.now() - policyAt >= POLICY_FRESH) {
+        policyWaiting = true; renderNotice(); clearTimeout(policyRetry); policyRetry = setTimeout(readPolicy, 30000);
+        return refusal('policy', POLICY_WAIT + ' Nothing was saved; your entries are still here. Try again in a moment.');
+      }
+      return null;
+    }
+    // A request dropped before sending: KMS ran nothing for it.
+    const notSent = () => ({ok: false, stale: true, error: {code: 'notSent', message: 'Nothing was sent: this screen was closed or the sign-in on this tab changed.'}});
+    async function send(body, frozen, still) {
+      frozen = frozen || freeze();
+      if (!frozen) throw new Error('This tab is not connected to KMS. Open KMS again.');
+      let held = gate(body);
+      if (held && typeof held.then === 'function') {
+        held = await held;
+        // The sign-in, restaurant or screen may have changed while the list was read.
+        if (!held && (!isCurrent(frozen) || still && !still())) return notSent();
+      }
+      if (held) return held;
+      if (!withdrawn || !recoveryCheck(body)) return deliver(body, frozen);
+      try {
+        const answer = await deliver(body, frozen);
+        if (!answer.ok && answer.error && !answer.stale) {
+          if (answer.error.code === 'approval') approvalWanted = true;
+          else if (answer.error.code !== 'session') { recoveryFailed = true; renderNotice(); }
+        }
+        return answer;
+      } catch (error) { recoveryFailed = true; renderNotice(); throw error; }
+    }
+
+    async function deliver(body, frozen) {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 120000);
+      try {
+        const response = await fetch(frozen.url, {method: 'POST', credentials: 'omit', redirect: 'follow', signal: controller.signal,
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(Object.assign({api: 1, appVersion: APP_VERSION, token: frozen.token}, body))});
+        if (!response.ok) throw new Error('KMS did not answer properly (' + response.status + '). Try again.');
+        let answer;
+        try { answer = await response.json(); } catch (error) { throw new Error('KMS sent an answer this page could not read. The owner may need to approve the script again.'); }
+        // A late answer, to a request sent before a sign-in, sign-out or switch
+        // (the screen checks backup status every 20 seconds), is never used: it
+        // must not redraw the sign-in, end the new session or show a message.
+        if (!isCurrent(frozen)) return {ok: false, stale: true, error: {code: 'stale', message: 'This answer arrived after the sign-in on this tab changed, so it was not used.'}};
+        if (!answer.ok && answer.error) {
+          if ((answer.error.code === 'session' || answer.error.code === 'paused' && !frozen.maintenance) && frozen.token && body.call !== 'signIn' && body.call !== 'maintenanceSignIn') sessionEnded(answer.error.message);
+          if (answer.error.code === 'version') versionChanged(answer.serverRelease);
+        }
+        return answer;
+      } catch (error) {
+        if (error.name === 'AbortError') throw new Error('KMS took too long to answer. Check the connection.');
+        throw error;
+      } finally { clearTimeout(timer); }
+    }
+
+    let signedInAgain = false, switchOffered = false;
+    function banner(text, action, handler) {
+      signedInAgain = false; switchOffered = false;
+      $('banner').hidden = !text; $('bannerText').textContent = text || '';
+      $('bannerAction').hidden = !action; $('bannerAction').textContent = action || ''; $('bannerAction').onclick = handler || null;
+    }
+    function screenWindow() { try { return currentScreen && $('screen').contentWindow; } catch (error) { return null; } }
+    function screenHasWork() { const w = screenWindow(); try { return !!(w && w.KmsStatus && (w.KmsStatus.isDirty() || w.KmsStatus.isBusy())); } catch (error) { return false; } }
+
+    // Never reloads over unsaved work by itself (design 3.1). Reload KMS goes
+    // through the root page, which opens the folder matching the server (6B D2,
+    // D5); a KMS from before 6B sends no release and counts as older.
+    function versionChanged(serverRelease) {
+      const newer = Number.isSafeInteger(serverRelease) && serverRelease > APP_RELEASE;
+      banner((newer ? 'KMS has been updated.' : "This restaurant's KMS is older than this page.") + ' Nothing more can be saved from this page; your entries are still here. Reload KMS to use the matching page.', 'Reload KMS', async function() {
+        if (!await leave('reload KMS')) return;
+        closeScreen(); location.assign('/');
+      });
+    }
+
+    // The launcher (6C): this person's screens in their groups, in the order
+    // the build lists them. A maintenance sign-in sees only the screens marked
+    // for maintenance. Comfort only: the server decides what each person may do.
+    function allowedScreens() {
+      const current = session(), rank = ROLES.indexOf(current && current.staff && current.staff.role);
+      return SCREENS.filter(screen => current && (current.maintenance ? screen.maintenance === true : rank >= 0 && rank >= ROLES.indexOf(screen.role)));
+    }
+    function tiles() {
+      const allowed = allowedScreens(), groups = [];
+      allowed.forEach(screen => { if (groups.indexOf(screen.group) < 0) groups.push(screen.group); });
+      $('tiles').replaceChildren(...groups.map(group => {
+        const section = document.createElement('section'), heading = document.createElement('h2'), box = document.createElement('div');
+        section.className = 'group'; section.dataset.group = group; heading.textContent = group; box.className = 'tiles';
+        box.append(...allowed.filter(screen => screen.group === group).map(screen => {
+          const b = document.createElement('button'); b.type = 'button'; b.dataset.screen = screen.name; b.textContent = screen.label;
+          b.addEventListener('click', () => openScreen(screen.name));
+          return b;
+        }));
+        section.append(heading, box);
+        return section;
+      }));
+      const current = session(), link = connection();
+      $('homeTitle').textContent = link && link.name ? link.name : 'KMS';
+      $('homeWho').textContent = !current ? '' : current.maintenance ? 'Owner maintenance sign-in. KMS is paused; only these screens are available.' :
+        'Signed in as ' + current.staff.name + ' (' + current.staff.role + ').';
+    }
+
+    function show(view) {
+      if (view === 'home') tiles();
+      ['stopped', 'signIn', 'home'].forEach(id => { $(id).hidden = id !== view; });
+      renderPause();
+      $('screen').hidden = view !== 'screen';
+      const current = session();
+      $('who').textContent = current ? current.maintenance ? 'Maintenance · ends ' + new Date(current.endsAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false}) : current.staff.name + ' · ' + current.staff.role : '';
+      $('signOutButton').hidden = !current; $('homeButton').hidden = view !== 'screen';
+      const link = connection(); $('restaurant').textContent = link && link.name ? link.name : '';
+    }
+
+    // Recent staff names belong to one restaurant (6B D6).
+    const namesKey = () => NAMES + ':' + ((connection() || {}).id || '');
+    function recentNames() {
+      const box = $('recentNames'); box.replaceChildren();
+      (load(localStorage, namesKey()) || []).forEach(name => {
+        const b = document.createElement('button'); b.type = 'button'; b.className = 'secondary'; b.textContent = name;
+        b.addEventListener('click', () => { $('staffName').value = name; $('staffPin').focus(); });
+        box.appendChild(b);
+      });
+    }
+
+    // Sign-in form, either as the page or over a screen whose session ended.
+    function signInView(note, overlay) {
+      signInMode(false);
+      $('signInNote').textContent = note || 'Use your name and 6-digit PIN.';
+      $('signInError').textContent = ''; $('staffPin').value = ''; recentNames();
+      if (overlay) { $('overlay').hidden = false; $('overlay').appendChild($('signIn')); $('signIn').hidden = false; }
+      else { $('overlay').hidden = true; document.querySelector('main').insertBefore($('signIn'), $('home')); show('signIn'); }
+      renderPause(); helloPause();
+      setTimeout(() => ($('staffName').value ? $('staffPin') : $('staffName')).focus(), 0);
+    }
+
+    // The owner's Google sign-in (slice 5E). The server keeps the approval and
+    // checks it on every owner call; this page only asks for it when an owner
+    // call is refused for want of it. Google's own button returns an ID token
+    // carrying a one-use nonce from KMS.
+    let ownerPending = null, gisLoading = null, gisScript = null, ownerCredential = null, ownerEndedAt = 0, ownerAttempt = 0, ownerOptions = {};
+    // Google's sign-in script gets its own bounded wait (6A.4, Astra b774248),
+    // apart from the time the owner takes to choose an account.
+    const GIS_WAIT_MS = 30000;
+    function gis() {
+      if (window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
+      if (!gisLoading) gisLoading = new Promise((resolve, reject) => {
+        const script = gisScript = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client'; script.async = true;
+        script.onload = resolve;
+        script.onerror = () => { if (gisScript === script) { gisLoading = null; gisScript = null; } reject(new Error('Google sign-in could not be loaded. Check the connection and try again.')); };
+        document.head.appendChild(script);
+      });
+      let timer;
+      const late = new Promise((resolve, reject) => { timer = setTimeout(() => {
+        // A stalled load is dropped so Try again starts a fresh one.
+        if (gisScript) { gisScript.remove(); gisScript = null; } gisLoading = null;
+        reject(new Error('Google sign-in did not load within 30 seconds. Check the connection, then choose Try again.'));
+      }, GIS_WAIT_MS); });
+      return Promise.race([gisLoading, late]).finally(() => clearTimeout(timer));
+    }
+    // Each approval box belongs to one screen's request (6B A2, Astra's
+    // re-check of d6e7481). Every step checks that its box is still the open
+    // one and that its screen and sign-in are unchanged: before sending (after
+    // any wait for the withdrawn list too) and before applying an answer, an
+    // error or a retry. A closed box's late answer never settles a newer one.
+    const boxOpen = box => !!box && ownerPending === box && screenCurrent(box.ticket);
+    function ownerClose(error) {
+      $('ownerCheck').hidden = true; ownerCredential = null;
+      if ($('signIn').parentNode !== $('overlay')) $('overlay').hidden = true;
+      const pending = ownerPending; ownerPending = null;
+      if (pending) ownerEndedAt = Date.now();
+      if (pending) { if (error) pending.reject(error); else pending.resolve(); }
+    }
+    async function ownerPrepare(options) {
+      const box = ownerPending;
+      if (!box) return;
+      const attempt = ++ownerAttempt, live = () => attempt === ownerAttempt && boxOpen(box);
+      ownerOptions = options; $('ownerRetry').hidden = true;
+      $('ownerError').textContent = options.error || ''; $('ownerGoogle').replaceChildren(); $('ownerConfirm').hidden = true; $('ownerConfirm').disabled = false; ownerCredential = null;
+      $('ownerConfirm').textContent = 'Link and confirm'; ownerApprove.busy = 0;
+      $('ownerCheckNote').textContent = options.fresh ? 'This change needs a recent Google sign-in by the account that owns this KMS workbook.' :
+        'Owner screens need a Google sign-in by the account that owns this KMS workbook.';
+      try {
+        const answer = await send({call: 'ownerNonce'}, null, live);
+        if (!live() || answer.stale) return;
+        if (!answer.ok) throw new Error(answer.error.message);
+        const value = answer.value;
+        approvalLinked = !!value.linked;
+        if (withdrawn && !value.linked) throw new Error('First-time owner linking is not available on a withdrawn page. The owner needs to update KMS.');
+        $('ownerLink').hidden = !!value.linked;
+        await gis();
+        if (!live()) return;
+        // Google's answer counts only for this attempt in this epoch (6B A2).
+        const at = epoch;
+        window.google.accounts.id.initialize({client_id: value.clientId, nonce: value.nonce, auto_select: false, cancel_on_tap_outside: false,
+          callback: response => { if (live() && at === epoch) ownerApprove(box, response && response.credential, value.nonce); }});
+        window.google.accounts.id.renderButton($('ownerGoogle'), {type: 'standard', theme: 'outline', size: 'large', text: 'continue_with'});
+      } catch (error) {
+        if (!live()) return;
+        $('ownerError').textContent = error.message; $('ownerRetry').hidden = false;
+      }
+    }
+    async function ownerApprove(box, credential, nonce) {
+      if (!boxOpen(box)) return;
+      if (!credential) { $('ownerError').textContent = 'Google did not return a sign-in. Try again.'; return; }
+      const code = $('ownerLinkCode').value.trim();
+      if (!$('ownerLink').hidden && !code) {
+        ownerCredential = {credential: credential, nonce: nonce}; $('ownerConfirm').hidden = false;
+        $('ownerError').textContent = 'Enter the linking code from the workbook, then choose Link and confirm.'; return;
+      }
+      $('ownerError').textContent = ''; $('ownerConfirm').disabled = true;
+      try {
+        const answer = await send({call: 'ownerApprove', idToken: credential, nonce: nonce, linkCode: $('ownerLink').hidden ? '' : code}, null, () => boxOpen(box));
+        if (!boxOpen(box) || answer.stale) return;
+        if (!answer.ok && answer.error && answer.error.code === 'busy') {
+          // F (Astra S3): KMS was busy and nothing ran, so this Google sign-in is
+          // still unused. Keep it and try again shortly; never make the owner start over.
+          ownerCredential = {credential: credential, nonce: nonce};
+          $('ownerConfirm').textContent = 'Try again'; $('ownerConfirm').hidden = false;
+          const tries = (ownerApprove.busy = (ownerApprove.busy || 0) + 1);
+          $('ownerError').textContent = tries <= 3 ? 'KMS is busy for a moment. Trying again…' : answer.error.message + ' Your Google sign-in is kept: choose Try again.';
+          if (tries <= 3) setTimeout(() => { if (boxOpen(box) && ownerCredential && ownerCredential.nonce === nonce) ownerApprove(box, credential, nonce); }, 5000);
+          return;
+        }
+        ownerApprove.busy = 0;
+        if (!answer.ok) { $('ownerError').textContent = answer.error.message; return; }
+        approvalWanted = false;
+        $('ownerLinkCode').value = '';
+        ownerClose(null);
+      } catch (error) { if (boxOpen(box)) $('ownerError').textContent = error.message; }
+      finally { if (boxOpen(box)) $('ownerConfirm').disabled = false; }
+    }
+    function ownerApproval(options, ticket) {
+      options = options || {};
+      if (ownerPending) return ownerPending.promise;
+      let resolve, reject;
+      const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+      ownerPending = {promise: promise, resolve: resolve, reject: reject, ticket: ticket};
+      $('overlay').hidden = false; $('overlay').appendChild($('ownerCheck')); $('ownerCheck').hidden = false;
+      ownerPrepare(options);
+      return promise;
+    }
+    function ownerCancelled() { const error = new Error('Owner confirmation was cancelled. Nothing was changed.'); error.kmsCode = 'approval'; return error; }
+
+    function sessionEnded(message) {
+      const previous = session();
+      clearTimeout(maintenanceTimer);
+      if (previous?.maintenance) {
+        const pending = load(localStorage, 'KMS_BACKUP_FINISH_PENDING:' + previous.context.book);
+        if (pending && (pending.choice === 'keep' || pending.action === 'undoMove')) message = 'The answer was lost. Sign in as usual (owner) and open Settings to see what happened.';
+      }
+      if (ownerPending) ownerClose(ownerCancelled());
+      keep(sessionStorage, SESSION, null);
+      if (!currentScreen) { signInView(message); return; }
+      $('who').textContent = ''; $('signOutButton').hidden = true;
+      signInView((message || 'Your sign-in has ended.') + (previous ? ' Sign in as ' + previous.staff.name + ' to carry on.' : ''), true);
+      if (previous) $('staffName').value = previous.staff.name;
+      sessionEnded.previous = previous;
+    }
+
+    async function signIn(event) {
+      event.preventDefault();
+      const name = $('staffName').value.trim(), pin = $('staffPin').value;
+      $('signInError').textContent = '';
+      if (!name || !/^\d{6}$/.test(pin)) { $('signInError').textContent = 'Enter your name and your 6-digit PIN.'; return; }
+      $('signInButton').disabled = true;
+      try {
+        const answer = await send({call: maintenanceMode ? 'maintenanceSignIn' : 'signIn', name: name, pin: pin});
+        $('staffPin').value = '';
+        if (answer.stale) return;
+        if (!answer.ok) {
+          if (answer.error.code === 'notPaused') { signInMode(false); $('signInError').textContent = 'KMS is not paused. Sign in as usual.'; refreshPause(); }
+          else { $('signInError').textContent = answer.error.message; if (answer.error.code === 'paused') refreshPause(); }
+          return;
+        }
+        const value = answer.value, previous = sessionEnded.previous || null, tab = connection();
+        epoch++;
+        keep(sessionStorage, SESSION, {token: value.token, connection: tab.id, staff: value.staff, context: value.context, idleMinutes: value.idleMinutes,
+          ...(value.maintenance ? {maintenance: true, endsAt: Date.now() + value.endsInMs} : {})});
+        maintenanceClock();
+        keep(localStorage, namesKey(), [value.staff.name].concat((load(localStorage, namesKey()) || []).filter(n => n !== value.staff.name)).slice(0, 6));
+        sessionEnded.previous = null;
+        // A screen carries on only for the same restaurant, workbook and person;
+        // a maintenance screen never carries on under an ordinary sign-in, or the reverse.
+        if (currentScreen && previous && !previous.maintenance && !value.maintenance && previous.connection === tab.id && previous.context &&
+            previous.context.book === value.context.book && previous.context.actor === value.context.actor) {
+          // Same person: the screen and its entries carry on as they were.
+          $('overlay').hidden = true; document.querySelector('main').insertBefore($('signIn'), $('home'));
+          show('screen'); banner('Signed in again. Your entries are still here; save again if a save was refused.'); signedInAgain = true;
+          return;
+        }
+        // Someone else: their screen closes through the leaving routine, still
+        // under the sign-in box. The first person's entries stay on this device
+        // for them only and are never shown to the new person. If they cannot be
+        // stored and the new person does not discard them, the new sign-in is
+        // cancelled so the first person can save or copy them.
+        if (currentScreen) {
+          const result = await leave('continue as ' + value.staff.name);
+          if (!result) {
+            const frozen = freeze(); epoch++; keep(sessionStorage, SESSION, null);
+            send({call: 'signOut', token: value.token}, frozen).catch(() => {});
+            sessionEnded.previous = previous;
+            signInView('Sign-in cancelled. ' + (previous ? previous.staff.name + ' can sign in to save or copy the entries.' : 'Sign in to save or copy the entries.'), true);
+            if (previous) $('staffName').value = previous.staff.name;
+            return;
+          }
+          closeScreen();
+          if (result === 'kept') banner('The unsaved entries on that screen are kept on this device, for ' + (previous ? previous.staff.name : 'the person who made them') + ' only.');
+        }
+        $('overlay').hidden = true; document.querySelector('main').insertBefore($('signIn'), $('home'));
+        if (value.maintenance) { tiles(); openScreen('Settings'); return; }
+        show('home');
+      } catch (error) {
+        $('signInError').textContent = error.message;
+      } finally { $('signInButton').disabled = false; }
+    }
+
+    function openScreen(name) {
+      if (allowedScreens().every(screen => screen.name !== name)) return;
+      currentScreen = name; banner('');
+      $('screen').src = 'screens/' + name + '.html';
+      show('screen');
+    }
+
+    // In-page choices replace window.confirm when leaving (6B A2). Resolves
+    // true for the second, discarding button. One question at a time: while one
+    // is open another is never shown over it and counts as the first button.
+    function choose(title, text, keepLabel, discardLabel) {
+      if (!$('dialog').hidden) return Promise.resolve(false);
+      return new Promise(resolve => {
+        $('dialogTitle').textContent = title; $('dialogText').textContent = text;
+        $('dialogKeep').textContent = keepLabel; $('dialogDiscard').textContent = discardLabel;
+        $('dialogKeep').onclick = () => { $('dialog').hidden = true; resolve(false); };
+        $('dialogDiscard').onclick = () => { $('dialog').hidden = true; resolve(true); };
+        $('dialog').hidden = false; $('dialogKeep').focus();
+      });
+    }
+    // Unsaved entries, a save under way or one whose outcome is unknown; an
+    // ordinary load in progress is not unsaved work.
+    function unsaved() {
+      const w = screenWindow();
+      try { return !!(w && w.KmsStatus && (w.KmsStatus.hasUnsaved ? w.KmsStatus.hasUnsaved() : w.KmsStatus.isDirty() || w.KmsStatus.isBusy())); } catch (error) { return false; }
+    }
+    // The screen stores its entries (and any save's operation ID, method and
+    // arguments) and reports whether the copy was written and read back.
+    function storedOnDevice() {
+      const w = screenWindow();
+      try { if (!w || !w.KmsRecovery || !w.KmsRecovery.persisted) return false; w.KmsRecovery.capture(); return w.KmsRecovery.persisted() === true; } catch (error) { return false; }
+    }
+    const KEPT = 'Your unsaved entries are kept on this device and offered back when you open that screen again.';
+    // The one leaving routine (6B A2) for Reload KMS, switching restaurant, Home,
+    // sign-out and another person signing in. Resolves 'clear' (nothing
+    // unsaved), 'kept' (stored on this device and checked) or 'discarded' (the
+    // person chose to lose them); null means stay on the screen.
+    async function leave(doing) {
+      if (!$('dialog').hidden) return null;
+      if (!currentScreen || !unsaved()) return 'clear';
+      if (storedOnDevice()) return 'kept';
+      if (!await choose('Your entries could not be stored', 'KMS could not keep a checked copy of the unsaved entries on this screen on this device, so the screen stays open. Copy or save them first.', 'Stay on this screen', 'Discard and leave')) return null;
+      if (!await choose('Discard unsaved entries?', 'This discards the unsaved entries on this screen and any save still waiting for its outcome check. They cannot be recovered. Then KMS will ' + doing + '.', 'Keep them', 'Discard and ' + doing)) return null;
+      try { const w = screenWindow(); if (w && w.KmsRecovery) w.KmsRecovery.discardCurrent(); } catch (error) {}
+      return 'discarded';
+    }
+    async function goHome() {
+      const result = await leave('go Home');
+      if (!result) return;
+      closeScreen();
+      if (result === 'kept') banner(KEPT);
+    }
+
+    // Closes the screen after the leaving routine (or the screen's own Close
+    // button) has dealt with its entries. The frame is replaced, not navigated,
+    // so the closed screen never asks the browser's own "leave?" question.
+    function closeScreen() {
+      currentScreen = '';
+      // A Google sign-in box opened for the closed screen closes with it.
+      if (ownerPending) ownerClose(ownerCancelled());
+      const old = $('screen'), fresh = old.cloneNode(false); fresh.removeAttribute('src'); old.replaceWith(fresh);
+      // Leaving the screen ends what "Signed in again" was about.
+      if (signedInAgain) banner('');
+      document.querySelector('main').insertBefore($('signIn'), $('home'));
+      $('overlay').hidden = true;
+      if (session()) show('home'); else signInView();
+    }
+
+    // Another tab connected this device to a different restaurant (6B D6). This
+    // tab stays where it is unless the person chooses to switch it.
+    function deviceChanged(event) {
+      if (event.key !== 'KMS_WEB_DEVICE') return;
+      let device = null;
+      try { device = JSON.parse(event.newValue || 'null'); } catch (error) {}
+      const tab = connection();
+      const other = tab && device && device.schema === 1 && Array.isArray(device.connections) ? device.connections.find(c => c && c.id === device.last) : null;
+      if (!other || other.id === tab.id || !linkPattern.test(other.url)) { if (switchOffered) banner(''); return; }
+      banner('Another tab connected this device to ' + (other.name || 'another KMS') + '. This tab stays on ' + (tab.name || 'its KMS') + '.',
+        'Switch this tab to ' + (other.name || 'it'), () => switchTo(other));
+      switchOffered = true;
+    }
+    // Pause, hello and owner-approval state belong to one restaurant (6B A2).
+    function resetConnectionState() {
+      acceptedPause = null; pauseApplied = pauseAsked; clearTimeout(pauseTimer); clearTimeout(maintenanceTimer);
+      keep(sessionStorage, HELLO, null);
+      if (ownerPending) ownerClose(ownerCancelled());
+      ownerAttempt++; ownerCredential = null;
+      try { if (window.google && window.google.accounts && window.google.accounts.id) window.google.accounts.id.cancel(); } catch (error) {}
+    }
+    // A connect link opened on this page (6C). The same KMS changes nothing;
+    // another one is checked with hello (no token), asked about, and then
+    // becomes the device's restaurant through the same switch as above. Each
+    // attempt has its own number and the epoch it began in, checked after every
+    // wait: a newer link, a sign-in, sign-out or switch makes an older one do
+    // nothing. Its question never replaces another one already open.
+    const CONNECT_WAIT_MS = 30000;
+    let connectAsked = 0, connectAsking = false;
+    async function connectRequested() {
+      const link = new URLSearchParams(location.hash.slice(1)).get('connect');
+      if (link === null) return;
+      history.replaceState(null, '', location.pathname);
+      const tab = connection();
+      if (!tab) return;
+      if (!linkPattern.test(link)) { banner('That connect link is not a KMS link, so nothing changed.'); return; }
+      if (link === tab.url) { banner('This device is already connected to ' + (tab.name || 'this KMS') + '.'); return; }
+      if (connectAsking) { banner('Answer the connect question that is already open first. Nothing changed for the newer connect link.'); return; }
+      const asked = ++connectAsked, at = epoch;
+      const live = () => asked === connectAsked && at === epoch && (connection() || {}).id === tab.id;
+      let name = '';
+      // One time limit covers the request and reading its answer.
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), CONNECT_WAIT_MS);
+      try {
+        const response = await fetch(link, {method: 'POST', credentials: 'omit', redirect: 'follow', signal: controller.signal, headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({api: 1, call: 'hello'})});
+        const answer = response.ok ? await response.json() : null;
+        if (!answer || !answer.ok) throw new Error('no answer');
+        name = answer.value && typeof answer.value.name === 'string' ? answer.value.name : '';
+      } catch (error) {
+        if (live()) banner(error.name === 'AbortError' ? 'The KMS in that connect link took too long to answer, so nothing changed.' : 'The KMS in that connect link could not be reached, so nothing changed.');
+        return;
+      } finally { clearTimeout(timer); }
+      if (!live()) return;
+      if (!$('dialog').hidden || ownerPending) { banner('The connect link arrived while another question was open, so nothing changed. Open the connect link again when you have finished.'); return; }
+      const here = tab.name || 'this KMS', there = name || 'the other KMS';
+      connectAsking = true;
+      let yes;
+      try {
+        yes = await choose('Connect this device to ' + there + ' instead?', 'This tab and new tabs will open ' + there + ' instead of ' + here +
+          '. You will be signed out here. Unsaved entries stay on this device for the person who made them and are never shown at the other restaurant.',
+          'Stay on ' + here, 'Connect to ' + there);
+      } finally { connectAsking = false; }
+      if (!yes || !live()) return;
+      const device = load(localStorage, 'KMS_WEB_DEVICE'), list = device && device.schema === 1 && Array.isArray(device.connections) ? device.connections : [];
+      const known = list.find(c => c && c.url === link);
+      await switchTo(known ? Object.assign({}, known, {name: name || known.name}) : {id: randomId(), url: link, name: name}, true, live);
+    }
+    function randomId() { return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
+
+    // Signs out of this restaurant (its token to its own link only), then the
+    // root page opens the other one. No credential is ever forwarded. remember:
+    // also make it this device's restaurant (a connect link, 6C), once the
+    // leaving routine has dealt with the open screen. still: the connect
+    // attempt's own check, repeated once the leaving questions are answered.
+    async function switchTo(other, remember, still) {
+      if (!await leave('switch this tab')) return;
+      if (still && !still()) { banner('Nothing changed: another connect link or a sign-in change came in meanwhile. Open the connect link again if you still want to connect.'); return; }
+      if (remember) {
+        const device = load(localStorage, 'KMS_WEB_DEVICE'), record = device && device.schema === 1 && Array.isArray(device.connections) ? device : {schema: 1, connections: [], last: ''};
+        const entry = {id: other.id, url: other.url, name: other.name || '', at: Date.now()};
+        ['business', 'installation'].forEach(field => { if (other[field]) entry[field] = other[field]; });
+        record.connections = [entry].concat(record.connections.filter(c => c && c.url !== other.url && c.id !== other.id)).slice(0, 10);
+        record.last = other.id;
+        // The device-wide change is refused, not half made, if it cannot be stored.
+        if (!keep(localStorage, 'KMS_WEB_DEVICE', record)) {
+          banner('This browser would not let KMS remember ' + (other.name || 'the other KMS') + ' on this device, so nothing changed. This tab stays on ' + ((connection() || {}).name || 'its KMS') + '.');
+          return;
+        }
+      }
+      const current = session(), frozen = freeze();
+      closeScreen();
+      epoch++; resetConnectionState();
+      keep(sessionStorage, SESSION, null);
+      if (current && frozen) await Promise.race([send({call: 'signOut', token: current.token}, frozen).catch(() => {}), new Promise(resolve => setTimeout(resolve, 5000))]);
+      keep(sessionStorage, TAB, {schema: 1, id: other.id, url: other.url, name: other.name || ''});
+      if ((connection() || {}).id !== other.id) { banner('This browser is blocking the storage KMS needs, so this tab could not be switched.'); return; }
+      location.assign('/');
+    }
+
+    async function signOut() {
+      const result = await leave('sign out');
+      if (!result) return;
+      const current = session(), frozen = freeze();
+      if (ownerPending) ownerClose(ownerCancelled());
+      closeScreen();
+      epoch++;
+      keep(sessionStorage, SESSION, null);
+      signInView(result === 'kept' ? 'Signed out. Your unsaved entries are kept on this device, and only you can see them.' : 'Signed out.');
+      if (current) { try { await send({call: 'signOut', token: current.token}, frozen); } catch (error) {} }
+    }
+
+    const screenCurrent = ticket => !!(ticket && currentScreen && ticket.win === screenWindow() && ticket.epoch === epoch);
+    window.KmsWeb = {
+      appVersion: APP_VERSION, send: send,
+      // Screens send through here with the ticket from the screen they came
+      // from (6B A2). Once that screen is closed, or the sign-in has changed,
+      // nothing more goes out and no Google sign-in box opens for it.
+      ticket: win => currentScreen && win && win === screenWindow() ? {win: win, epoch: epoch} : null,
+      screenSend: (body, ticket) => screenCurrent(ticket) ? send(body, null, () => screenCurrent(ticket)) : Promise.resolve(notSent()),
+      ownerApproval: (options, ticket) => screenCurrent(ticket) ? ownerApproval(options, ticket) : Promise.reject(ownerCancelled()),
+      // The screen's own Close button goes through the one leaving routine.
+      closeScreen: () => goHome(),
+      release: APP_RELEASE,
+      maintenance: () => !!session()?.maintenance,
+      // Lets a screen's load timer leave out the time spent in the Google sign-in box (finding D).
+      ownerWait: () => ({waiting: !!ownerPending, endedAt: ownerEndedAt}),
+      role: () => { const current = session(); return current && current.staff && current.staff.role || ''; },
+      // A save went through, so the note about signing in again is out of date.
+      writeSucceeded: () => { if (signedInAgain) banner(''); },
+      context: screen => { const current = session(); return current ? {schema: 1, book: current.context.book, actor: current.context.actor, screen: screen} : null; },
+      // The connect link for this tab's restaurant (6C), for the owner only. It
+      // holds only the script address, which is effectively public (design 3.3).
+      connectLink: () => {
+        const current = session(), tab = connection();
+        return tab && current && (current.maintenance || current.staff && current.staff.role === 'Owner') ? location.origin + '/#connect=' + encodeURIComponent(tab.url) : '';
+      }
+    };
+
+    $('signInForm').addEventListener('submit', signIn);
+    $('pauseCheck').addEventListener('click', refreshPause);
+    $('maintenanceSignIn').addEventListener('click', () => signInMode(true));
+    $('ordinarySignIn').addEventListener('click', () => signInMode(false));
+    $('signOutButton').addEventListener('click', signOut);
+    $('homeSignOut').addEventListener('click', signOut);
+    $('homeButton').addEventListener('click', goHome);
+    $('ownerCancel').addEventListener('click', () => ownerClose(ownerCancelled()));
+    $('ownerRetry').addEventListener('click', () => { if (ownerPending) ownerPrepare(ownerOptions); });
+    $('ownerConfirm').addEventListener('click', () => { if (ownerCredential) ownerApprove(ownerPending, ownerCredential.credential, ownerCredential.nonce); });
+    window.addEventListener('storage', deviceChanged);
+    window.addEventListener('hashchange', connectRequested);
+    readPolicy(); setInterval(readPolicy, POLICY_EVERY);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) readPolicy(); });
+    window.addEventListener('beforeunload', event => { if (screenHasWork()) { event.preventDefault(); event.returnValue = ''; } });
+
+    // Without this tab's restaurant, go back to the root once; #r marks the
+    // second arrival, which stops here instead of looping (6B A2).
+    const returned = location.hash === '#r';
+    if (returned) history.replaceState(null, '', location.pathname);
+    if (!connection()) {
+      if (returned) { $('stoppedText').textContent = 'This browser is blocking the storage KMS needs. Allow this site to store data (or leave private browsing), then open KMS again.'; show('stopped'); }
+      else location.replace('/#r');
+    }
+    else if (!session()) signInView();
+    else if (session().maintenance) { maintenanceClock(); if (session()) openScreen('Settings'); }
+    else show('home');
+    if (connection()) connectRequested();
+  })();
+  </script>
+</body>
+</html>
