@@ -1,0 +1,771 @@
+<!DOCTYPE html><html><head><base target="_top"><meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#213342;background:#f4f7f8}*{box-sizing:border-box}body{margin:0;font-size:14px}button,input,select,textarea{font:inherit}button{border:0;border-radius:7px;padding:10px 14px;background:#146d70;color:#fff;font-weight:700;cursor:pointer}button:disabled{opacity:.48;cursor:not-allowed}button.secondary{background:#e8f0f1;color:#18545a}input,select,textarea{width:100%;padding:8px 9px;min-height:37px;border:1px solid #bdcbd0;border-radius:6px;background:#fff;color:#18303c}input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid #71b7b7}input:disabled,select:disabled,textarea:disabled{background:#eef2f3;color:#596a71}label{display:block;font-size:12px;font-weight:700;color:#3d5965;margin-bottom:5px}h1,h2,p{margin-top:0}h1{font-size:25px;margin-bottom:5px}h2{font-size:17px;margin-bottom:9px}.shell{max-width:1460px;margin:auto;padding:21px 25px 105px}.top,.actions,.heading{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}.top{align-items:flex-start;margin-bottom:15px}.small{font-size:12px;line-height:1.5}.muted{color:#607782}.panel{background:#fff;border:1px solid #d8e2e5;border-radius:10px;padding:17px;margin-bottom:14px}.fields{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.span2{grid-column:span 2}.wide{grid-column:1/-1}.notice{border-radius:7px;padding:10px 12px;background:#eaf4f4;color:#28565d;margin-top:12px}.warning{background:#fff3d9;color:#765520}.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:15px 0}.metric{border:1px solid #d9e4e6;border-radius:8px;padding:13px;background:#f8fbfb;font-size:12px;color:#4b6570}.metric strong{display:block;font-size:22px;color:#1e3440;margin-top:5px;font-variant-numeric:tabular-nums}.metric.gp{background:#eaf4f4}.table-wrap{overflow:auto;border:1px solid #d9e2e5;border-radius:7px}table{width:100%;min-width:650px;border-collapse:collapse}th{text-align:left;font-size:11px;text-transform:uppercase;background:#eaf1f2;color:#4b6570;padding:10px 8px;white-space:nowrap}td{border-top:1px solid #e4ebed;padding:7px 8px}tr:nth-child(even) td{background:#fafcfc}.right{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.qty{width:120px}.filters{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.filters>div{flex:1;min-width:160px}.check{display:flex;gap:7px;align-items:center;margin-bottom:10px;font-weight:400}.check input{width:17px;min-height:17px;height:17px}.detail{font-size:11px;color:#617780;margin-top:3px}.footer{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #d4e0e3;padding:12px 25px;box-shadow:0 -3px 12px #1c364113;z-index:3}.footer-inner{max-width:1410px;margin:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}.status{margin-left:auto;font-size:12px;line-height:1.45;max-width:650px}.pages{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:10px}[hidden]{display:none!important}textarea{resize:vertical;min-height:55px}#printArea{display:none}.empty{text-align:center;padding:20px;color:#617780}
+.readiness-list{display:grid;gap:7px}.readiness-item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 10px;border:1px solid #d9e4e6;border-radius:6px}.readiness-item.warn{background:#fff7e6;border-color:#ead9af}.readiness-item button{padding:6px 10px;white-space:nowrap}#usagePanel .table-wrap{max-height:460px}#usagePanel table{min-width:1040px}.explain td{background:#f3f7f7!important}.explain-fields{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.explain-fields select{width:190px}.explain-fields input{flex:1;min-width:260px}.explain-label{font-size:11px;font-weight:bold;color:#536a70}#usagePanel th{position:sticky;top:0;z-index:1}
+@media(max-width:800px){.shell{padding:16px 12px 135px}.fields,.metrics{grid-template-columns:1fr 1fr}.footer{padding:10px 12px}.status{margin-left:0;width:100%}}
+@media print{@page{size:A4 portrait;margin:15mm}.shell,.footer{display:none}#printArea{display:block;color:#000;font-size:11pt}#printArea h1{font-size:20pt}#printArea table{min-width:0}#printArea td{padding:8px;border-bottom:1px solid #ddd}#printArea .emphasis td{font-weight:bold;border-top:2px solid #444}#printArea .small{font-size:9pt}#printArea tr{break-inside:avoid}}
+</style><script>const SCREEN="WeeklyReport",OWNER_SCREEN=false,OWNER_CALLS={"kmsSettingsGet":{"kind":"read"},"kmsBackupStatus":{"kind":"read"},"kmsBackupFinishReceipt":{"kind":"read"},"kmsBackupSignOutPreview":{"kind":"read"},"kmsBackupRetentionPreview":{"kind":"read"},"kmsRecoveryIssues":{"kind":"read"},"kmsOwnerStaffList":{"kind":"read"},"kmsSettingsSave":{"kind":"write","receipt":true},"kmsBackupStart":{"kind":"write"},"kmsBackupCancel":{"kind":"write","fresh":true},"kmsBackupAcknowledge":{"kind":"write"},"kmsBackupResume":{"kind":"write","fresh":true},"kmsBackupPin":{"kind":"write"},"kmsBackupScheduleSet":{"kind":"write"},"kmsBackupRestore":{"kind":"write","fresh":true},"kmsRecoveryResolve":{"kind":"write"},"kmsOwnerStaffAdd":{"kind":"write","fresh":true},"kmsOwnerStaffChange":{"kind":"write","fresh":true},"kmsOwnerStaffClose":{"kind":"write","fresh":true},"kmsBackupReconcile":{"kind":"write","fresh":true},"kmsBackupFinish":{"kind":"write","fresh":true},"kmsBackupUndoMove":{"kind":"write","fresh":true}};
+// Stand-in for google.script.run inside a KMS screen on the hosted web page
+// (design 3.1). The screen keeps calling google.script.run exactly as it does
+// in Sheets; each call is sent by the page shell (window.parent.KmsWeb) to the
+// restaurant's own script with fetch, no Google cookies, as text/plain.
+// The build inserts this before BrowserRecovery and UiStatus, with SCREEN,
+// OWNER_SCREEN and OWNER_CALLS (the owner call table in OwnerWeb.js) set.
+(function() {
+  'use strict';
+  const web = window.parent !== window && window.parent.KmsWeb;
+  if (!web) { document.documentElement.innerHTML = '<p style="font:16px Arial;padding:24px">Open KMS from its web page.</p>'; return; }
+  // Browser recovery copies belong to this workbook, this person and this screen.
+  window.KmsRecoveryContext = web.context(SCREEN);
+  // Recovery copies record the page release that wrote them (6B A2).
+  window.KmsWebRelease = web.release;
+  window.KmsPerformanceEnabled = true;
+  window.KmsSaveRecoveryEnabled = true;
+  // The screen hides actions this person's role cannot use. The server check is the real guard.
+  window.KmsStaffRole = web.role();
+  window.KmsWebPage = true;
+  window.KmsMaintenance = !!(web.maintenance && web.maintenance());
+  // The HEIC photo converter comes from this release's own folder (6B A4): the
+  // page's security policy allows no other site's scripts. Invoice Entry and
+  // the record editor use this hook; in Sheets they load it from jsDelivr.
+  window.kmsLoadHeicConverter = function() { return import(new URL('../vendor/heic-to.js', location.href).href); };
+  // UiStatus leaves time in the owner's Google sign-in box out of its 45-second timer.
+  window.KmsOwnerWait = function() { return web.ownerWait ? web.ownerWait() : null; };
+  // These refusals happen before KMS runs anything, so a save refused this way
+  // is certainly not saved and the form can say so.
+  // A withdrawn page (withdrawn) or an unchecked withdrawn list (policy) sends
+  // nothing, nor does a request whose screen or sign-in has changed (notSent).
+  const refusedBeforeKms = ['version', 'session', 'role', 'unavailable', 'binding', 'request', 'approval', 'withdrawn', 'policy', 'notSent'];
+  // Refusals are not failures: the screen shows a refusal state, not Save failed.
+  const refusals = refusedBeforeKms.concat(['backup', 'busy', 'locked', 'signIn', 'paused', 'pauseChanged', 'pauseState', 'notPaused']);
+
+  // A closed screen sends nothing and acts on nothing (6B A2): its frame has
+  // been removed from the page, and its requests belong to a sign-in or
+  // restaurant that may have changed.
+  function attached() { try { return !!(window.frameElement && window.frameElement.isConnected); } catch (error) { return false; } }
+
+  function failure(message, code) { const error = new Error(message); error.kmsCode = code || 'failed'; return error; }
+
+  function staffRequest(name, args) {
+    if (name === 'kmsPerformanceCall') return {call: 'read', method: String(args[0]), args: args[1] || []};
+    if (name === 'kmsOperationCall') return {call: 'save', method: String(args[0]), args: args[1] || [], operationId: args[2]};
+    if (name === 'kmsOperationStatus') return {call: 'status', method: String(args[0]), args: args[1] || [], operationId: args[2]};
+    return {call: 'read', method: name, args: args};
+  }
+
+  // Owner calls go by their own routes (slice 5E), never the staff ones.
+  function request(name, args) {
+    // On an owner screen the backup poll reads the owner's own status (R2),
+    // which also works while this page follows its own backup capture.
+    if (OWNER_SCREEN && name === 'kmsBackupActivity') return {body: {call: 'ownerRead', method: 'kmsBackupStatus', args: []}, pick: 'activity', background: true};
+    const body = staffRequest(name, args);
+    const owner = Object.prototype.hasOwnProperty.call(OWNER_CALLS, body.method) ? OWNER_CALLS[body.method] : null;
+    if (owner) body.call = body.call === 'status' ? 'ownerStatus' : owner.kind === 'write' ? 'ownerWrite' : 'ownerRead';
+    return {body: body, fresh: !!(owner && owner.fresh)};
+  }
+
+  // Development only: simulate a save whose confirmation is lost on the way
+  // back. Set sessionStorage KMS_WEB_FAULT to drop-next-save on a localhost page.
+  function dropThisSave(body) {
+    if (body.call !== 'save' || !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return false;
+    try {
+      if (window.parent.sessionStorage.getItem('KMS_WEB_FAULT') !== 'drop-next-save') return false;
+      window.parent.sessionStorage.removeItem('KMS_WEB_FAULT');
+      return true;
+    } catch (error) { return false; }
+  }
+
+  function dispatch(name, args, options) {
+    // Each request belongs to this screen and the sign-in it was made under
+    // (6B A2); the page checks that again before every step that sends or asks.
+    const ticket = attached() && web.ticket(window);
+    if (!ticket) return;
+    const routed = request(name, args), body = routed.body, save = name === 'kmsOperationCall';
+    function succeed(value) { if (options.success) options.success(value, options.userObject); }
+    function fail(error) { if (options.failure) options.failure(error, options.userObject); else console.error(error); }
+    // An owner call refused for want of the owner's Google sign-in asks for it,
+    // then is sent once more. The refusal came before KMS ran anything, so the
+    // second send is the first attempt (writes keep their request ID).
+    function send() {
+      return web.screenSend(body, ticket).then(function(answer) {
+        if (answer.ok || answer.stale || !answer.error || answer.error.code !== 'approval' || routed.background || !/^owner/.test(body.call)) return answer;
+        return web.ownerApproval({fresh: routed.fresh, message: answer.error.message}, ticket).then(function() { return web.screenSend(body, ticket); }, function(error) {
+          return {ok: false, error: {code: 'approval', message: error && error.message || answer.error.message}};
+        });
+      });
+    }
+    send().then(function(answer) {
+      if (!attached()) return;
+      if (dropThisSave(body)) { fail(failure('Simulated lost confirmation: the save reached KMS but its answer was dropped.', 'network')); return; }
+      if (answer.ok) {
+        if (save && answer.value && answer.value.outcome === 'saved') web.writeSucceeded();
+        succeed(routed.pick ? answer.value && answer.value[routed.pick] : answer.value); return;
+      }
+      const code = answer.error && answer.error.code, message = answer.error && answer.error.message || 'KMS could not finish this request.';
+      if (save && refusedBeforeKms.indexOf(code) >= 0) succeed({outcome: 'rejected', error: message, refusal: true});
+      else { const error = failure(message, code); if (refusals.indexOf(code) >= 0) error.kmsRefusal = true; fail(error); }
+    }, function(error) {
+      if (!attached()) return;
+      // No answer: for a save the outcome is unknown, and UiStatus checks it.
+      fail(failure(error && error.message || 'KMS could not be reached. Check the connection.', 'network'));
+    });
+  }
+
+  function runner(options) {
+    return new Proxy({}, {get: function(_target, name) {
+      if (name === 'withSuccessHandler') return function(handler) { return runner(Object.assign({}, options, {success: handler})); };
+      if (name === 'withFailureHandler') return function(handler) { return runner(Object.assign({}, options, {failure: handler})); };
+      if (name === 'withUserObject') return function(value) { return runner(Object.assign({}, options, {userObject: value})); };
+      return function() { dispatch(String(name), Array.from(arguments), options); };
+    }});
+  }
+
+  window.google = {script: {run: runner({}), host: {close: function() { web.closeScreen(); }, setWidth: function() {}, setHeight: function() {}}}};
+})();
+</script><style>
+ #kmsBrowserRecovery{position:fixed;left:22px;right:22px;bottom:80px;z-index:26;padding:12px 16px;background:#fff7e6;border:1px solid #d4b67b;border-radius:8px;font:14px/1.4 Arial,sans-serif;box-shadow:0 2px 10px #23374415}
+ #kmsBrowserRecovery p{margin:0 0 8px}#kmsBrowserRecovery button{margin:0 8px 0 0;padding:7px 10px}#kmsBrowserRecovery[hidden]{display:none}
+ @media print{#kmsBrowserRecovery{display:none!important}}
+</style>
+<script>
+// Recovery copies are local to this browser. They are never database records.
+window.KmsRecovery=(function(){
+ 'use strict';
+ const scope=window.KmsRecoveryContext,maxCopies=8,maxKeys=512,maxChars=750000;
+ const writer=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(16).slice(2);
+ // The web page's release (6B A2); null in Sheets. Each copy records it and
+ // its screen adapter's format, so a page never applies a copy it cannot read.
+ const release=Number.isSafeInteger(window.KmsWebRelease)?window.KmsWebRelease:null;
+ let lastText=null,lastOk=false;
+ let adapter,ownKey,storage,enabled=false,active=null,offered=new Set(),panel,timer,restoring=false,ready=false,copyFailed=false,initialized=false,suppressed=null,notice=false,storageFault=false,alive=true;
+ const prefix=scope&&scope.book&&scope.actor&&scope.screen?'KMS_RECOVERY_V1:'+scope.book+':'+scope.actor+':'+scope.screen+':':'';
+ function clone(value){return JSON.parse(JSON.stringify(value));}
+ function fields(ids){return ids.map(id=>{const el=document.getElementById(id);return el&&el.type!=='file'?[id,el.value,el.type==='checkbox'?el.checked:null]:null;}).filter(Boolean);}
+ function applyFields(values){(values||[]).forEach(([id,value,checked])=>{const el=document.getElementById(id);if(el&&el.type!=='file'){el.value=value;if(checked!==null)el.checked=checked;}});}
+ function take(state,keys){return Object.fromEntries(keys.map(key=>[key,clone(state[key]===undefined?null:state[key])]));}
+ function put(state,values){Object.keys(values).forEach(key=>state[key]=clone(values[key]));}
+ function show(text,actions){
+  notice=!active;
+  if(!document.body)return;
+  if(!panel){panel=document.createElement('aside');panel.id='kmsBrowserRecovery';panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');document.body.append(panel);}
+  panel.replaceChildren();const p=document.createElement('p');p.textContent=text;panel.append(p);
+  (actions||[]).forEach(([label,action])=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.addEventListener('click',guarded(action));panel.append(button);});
+  const footer=document.querySelector('.kms-activity-footer');panel.style.bottom=((footer?.getBoundingClientRect().height||66)+12)+'px';panel.hidden=false;
+ }
+ function hide(){notice=false;if(panel)panel.hidden=true;}
+ function guarded(fn,fallback){return function(...args){try{return fn(...args);}catch(error){storageFault=true;copyFailed=true;show('Browser recovery could not be accessed. Keep this window open until saves are confirmed; existing copies have not been discarded.',[]);return fallback;}};}
+ function read(key){const text=storage.getItem(key);try{if(!text)return null;const item=JSON.parse(text);if(item.schema!==1||item.book!==scope.book||item.actor!==scope.actor||item.screen!==scope.screen)return null;return item;}catch(error){return null;}}
+ function entries(){if(!enabled)return [];if(storage.length>maxKeys)throw Error('Browser recovery storage needs clearing');const keys=[];for(let i=0;i<storage.length;i++){const key=storage.key(i);if(key&&key.startsWith(prefix+'copy:'))keys.push(key);}return keys.map(key=>({key,item:read(key)})).filter(x=>x.item).sort((a,b)=>b.item.updated-a.item.updated);}
+ function init(){
+  if(initialized||!prefix)return;initialized=true;
+  if(['ConsoleDisplay','AllergenMatrix','OrderSheet'].includes(scope.screen))return;
+  try{storage=window.localStorage;const probe=prefix+'probe';storage.setItem(probe,writer);if(storage.getItem(probe)!==writer)throw Error('Read-back failed');storage.removeItem(probe);enabled=true;}
+  catch(error){enabled=false;show('Browser recovery is unavailable here. Keep this window open until saves are confirmed.',[]);}
+ }
+ function reserve(){
+  if(ownKey)return ownKey;
+  if(entries().length>=maxCopies)throw Error('Recovery copies are full. Restore or discard an earlier copy first.');
+  ownKey=prefix+'copy:'+writer;return ownKey;
+ }
+ function format(){return adapter&&Number.isSafeInteger(adapter.format)&&adapter.format>0?adapter.format:1;}
+ function write(item){
+  if(!enabled)return false;
+  item.release=release;if(item.draft)item.format=format();
+  try{const key=reserve(),text=JSON.stringify(item);if(text.length>maxChars)throw Error('Recovery copy is too large');storage.setItem(key,text);if(storage.getItem(key)!==text)throw Error('Recovery copy could not be verified');lastText=text;lastOk=true;return true;}
+  catch(error){lastOk=false;copyFailed=true;show('A browser recovery copy could not be kept. Your entries are still in this window. Keep it open until the save is confirmed.',active&&!active.item.operation?[['Discard earlier copy',discard],['Later',later]]:[['Review earlier copies',()=>{active=null;hide();offer();}]]);return false;}
+ }
+ function base(){return {schema:1,book:scope.book,actor:scope.actor,screen:scope.screen,writer,updated:Date.now(),draft:null,operation:null};}
+ function snapshot(){if(suppressed&&suppressed===JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id))))return null;if(!adapter||!adapter.ready()||!window.KmsStatus?.isDirty())return null;return {label:adapter.label(),value:clone(adapter.capture()),updated:Date.now()};}
+ function capture(){
+  clearTimeout(timer);if(!enabled||storageFault||restoring||!ready)return;
+  const draft=snapshot(),old=ownKey&&read(ownKey);
+  if(!draft&&!old?.operation){if(ownKey){storage.removeItem(ownKey);ownKey=null;}lastText=null;return;}
+  // Each window owns a separate key; another window's copy is never replaced.
+  if(old&&old.writer!==writer){ownKey=null;show('Another window is using this recovery slot. Keep your current form open.',[]);return;}
+  const item=old||base();item.updated=Date.now();
+  if(draft){const serial=JSON.stringify(draft.value);if(!item.draft||JSON.stringify(item.draft.value)!==serial)item.draft=draft;}
+  else if(!item.operation)item.draft=null;
+  write(item);
+ }
+ function schedule(){clearTimeout(timer);timer=setTimeout(guarded(capture),180);}
+ function operationStart(request){
+  if(!enabled||storageFault)return;
+  capture();const item=ownKey&&read(ownKey)||base();
+  item.operation={id:request.id,method:request.method,args:clone(request.args),started:Date.now(),draftAt:item.draft?.updated||0};item.updated=Date.now();write(item);
+ }
+ function keepDraftAfterSave(item,op,result){
+  if(item.draft&&/kmsSave(?:Prep|Dish)HtmlPhoto/.test(op.method)){
+   const state=item.draft.value.state;if(state?.recipe){['editToken','allergenReviewToken','photoFileId','photoFilename','photoStatus'].forEach(key=>{if(result[key]!==undefined)state.recipe[key]=result[key];});state.pendingPhotoChange=null;}
+   return !!state?.changed;
+  }
+  return !!(item.draft&&item.draft.updated>op.draftAt);
+ }
+ function operationEnd(request,outcome){
+  if(!enabled||!ownKey)return;
+  const item=read(ownKey);if(!item||item.writer!==writer||item.operation?.id!==request.id)return;
+  if(outcome.outcome==='resolved'){if(item.draft&&(outcome.resolution?.resolution==='Not saved, verified'||item.draft.updated>item.operation.draftAt)){item.operation=null;write(item);}else{storage.removeItem(ownKey);ownKey=null;}}else if(outcome.outcome==='saved'){
+   if(keepDraftAfterSave(item,item.operation,outcome.value||{})){item.operation=null;item.updated=Date.now();write(item);}
+   else{storage.removeItem(ownKey);ownKey=null;}
+  }else if(outcome.outcome==='rejected'){item.operation=null;item.updated=Date.now();write(item);}
+ }
+ // A copy from a newer page, or a draft format this screen has no explicit
+ // compatibility code for, is kept untouched: never applied, checked or deleted.
+ function newerRelease(item){return release!==null&&Number.isSafeInteger(item.release)&&item.release>release;}
+ function draftFormat(item){return item.format===undefined?1:item.format;}
+ function readable(item){const f=draftFormat(item);return f===format()||!!(adapter&&adapter.upgrade&&Object.prototype.hasOwnProperty.call(adapter.upgrade,f)&&typeof adapter.upgrade[f]==='function');}
+ function kept(item){
+  const newer=newerRelease(item)||Number.isSafeInteger(draftFormat(item))&&draftFormat(item)>format();
+  show(newer?'This entry was made with a newer KMS page. It is kept; open it after KMS is updated.':'This entry was made with a different KMS page and cannot be opened here. It is kept on this device.',[['Later',later]]);
+ }
+ function available(){return entries().find(x=>x.item.writer!==writer&&!offered.has(x.key));}
+ function offer(){
+  if(!enabled||active||notice||window.KmsStatus?.isBusy()||window.KmsStatus?.isDirty())return;
+  const next=available();if(!next)return;
+  active=next;const item=next.item;
+  if(newerRelease(item)){kept(item);return;}
+  if(item.operation){checkPrompt(item);return;}
+  if(!item.draft){storage.removeItem(next.key);active=null;offer();return;}
+  if(!ready||!adapter?.ready()){active=null;return;}
+  if(!readable(item)){kept(item);return;}
+  show('Recover unsaved '+item.draft.label+' from '+new Date(item.updated).toLocaleString()+'? Restoring brings back the form for review; it does not save it.',[['Restore edits',restore],['Discard copy',discard],['Later',later]]);
+ }
+ function checkPrompt(item){show('An earlier save for '+(item.draft?.label||'this screen')+' needs an outcome check. It will not be submitted again.',[['Check save outcome',check],['Later',later]]);}
+ // A save blocked by an unsettled earlier save must always lead back to its
+ // outcome check, even after Later or while the form has entries (item 7b).
+ function showPending(){
+  if(!enabled)return false;
+  if(active?.item.operation){if(!panel||panel.hidden)(newerRelease(active.item)?kept:checkPrompt)(active.item);return true;}
+  const next=entries().find(x=>x.item.operation);if(!next)return false;
+  offered.delete(next.key);active=next;(newerRelease(next.item)?kept:checkPrompt)(next.item);return true;
+ }
+ function later(){if(active)offered.add(active.key);active=null;hide();}
+ function discard(){
+  if(!active||active.item.operation||newerRelease(active.item)||active.item.draft&&!readable(active.item))return;
+  if(!confirm('Discard this browser recovery copy? Saved database records will not change.'))return;
+  storage.removeItem(active.key);active=null;hide();offer();
+ }
+ function restore(){
+  if(!active?.item.draft||active.item.operation||!adapter||!adapter.ready()||window.KmsStatus.isBusy()||newerRelease(active.item)||!readable(active.item))return;
+  if(window.KmsStatus.isDirty()&&!confirm('Restore this earlier copy and discard the current unsaved form?'))return;
+  const selected=active;restoring=true;
+  // An earlier format reaches the screen only through its compatibility code.
+  const f=draftFormat(selected.item),value=f===format()?clone(selected.item.draft.value):adapter.upgrade[f](clone(selected.item.draft.value));
+  try{adapter.restore(value);
+   // Retain the original copy until its restored successor is safely stored.
+   restoring=false;capture();const successor=ownKey&&read(ownKey);
+   if(successor?.draft)storage.removeItem(selected.key);
+   active=null;show('Edits restored for review. Nothing has been saved. If this record changed elsewhere, reload and compare before saving.',[['Dismiss',hide]]);
+  }catch(error){show('The copy could not be restored: '+(error.message||String(error))+'. It has been retained.',[['Later',later]]);}
+  finally{restoring=false;window.KmsStatus.refresh();}
+ }
+ function check(){
+  if(!active?.item.operation||newerRelease(active.item))return;
+  const selected=active,op=selected.item.operation,finish=window.KmsStatus.begin('Checking save…',false);
+  show('Checking the earlier save. No business changes are being repeated.',[]);
+  let finished=false;const timeout=setTimeout(()=>{if(finished||!alive)return;finished=true;finish(Error('Save outcome check timed out'));if(active===selected)show('The outcome check did not finish. The save has not been repeated.',[['Check again',check],['Later',later]]);},45000);
+  const complete=()=>{if(finished||!alive)return false;finished=true;clearTimeout(timeout);return true;};
+  google.script.run.withSuccessHandler(guarded(outcome=>{
+   if(!complete())return;finish();if(active!==selected)return;
+   if(outcome?.outcome==='resolved'){const retain=selected.item.draft&&(outcome.resolution?.resolution==='Not saved, verified'||selected.item.draft.updated>op.draftAt);if(retain){selected.item.operation=null;storage.setItem(selected.key,JSON.stringify(selected.item));}else storage.removeItem(selected.key);active=null;show('The workbook owner reconciled this save. '+(retain?'Your unsaved copy remains available for review.':'Open or reload the saved record before making another change.'),[['Dismiss',()=>{hide();offer();}]]);}
+   else if(outcome?.outcome==='saved'){
+    const result=outcome.value||{},record=result.record||result,id=record.id||record.key||result.id||'';
+    selected.item.operation=null;
+    if(keepDraftAfterSave(selected.item,op,result)){storage.setItem(selected.key,JSON.stringify(selected.item));active=null;show('The earlier save completed'+(id?' ('+id+')':'')+'. Unsaved edits remain available for review.',[['Review edits',()=>{hide();offer();}]]);}
+    else{storage.removeItem(selected.key);active=null;show('The earlier save completed'+(id?' ('+id+')':'')+'. Open or reload that saved record to see its current values.',[['Dismiss',()=>{hide();offer();}]]);}
+   }else if(outcome?.outcome==='rejected'){
+    // A rejected check is a definite answer: say so, then offer any draft (item 7a).
+    const item=selected.item,said='The earlier save did not happen. Nothing was saved by it.';item.operation=null;
+    if(!item.draft){storage.removeItem(selected.key);active=null;show(said+' You can enter the change again.',[['Dismiss',()=>{hide();offer();}]]);}
+    else{storage.setItem(selected.key,JSON.stringify(item));
+     if(ready&&adapter?.ready())show(said+' Recover unsaved '+item.draft.label+' from '+new Date(item.updated).toLocaleString()+'? Restoring brings back the form for review; it does not save it.',[['Restore edits',restore],['Discard copy',discard],['Later',later]]);
+     else{active=null;show(said+' Your unsaved copy remains available for review.',[['Dismiss',()=>{hide();offer();}]]);}}
+   }else show('This write is still unconfirmed. Keep this recovery copy and ask the workbook owner to investigate. Do not enter the same invoice or recipe again.',[['Check again',check],['Later',later]]);
+  })).withFailureHandler(guarded(error=>{if(!complete())return;finish(error);if(active===selected)show('The outcome check did not finish. The save has not been repeated.',[['Check again',check],['Later',later]]);})).kmsOperationStatus(op.method,op.args,op.id);
+ }
+ function refresh(){
+  if(!adapter){if(enabled){ready=true;offer();}return;}
+  if(!ready&&adapter.ready())ready=true;offer();
+  schedule();
+ }
+ function register(value){adapter=value;init();refresh();}
+ // Do not start network calls on every keypress or poll the database for drafts.
+ document.addEventListener('DOMContentLoaded',guarded(()=>{init();if(!adapter){ready=true;offer();}}),{once:true});
+ ['input','change','click'].forEach(type=>document.addEventListener(type,()=>Promise.resolve().then(guarded(refresh))));
+ window.addEventListener('pagehide',()=>{guarded(capture)();alive=false;});document.addEventListener('visibilitychange',guarded(()=>{if(document.hidden)capture();}));
+ window.addEventListener('beforeunload',event=>{guarded(capture)();if(window.KmsStatus?.isDirty()||window.KmsStatus?.isBusy()){event.preventDefault();event.returnValue='';}});
+ // True only when this window's latest copy was written and read back
+ // unchanged, and is still there; false after a storage fault, a failed
+ // write, or when recovery is unavailable (6B A2).
+ function persisted(){
+  if(!enabled||storageFault||!lastOk||!ownKey||lastText===null)return false;
+  return storage.getItem(ownKey)===lastText;
+ }
+ function discardCurrent(){const item=ownKey&&read(ownKey);if(item?.operation)return false;suppressed=JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id)));if(ownKey){storage.removeItem(ownKey);ownKey=null;}return true;}
+ return {discardCurrent:guarded(discardCurrent,false),suppressCurrent:()=>{suppressed=JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id)));},register:guarded(register),refresh:guarded(refresh),capture:guarded(capture),operationStart:guarded(operationStart),operationEnd:guarded(operationEnd),fields,applyFields,take,put,
+  persisted:guarded(persisted,false),hasPending:()=>!!active?.item.operation,showPending:guarded(showPending,false),pendingSaves:guarded(()=>storageFault||enabled&&entries().some(x=>x.item.operation),true),available:()=>enabled&&!copyFailed};
+})();
+</script>
+<style>
+  .kms-activity-footer {
+    position:fixed!important; inset:auto 0 0!important; width:auto!important; margin:0!important;
+    box-sizing:border-box; background:#fff; border-top:1px solid #d4e0e3;
+    padding:11px 22px!important; z-index:20; min-height:66px;
+  }
+  .kms-activity-actions { padding-right:344px; box-sizing:border-box; }
+  .kms-activity-footer.kms-activity-simple { padding-right:366px!important; }
+  .kms-activity-footer .kms-activity-actions { margin-top:0; }
+  body[data-kms-layout="console"] .kms-activity-footer { position:relative!important; inset:auto!important; flex:none; }
+  #kmsActivity {
+    position:absolute; right:22px; bottom:11px; height:44px; width:328px;
+    display:flex; align-items:center; justify-content:flex-end; gap:16px;
+    font:600 24px/1.3 Arial,Helvetica,sans-serif; color:#526973; white-space:nowrap;
+  }
+  #kmsActivity[data-state="busy"],#kmsActivity[data-state="maintenance"] { color:#186d70; }
+  #kmsActivity[data-state="warning"],#kmsActivity[data-state="dirty"] { color:#876018; }
+  #kmsActivity[data-state="success"] { color:#286c46; }
+  #kmsActivity[data-state="error"] { color:#9a3d33; }
+  .kms-activity-icon { width:28px; height:28px; box-sizing:border-box; flex:none; display:inline-flex; align-items:center; justify-content:center; }
+  #kmsActivity[data-state="busy"] .kms-activity-icon,#kmsActivity[data-state="maintenance"] .kms-activity-icon {
+    border:4px solid #d3e5e5; border-top-color:#186d70; border-radius:50%;
+    animation:kms-activity-spin .8s linear infinite;
+  }
+  #kmsActivity[data-state="maintenance"] > span:last-child { font-size:20px;line-height:1.1;white-space:pre-line; }
+  @keyframes kms-activity-spin { to { transform:rotate(360deg); } }
+  @media(prefers-reduced-motion:reduce) { #kmsActivity[data-state="busy"] .kms-activity-icon,#kmsActivity[data-state="maintenance"] .kms-activity-icon { animation-duration:2.4s; } }
+  @media(max-width:760px) {
+    .kms-activity-footer { padding-left:12px!important; padding-right:12px!important; }
+    /* On smaller displays give the larger status its own space below actions. */
+    .kms-activity-actions { padding-right:0; padding-bottom:58px; }
+    .kms-activity-footer.kms-activity-simple { padding-right:12px!important; }
+    body[data-kms-layout="console"] .kms-activity-footer { padding-bottom:66px!important; }
+    #kmsActivity { right:12px; width:min(328px, calc(100vw - 24px)); }
+  }
+  @media print {
+    .kms-activity-footer,#kmsActivity,#kmsSaveRecovery { display:none!important; }
+    .kms-activity-content { padding-bottom:0!important; }
+  }
+</style>
+<script>
+// History date changes are local: no server call and no draft data changes.
+window.KmsHistoryDates=(function(){
+  function yearFrom(value,direction){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return '';
+    const date=new Date(value+'T00:00:00Z');if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==value)return '';
+    const year=date.getUTCFullYear()+direction,month=date.getUTCMonth(),day=Math.min(date.getUTCDate(),new Date(Date.UTC(year,month+1,0)).getUTCDate());
+    return new Date(Date.UTC(year,month,day)).toISOString().slice(0,10);
+  }
+  function bind(from,to){
+    if(!from||!to)return;
+    from.addEventListener('change',function(){const end=yearFrom(from.value,1);if(end)to.value=end;});
+    to.addEventListener('change',function(){const end=yearFrom(from.value,1);if(to.value&&end&&(to.value<from.value||to.value>end))from.value=yearFrom(to.value,-1);});
+  }
+  document.addEventListener('DOMContentLoaded',function(){[['historyFrom','historyTo'],['fromDate','toDate']].forEach(ids=>bind(document.getElementById(ids[0]),document.getElementById(ids[1])));},{once:true});
+  return {yearFrom:yearFrom};
+})();
+// Native Apps Script runners are immutable. Wrap each chain rather than modifying
+// google.script.run, and finish only when its callback has finished as well.
+window.KmsStatus = (function() {
+  'use strict';
+  const pending = new Map();
+  let alive=true;window.addEventListener('pagehide',function(){alive=false;},{once:true});
+  let badge, label, icon, dirtyCheck = function() { return false; };
+  let nextId = 0, failure = '', savedUntil = 0, savedTimer, cycleWrote = false;
+  const recoverable = new Set(['kmsSavePrepHtmlRecipe','kmsSaveDishHtmlRecord','kmsSavePrepHtmlPhoto','kmsSaveDishHtmlPhoto',
+    'kmsSaveIngredientHtmlRecord','kmsSupplierSave','kmsInvoiceSave','kmsInvoiceVoid','kmsInvoiceSavePhoto','kmsInvoiceRemovePhoto','kmsStocktakeSave','kmsStocktakeCorrect',
+    'kmsWeeklySave','kmsWeeklyCorrect','kmsMenuPricingSave','kmsSettingsSave','kmsMarkSelectedAllergensReviewed',
+    'kmsMarkSupplierAllergensReviewed','kmsMarkIngredientAllergensReviewed','kmsMarkRecipeAllergensReviewed','kmsCostReviewMark']);
+  let unresolved = null, recoveryPanel;
+  let maintenance=window.KmsMaintenanceInitial||null,maintenanceTimer,maintenanceReading=false;
+  const maintenanceListeners=new Set();
+  function maintenanceOwner(){try{return window.parent!==window&&window.parent.KmsApp&&typeof window.parent.KmsStatus?.maintenance==='function'&&window.parent.KmsStatus||null;}catch(error){return null;}}
+  function maintenanceState(){const owner=maintenanceOwner();return owner?owner.maintenance():maintenance;}
+  // F: while a job runs, a last update over 3 minutes before the server's answer
+  // is shown as not recently confirmed (its time), instead of freezing or guessing.
+  // A fixed 24-hour HH:MM in the device's own time zone, whatever its language.
+  function clock(at){const d=new Date(at);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+  function maintenanceQuiet(value){const at=Date.parse(value?.updated||value?.latest?.updated||'');if(!(value?.capturing||value?.restoring)||!Number.isFinite(at)||!(value.observedAt-at>180000))return '';return clock(at);}
+  function scheduleMaintenance(){
+    clearTimeout(maintenanceTimer);const value=maintenanceState();
+    if(alive&&!maintenanceOwner()&&!document.hidden&&(value?.capturing||value?.restoring))maintenanceTimer=setTimeout(checkMaintenance,20000);
+  }
+  function setMaintenance(value){
+    const owner=maintenanceOwner();if(owner){owner.setMaintenance(value);return;}
+    if(!value||!Number.isFinite(value.observedAt))return;
+    // A refused answer changes nothing here; the poll that asked schedules the
+    // next one itself, so refusing never stops the polling.
+    // F: an answer with a lower status revision is older, whatever its time; an
+    // answer without one is judged by when the server read it, and keeps the
+    // revision already seen, so a later, older answer is still refused.
+    if(maintenance){const a=value.revision,b=maintenance.revision;
+      if(typeof a==='number'&&typeof b==='number'&&a!==b){if(a<b)return;}
+      else if(value.observedAt<maintenance.observedAt)return;
+      if(typeof a!=='number'&&typeof b==='number')value=Object.assign({},value,{revision:b});}
+    maintenance=value;render();maintenanceListeners.forEach(fn=>fn());scheduleMaintenance();
+  }
+  function checkMaintenance(){
+    if(!alive||maintenanceOwner()||maintenanceReading)return;maintenanceReading=true;let done=false;
+    const timeout=setTimeout(()=>failed(),45000);
+    function failed(){if(done||!alive)return;done=true;clearTimeout(timeout);maintenanceReading=false;if(maintenance)maintenance=Object.assign({},maintenance,{uncertain:true});render();maintenanceListeners.forEach(fn=>fn());scheduleMaintenance();}
+    try{google.script.run.withSuccessHandler(value=>{if(done||!alive)return;done=true;clearTimeout(timeout);maintenanceReading=false;setMaintenance(value);scheduleMaintenance();}).withFailureHandler(failed).kmsBackupActivity();}catch(error){failed();}
+  }
+  function observeMaintenance(method,result){
+    if(result?.activity)setMaintenance(result.activity);
+    else if(result?.backup?.activity)setMaintenance(result.backup.activity);
+    else if(/^kmsBackup(?:Start|Restore|Resume|Cancel)$/.test(method)&&result?.updated)setMaintenance({observedAt:Date.parse(result.updated),updated:result.updated,capturing:result.kind==='Backup'&&result.status==='Capturing',restoring:result.kind==='Restore'&&result.status==='Restoring',status:result.status,id:result.id});
+  }
+  window.addEventListener('pagehide',()=>{clearTimeout(maintenanceTimer);maintenanceListeners.clear();},{once:true});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(maintenanceTimer);else if(maintenanceState()?.capturing||maintenanceState()?.restoring)checkMaintenance();});
+  function formValues() {
+    return JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(function(input) {
+      return [input.id,input.name,input.value,input.type==='checkbox'?input.checked:null];
+    }));
+  }
+  function recoveryNotice(message, request) {
+    if(!recoveryPanel) {
+      recoveryPanel=document.createElement('div');recoveryPanel.id='kmsSaveRecovery';
+      recoveryPanel.style.cssText='position:fixed;left:22px;right:22px;bottom:80px;padding:12px 16px;background:#fff7e6;border:1px solid #d4b67b;border-radius:8px;z-index:25;font:14px/1.4 Arial,sans-serif;';
+      const explanation=document.createElement('span'),check=document.createElement('button');
+      check.type='button';check.textContent='Check save outcome';check.style.marginLeft='12px';
+      check.addEventListener('click',function(){if(unresolved&&unresolved.check&&!pending.size)unresolved.check();});
+      recoveryPanel.append(explanation,check);document.body.appendChild(recoveryPanel);
+    }
+    recoveryPanel.firstChild.textContent=message;recoveryPanel.hidden=false;
+    const footer=document.querySelector('.kms-activity-footer');
+    recoveryPanel.style.bottom=((footer&&footer.getBoundingClientRect().height||66)+12)+'px';
+    recoveryPanel.lastChild.hidden=!request;
+  }
+  function clearRecovery(request) {
+    request.completed=true;
+    if(unresolved===request)unresolved=null;
+    if(recoveryPanel)recoveryPanel.hidden=true;
+  }
+  function newOperationId() {
+    const bytes=new Uint8Array(16);window.crypto.getRandomValues(bytes);
+    return Date.now()+'-'+Array.from(bytes,function(value){return value.toString(16).padStart(2,'0');}).join('');
+  }
+  function dirty() { return !!dirtyCheck(); }
+  function render() {
+    if (!badge) return;
+    let text = 'Ready', kind = 'ready';
+    if (pending.size) {
+      const tasks = Array.from(pending.values());
+      const task = tasks.find(function(t) { return t.write; }) || tasks[tasks.length - 1];
+      text = task.label; kind = 'busy';
+    } else if (failure) { text = failure; kind = /^(Saved|Refused|Signed out)/.test(failure)?'warning':'error'; }
+    else if (maintenanceState()?.capturing||maintenanceState()?.restoring) {const value=maintenanceState();const quiet=maintenanceQuiet(value);text=value.uncertain?'Backup status unconfirmed\nCheck Settings':quiet?'Progress not recently confirmed\nLast update '+quiet:value.capturing?'Backup capturing…\nSaves paused':'Restoring backup…\nOriginal saves available';kind='maintenance';}
+    else if (dirty()) { text = 'Unsaved changes'; kind = 'dirty'; }
+    else if (Date.now() < savedUntil) { text = 'Saved'; kind = 'success'; }
+    if (badge.dataset.state !== kind) badge.dataset.state = kind;
+    const busyValue = kind === 'busy' || kind === 'maintenance' ? 'true' : 'false';
+    if (badge.getAttribute('aria-busy') !== busyValue) badge.setAttribute('aria-busy', busyValue);
+    // Avoid repeated live-region announcements on every keystroke or click.
+    if (label.textContent !== text) label.textContent = text;
+    const symbol = kind === 'success' ? '✓' : kind === 'error' ? '!' : kind === 'dirty' ? '•' : '';
+    if (icon.textContent !== symbol) icon.textContent = symbol;
+  }
+  function refresh() { Promise.resolve().then(function(){render();if(window.KmsRecovery)window.KmsRecovery.refresh();}); }
+  function begin(text, write) {
+    if (!pending.size) { failure = ''; savedUntil = 0; cycleWrote = false; clearTimeout(savedTimer); }
+    const id = ++nextId;
+    pending.set(id, {label:text, write:!!write}); render();
+    return function(error) {
+      // An await continuation may start its follow-up read. Keep that inside the
+      // same activity cycle, just like requests started directly in a callback.
+      Promise.resolve().then(function() {
+        const task = pending.get(id);
+        if (!task) return;
+        pending.delete(id);
+        if (error) failure = error.kmsRefusal ? (error.kmsCode==='session' ? 'Signed out' : 'Refused') : error.kmsOutcome==='unknown' ? 'Save unconfirmed' : error.kmsOutcome==='savedViewError' ? 'Saved; reload form' : task.label === 'Preparing photo…' ? 'Photo failed' : task.label === 'Processing backup…' ? 'Backup action failed' : task.write ? 'Save failed' : 'Load failed';
+        else if (task.write) { cycleWrote = true; try { document.dispatchEvent(new CustomEvent('kms-write-succeeded')); } catch (ignored) {} }
+        if (!pending.size && cycleWrote && !failure) {
+          savedUntil = Date.now() + 2500;
+          savedTimer = setTimeout(refresh, 2550);
+        }
+        refresh();
+      });
+    };
+  }
+  function operation(method, args) {
+    const write = /Save|Mark|Accept|Void|Correct|Archive|Delete|Remove|Finalis|Resolve/.test(method);
+    const payload = args[0];
+    const finalise = write && payload && payload.status === 'Finalised';
+    return {write:write, label:/^kmsBackup(?:Start|Restore|Resume|Cancel|Pin)$/.test(method)?'Processing backup…':method==='kmsRecoveryResolve'?'Reconciling…':method==='kmsDesktopShortcutInstaller' ? 'Preparing installer…' : finalise ? 'Finalising…' : /Void/.test(method) ? 'Voiding…' : /Accept/.test(method) || write && payload && payload.status === 'Accepted' ? 'Accepting…' : write ? 'Saving…' : /PreviewUsage/.test(method) ? 'Reviewing usage…' : 'Loading…'};
+  }
+  function run(options) {
+    options = options || {};
+    return new Proxy({}, {get:function(_target, method) {
+      if (method === 'withSuccessHandler') return function(handler) { return run(Object.assign({}, options, {success:handler})); };
+      if (method === 'withFailureHandler') return function(handler) { return run(Object.assign({}, options, {failure:handler})); };
+      if (method === 'withUserObject') return function(value) { return run(Object.assign({}, options, {userObject:value})); };
+      return function() {
+        const args = Array.from(arguments);
+        // Internal screen shortcuts stay inside the shared KMS window. Do not
+        // start a child RPC activity cycle before its navigation guard runs.
+        const navigation = window.KmsEmbedded && window.KmsEmbedded.navigateMethod(String(method));
+        if (navigation) {
+          Promise.resolve(navigation).then(function(result) { if (options.success) options.success(result, options.userObject); }, function(error) { if (options.failure) options.failure(error, options.userObject); else console.error(error); });
+          return;
+        }
+        const task = operation(String(method), args);
+        if(task.write&&maintenanceState()?.capturing){const error=new Error('Backup capture is in progress; saves are paused. Your edits remain in this form. Wait for capture to finish, then save again.');if(options.failure)options.failure(error,options.userObject);else console.error(error);render();return;}
+        let finish = options.background && !task.write ? function() {} : begin(task.label, task.write);
+        const started=Date.now();let suppliedInitial=false,settled=false,watchdog;
+        function stopWatchdog(){clearTimeout(watchdog);}
+        // 45 seconds of KMS time: on the web page, time in the owner's Google
+        // sign-in box does not count, and the resent request gets a full 45 seconds.
+        function arm(fire){stopWatchdog();const armed=Date.now();const tick=function(){const owner=window.KmsOwnerWait&&window.KmsOwnerWait();
+          if(owner&&owner.waiting){watchdog=setTimeout(tick,1000);return;}
+          const ended=owner&&owner.endedAt||0,left=ended>armed?45000-(Date.now()-ended):0;if(left>0){watchdog=setTimeout(tick,left);return;}fire();};
+          watchdog=setTimeout(tick,45000);}
+        function trace(outcome){if(window.KmsPerformanceEnabled)console.log('KMS browser '+String(method)+': '+(Date.now()-started)+(suppliedInitial?' ms initial response wait (':' ms round trip (')+outcome+')');}
+        const onFailure = function(error) {
+          if(!alive||!window.document||settled)return;if(!error||error.kmsOutcome!=='unknown')settled=true;stopWatchdog();
+          trace('failed');
+          try { if (options.failure) options.failure(error, options.userObject); else console.error(error); }
+          finally { finish(error || new Error('Request failed')); }
+        };
+        try {
+          const onSuccess = function(result) {
+            if(!alive||!window.document||settled)return;settled=true;stopWatchdog();
+            trace('completed');observeMaintenance(String(method),result);
+            let callbackError;const callbackStarted=Date.now();
+            try { if (options.success) options.success(result, options.userObject); }
+            catch (error) { callbackError = error; throw error; }
+            finally {
+              if(window.KmsPerformanceEnabled)console.log('KMS browser '+String(method)+': '+(Date.now()-callbackStarted)+' ms result handling');
+              finish(callbackError);
+            }
+          };
+          if(window.KmsSaveRecoveryEnabled&&recoverable.has(String(method))) {
+            if(!unresolved&&window.KmsRecovery?.pendingSaves()){const offered=window.KmsRecovery.showPending&&window.KmsRecovery.showPending();const blocked=new Error(offered?'An earlier save needs an outcome check first. Use Check save outcome in the recovery panel.':'An earlier save needs an outcome check before another change can be saved.');blocked.kmsRefusal=true;onFailure(blocked);return;}
+            const serial=JSON.stringify(args),key=String(method)+'|'+serial;
+            if(unresolved?.confirmed){const error=new Error('The earlier save completed. Reload the saved record before saving again.');error.kmsOutcome='savedViewError';onFailure(error);return;}
+            // A busy reply proves only that this delivery did nothing; another
+            // delivery of the same ID may have saved (Codex F3). The ID is kept
+            // until a receipt settles it: an unchanged form resends it, and a
+            // changed form first asks for its outcome.
+            if(unresolved&&unresolved.busy&&unresolved.key!==key) {
+              const earlier=unresolved;settled=true;
+              const notSent=function(text){settled=false;onFailure(new Error((text?text+' ':'')+'Your earlier save has not been confirmed yet, so this change was not sent. Your entries remain in this form. Try again in a moment.'));};
+              arm(function(){notSent('KMS did not answer.');});
+              google.script.run.withSuccessHandler(function(outcome){
+                if(!alive||!window.document||!settled)return;stopWatchdog();
+                const result=outcome&&outcome.outcome;
+                if(result==='rejected'){if(window.KmsRecovery)window.KmsRecovery.operationEnd(earlier,outcome);clearRecovery(earlier);finish();run(options)[method].apply(null,args);return;}
+                if(result==='saved'||result==='resolved'){settled=false;earlier.busy=false;earlier.confirmed=true;if(window.KmsRecovery)window.KmsRecovery.operationEnd(earlier,outcome);const error=new Error('The earlier save completed. Reload the saved record before saving again.');error.kmsOutcome='savedViewError';onFailure(error);return;}
+                if(result==='unknown'&&!outcome.busy){settled=false;earlier.busy=false;earlier.sent=true;const error=new Error((outcome.error||'The earlier save is unconfirmed.')+' Use Check save outcome before continuing.');error.kmsOutcome='unknown';recoveryNotice(error.message,earlier);onFailure(error);return;}
+                notSent(outcome&&outcome.error||'');
+              }).withFailureHandler(function(){if(!alive||!window.document||!settled)return;notSent('KMS could not check it.');})
+                .kmsOperationStatus(earlier.method,earlier.args,earlier.id);
+              return;
+            }
+            if(unresolved&&unresolved.busy){unresolved.busy=false;unresolved.sent=false;}
+            if(unresolved&&unresolved.key!==key) {
+              const error=new Error('An earlier save is unconfirmed. Check save outcome before making another change.');error.kmsOutcome='unknown';onFailure(error);return;
+            }
+            const request=unresolved||{id:newOperationId(),method:String(method),args:JSON.parse(serial),key:key,form:formValues()};
+            unresolved=request;
+            function unknown(error,reason) {
+              stopWatchdog();
+              if(!alive||!window.document||request.completed||request.confirmed)return;
+              request.failureReported=true;
+              const detail=new Error((reason?reason+' ':'')+'The save outcome is unconfirmed. Your entries remain in this form. Use Check save outcome before continuing.');
+              detail.kmsOutcome='unknown';recoveryNotice(detail.message,request);onFailure(detail);
+            }
+            function receive(outcome) {
+              if(!alive||!window.document||request.completed)return;
+              if(!outcome||!outcome.outcome){unknown();return;}
+              if(outcome.outcome==='resolved'){stopWatchdog();request.confirmed=true;if(window.KmsRecovery){window.KmsRecovery.operationEnd(request,outcome);window.KmsRecovery.suppressCurrent();}const error=new Error('The workbook owner has reconciled this save. Reload the saved record before making another change.');error.kmsOutcome='savedViewError';recoveryNotice(error.message,null);finish(error);return;}
+              if(outcome.outcome==='saved') {
+                stopWatchdog();request.confirmed=true;
+                if(window.KmsRecovery)window.KmsRecovery.operationEnd(request,outcome);
+                if(request.failureReported&&options.awaited||formValues()!==request.form) {
+                  const result=outcome.value||{},record=result.record||result;
+                  const detail=new Error('Saved'+(record.id?' as '+record.id:'')+'. '+(formValues()!==request.form?'Later edits remain unsaved. Copy those edits, then reload the saved record before saving again.':'Reload the saved record before continuing; the earlier request is already complete.'));
+                  detail.kmsOutcome='savedViewError';if(window.KmsRecovery)window.KmsRecovery.suppressCurrent();recoveryNotice(detail.message,null);finish(detail);return;
+                }
+                try{onSuccess(outcome.value);clearRecovery(request);if(outcome.warning){failure='Saved; check notice';recoveryNotice(outcome.warning,null);refresh();}}
+                catch(error){error.kmsOutcome='savedViewError';recoveryNotice('Your save completed, but the display could not refresh. Reload the saved record before saving again.',null);finish(error);console.error(error);}
+                return;
+              }
+              if(outcome.outcome==='rejected') {stopWatchdog();if(window.KmsRecovery)window.KmsRecovery.operationEnd(request,outcome);clearRecovery(request);const rejected=new Error(outcome.error||'Save rejected. No changes were made.');if(outcome.refusal)rejected.kmsRefusal=true;onFailure(rejected);return;}
+              // Busy: this delivery did nothing, but the save keeps its ID (see above).
+              if(outcome.outcome==='busy') {stopWatchdog();request.busy=true;if(recoveryPanel)recoveryPanel.hidden=true;const busy=new Error(outcome.error||'KMS is busy. Nothing was saved by this request. Try again in a moment.');busy.kmsRefusal=true;busy.kmsCode='busy';onFailure(busy);return;}
+              unknown(null,outcome.busy&&outcome.error);
+            }
+            function check() {
+              if(request.completed||request.confirmed)return;
+              arm(function(){unknown();});
+              google.script.run.withSuccessHandler(receive).withFailureHandler(unknown)
+                .kmsOperationStatus(request.method,request.args,request.id);
+            }
+            request.check=function(){settled=false;finish=begin('Checking save…',true);check();};
+            if(request.sent){check();return;}
+            request.sent=true;
+            if(window.KmsRecovery)window.KmsRecovery.operationStart(request);
+            arm(function(){recoveryNotice('This save is taking longer than usual. Checking its outcome; it will not be submitted again.',request);check();});
+            google.script.run.withSuccessHandler(receive).withFailureHandler(check)
+              .kmsOperationCall(request.method,request.args,request.id);
+            return;
+          }
+          arm(function(){onFailure(new Error(/^kmsBackup(?:Start|Restore|Resume|Cancel|Pin)$/.test(String(method))?'The backup request has not been confirmed. Check backup status before retrying; it may still be running.':'This load did not finish. Your current entries have not been replaced. Try loading again.'));});
+          const initial=window.KmsEmbedded&&window.KmsEmbedded.takeInitial&&window.KmsEmbedded.takeInitial(String(method),args);
+          if(initial) {
+            suppliedInitial=true;
+            Promise.resolve(initial.response || initial).then(function(outcome){
+              if(outcome.error)onFailure(new Error(outcome.error));else onSuccess(outcome.value);
+            });
+          } else {
+            const runner=google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure);
+            if(window.KmsPerformanceEnabled)runner.kmsPerformanceCall(String(method),args);
+            else runner[method].apply(runner,args);
+          }
+        } catch (error) { onFailure(error); }
+      };
+    }});
+  }
+  function mount() {
+    const body = document.body;
+    let footer = body.dataset.kmsFooter && document.querySelector(body.dataset.kmsFooter);
+    if (!footer) { footer = document.createElement('footer'); body.appendChild(footer); footer.className = 'kms-activity-simple'; }
+    footer.classList.add('kms-activity-footer');
+    const actions = body.dataset.kmsActions && document.querySelector(body.dataset.kmsActions);
+    if (actions) { footer.classList.remove('kms-activity-simple'); if (!footer.contains(actions)) footer.appendChild(actions); actions.classList.add('kms-activity-actions'); }
+    else footer.classList.add('kms-activity-simple');
+    // Long explanations belong in the content, so they cannot cover the badge or
+    // make a save/failure resize the action bar. Retain the existing message ID.
+    const detail = body.dataset.kmsDetail && document.querySelector(body.dataset.kmsDetail);
+    if (detail && footer.contains(detail)) {
+      const content = document.querySelector(body.dataset.kmsContent || 'main') || body;
+      content.appendChild(detail); detail.style.cssText = 'display:block;margin:12px 0;font-size:12px;line-height:1.4;';
+    }
+    badge = document.createElement('div'); badge.id = 'kmsActivity'; badge.setAttribute('role','status'); badge.setAttribute('aria-live','polite'); badge.setAttribute('aria-atomic','true');
+    icon = document.createElement('span'); icon.className = 'kms-activity-icon'; icon.setAttribute('aria-hidden','true');
+    label = document.createElement('span'); badge.append(icon,label); footer.appendChild(badge);
+    const content = document.querySelector(body.dataset.kmsContent || 'main') || body;
+    content.classList.add('kms-activity-content');
+    // Console already has a flex layout and a separate scrolling main pane.
+    function fit() { if (body.dataset.kmsLayout !== 'console') content.style.paddingBottom = (footer.getBoundingClientRect().height + 22) + 'px'; }
+    fit(); window.addEventListener('resize',fit);
+    if (window.ResizeObserver) new ResizeObserver(fit).observe(footer);
+    if (detail) new MutationObserver(refresh).observe(detail,{childList:true,subtree:true,characterData:true});
+    ['input','change','click'].forEach(function(event) { document.addEventListener(event,refresh); });
+    const owner=maintenanceOwner();if(owner){const unsubscribe=owner.subscribeMaintenance(render);window.addEventListener('pagehide',unsubscribe,{once:true});if(window.KmsMaintenanceInitial)owner.setMaintenance(window.KmsMaintenanceInitial);}else scheduleMaintenance();
+    render();
+  }
+  document.addEventListener('DOMContentLoaded',mount,{once:true});
+  return {maintenance:maintenanceState,maintenanceQuiet:maintenanceQuiet,clock:clock,setMaintenance:setMaintenance,subscribeMaintenance:function(fn){const owner=maintenanceOwner();if(owner)return owner.subscribeMaintenance(fn);maintenanceListeners.add(fn);return ()=>maintenanceListeners.delete(fn);},run:run, begin:begin, refresh:refresh, isDirty:dirty, hasUnsaved:function() { return dirty()||Array.from(pending.values()).some(function(task){return task.write;})||!!(unresolved&&!unresolved.confirmed)||!!(window.KmsRecovery&&window.KmsRecovery.hasPending()); }, isBusy:function() { return pending.size>0||!!(unresolved&&!unresolved.confirmed&&!unresolved.busy)||!!(window.KmsRecovery&&window.KmsRecovery.hasPending()); }, setDirtyCheck:function(check) { dirtyCheck = check; refresh(); }};
+})();
+</script>
+</head><body data-kms-footer=".footer" data-kms-actions=".footer-inner" data-kms-detail="#status" data-kms-content=".shell">
+<div class="shell"><div class="top"><div><h1>Weekly sales and GP</h1><p class="small muted">Dry sales, Accepted invoices and stock counts for one reporting period.</p></div><div class="actions"><button id="newBtn" class="secondary">Current period</button><button id="refreshBtn" class="secondary">Refresh period</button><button id="historyBtn" class="secondary">Report history</button><button id="printBtn" class="secondary">Print GP report</button></div></div>
+<section id="historyPanel" class="panel" hidden><div class="heading"><h2>Finalised reports</h2><button id="closeHistory" class="secondary">Close history</button></div><div class="filters"><div><label for="historyFrom">From closing date</label><input id="historyFrom" type="date"></div><div><label for="historyTo">To closing date</label><input id="historyTo" type="date"></div><button id="searchHistory">Search</button></div><div id="historyRows" class="table-wrap"></div><div class="pages"><button id="prevPage" class="secondary">Previous</button><span id="pageLabel" class="small"></span><button id="nextPage" class="secondary">Next</button></div></section>
+<section class="panel"><div class="fields"><div class="span2"><label for="openingInfo">Opening stock · carried forward</label><input id="openingSelect" type="hidden"><input id="openingInfo" readonly></div><div><label for="closingInfo">Closing stock count</label><input id="closingDate" type="hidden"><input id="closingInfo" readonly></div><div><label for="draftSelect">Draft reports to resume</label><select id="draftSelect"></select><button id="loadBtn" class="secondary" style="margin-top:7px;width:100%">Load draft</button></div></div><p id="recordInfo" class="small muted" style="margin:12px 0 0">Loading…</p><div id="periodInfo" class="notice"></div><div id="correctionPanel" class="notice warning" hidden><label for="correctionReason">Why is this report being corrected?</label><input id="correctionReason" maxlength="500" placeholder="Required reason, recorded with the replacement"></div><div id="warning" class="notice warning" hidden></div></section>
+<section class="panel" id="readinessPanel"><div class="heading"><h2>Ready to finalise</h2><button id="refreshReviews" class="secondary" type="button">Refresh review prompts</button></div><div id="readinessItems" class="readiness-list small"></div></section>
+<section class="panel"><h2>Dry-sales takings</h2><div class="fields"><div><label for="takings">Total dry takings</label><input id="takings" type="number" min="0" step="0.01" placeholder="Enter period total"></div><div><label for="basis">Takings entered</label><select id="basis"><option>Including tax</option><option>Excluding tax</option></select></div><div><label for="taxRate">Sales tax rate (%)</label><input id="taxRate" type="number" min="0" max="100" step="0.01"></div><div><label for="invoiceTax">Invoice Tax/VAT adjustments</label><select id="invoiceTax"><option value="Exclude Tax/VAT adjustments">Exclude from food cost</option><option value="Include Tax/VAT adjustments">Include in food cost</option></select></div></div><p class="small muted" style="margin:12px 0 0">Tax settings apply to this report. The invoice option applies only to separately recorded Tax/VAT adjustments; ingredient pack prices are used as recorded.</p></section>
+<section class="panel"><div class="heading"><h2>GP report</h2><span id="currencyInfo" class="small muted"></span></div><div class="metrics"><div class="metric">Opening stock<strong id="openingValue">—</strong></div><div class="metric">Purchases used for GP<strong id="purchases">—</strong></div><div class="metric">Closing stock<strong id="closingValue">—</strong></div><div class="metric">Food used<strong id="foodUsed">—</strong></div><div class="metric">Dry takings entered<strong id="takingsValue">—</strong></div><div class="metric">Net dry sales<strong id="netSales">—</strong></div><div class="metric">Gross profit<strong id="grossProfit">—</strong></div><div class="metric gp">GP<strong id="gp">—</strong></div></div><p id="formulaInfo" class="small muted"></p><details><summary>Accepted invoice breakdown</summary><p id="invoiceInfo" class="small muted" style="margin-top:10px"></p><div class="table-wrap"><table><thead><tr><th>Date</th><th>Invoice</th><th>Supplier</th><th class="right">Printed total</th><th class="right">Cost used</th></tr></thead><tbody id="invoiceRows"></tbody></table></div></details></section>
+
+<section class="panel" id="salesPanel"><div class="heading"><h2>Dish quantities sold</h2><button id="zeroBtn" class="secondary">Set unentered sales to 0</button></div><p class="small muted">These quantities drive expected-usage reporting. Recipe costs use current Active Prep revisions until finalised. Takings come from your entered total; dish quantities are not used to reconstruct revenue.</p><div class="filters"><div><label for="dishSearch">Find dish</label><input id="dishSearch" type="search" placeholder="Dish name"></div><label class="check"><input id="showArchived" type="checkbox">Show archived dishes</label></div><div class="table-wrap"><table><thead><tr><th>Dish</th><th class="qty">Quantity sold</th><th class="right">Recipe cost per dish</th><th class="right">Recipe food cost</th></tr></thead><tbody id="salesRows"></tbody></table></div><p id="salesInfo" class="small muted" style="margin:10px 0 0"></p><label for="notes" style="margin-top:15px">Period notes</label><textarea id="notes" maxlength="3000" placeholder="Optional notes"></textarea></section>
+<section class="panel" id="usagePanel"><div class="heading"><h2>Expected versus actual usage</h2><div class="actions"><button id="reviewUsageBtn" class="secondary">Review usage</button><button id="printUsageBtn" class="secondary" disabled>Print usage report</button></div></div><p class="small muted">Purchase units throughout, including ingredients held in counted Prep. Actual = opening + deliveries − closing. Positive variance means more used than recorded dish sales predict; it is not automatically waste.</p><div id="usageNotice" class="notice">Review usage after entering dish sales.</div><div class="filters" style="margin-top:12px"><div><label for="usageSearch">Find ingredient</label><input id="usageSearch" type="search" placeholder="Ingredient name"></div><label class="check"><input id="usageReviewOnly" type="checkbox">Review flags only</label><div><label for="usageSort">Sort usage</label><select id="usageSort"><option value="name">Ingredient name</option><option value="costDesc">Variance cost: high to low</option><option value="costAsc">Variance cost: low to high</option><option value="impact">Largest cost difference (either sign)</option></select></div></div><p id="usageSummary" class="small muted"></p><div class="table-wrap"><table><thead><tr><th>Ingredient</th><th>Unit</th><th class="right">Opening</th><th class="right">Received</th><th class="right">Closing</th><th class="right">Actual</th><th class="right">Expected</th><th class="right">Variance</th><th class="right">Variance %</th><th class="right">Variance cost</th></tr></thead><tbody id="usageRows"></tbody></table></div><p class="small muted" style="margin:10px 0 0">Review flags: negative actual usage, usage without recorded sales, or at least 5% variance worth at least 1 currency unit. Variance cost uses saved usual purchase cost, not a stock GP reconciliation. Printing follows the current search, filter and sort order.</p></section>
+</div><div class="footer"><div class="footer-inner"><button id="correctBtn" class="secondary" hidden>Correct report</button><button id="saveBtn" class="secondary">Save draft</button><button id="finaliseBtn">Finalise report</button><span id="status" class="status" role="status" aria-live="polite"></span></div></div><div id="printArea"></div>
+<script>
+'use strict';const $=id=>document.getElementById(id);const state={record:null,context:null,rows:[],invoices:[],counts:[],drafts:[],needsCorrection:[],reviewPrompts:null,reviewLoading:false,sourcesChanged:false,defaults:null,dirty:false,busy:false,correcting:false,offset:0,total:0,usage:null,explanations:{}};
+  KmsStatus.setDirtyCheck(function() { return !!(state.dirty); });
+const blank=v=>v===''||v===null||v===undefined;const editable=()=>state.correcting||!state.record||state.record.status==='Draft';const round=n=>Math.round((n+Number.EPSILON)*100)/100;
+const currency=()=>state.record&&state.record.currency||state.context&&state.context.currency||'£';const money=n=>blank(n)?'—':currency()+Number(n).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});const percent=n=>blank(n)?'—':(Number(n)*100).toFixed(2)+'%';const txt=(tag,value,cls)=>{const e=document.createElement(tag);e.textContent=value;if(cls)e.className=cls;return e;};const rpc=(method,arg,background=false)=>new Promise((resolve,reject)=>{const started=performance.now();KmsStatus.run({background,awaited:true}).withSuccessHandler(value=>{console.log('KMS weekly browser '+method+': '+Math.round(performance.now()-started)+' ms');resolve(value);}).withFailureHandler(reject)[method](arg);});
+function message(value,error){$('status').textContent=value;$('status').style.color=error?'#9a3d33':'#28565d';}function warn(value){$('warning').textContent=value;$('warning').hidden=!value;}function leave(){return !state.dirty||confirm('Continue without saving your period changes?');}
+function busy(value){state.busy=value;document.querySelectorAll('button,input,select,textarea').forEach(e=>e.disabled=value);if(!value){readOnly();$('refreshReviews').disabled=state.reviewLoading;}}
+function readOnly(){const fixed=!editable();['takings','basis','taxRate','invoiceTax','notes','refreshBtn','zeroBtn'].forEach(id=>$(id).disabled=fixed||!state.context&&editable());document.querySelectorAll('#salesRows input').forEach(e=>e.disabled=fixed);$('saveBtn').hidden=fixed||state.correcting;$('finaliseBtn').hidden=fixed;$('finaliseBtn').textContent=state.correcting?'Save corrected report':'Finalise report';$('correctBtn').hidden=!state.record||!['Finalised','Needs correction'].includes(state.record.status)||state.correcting;$('zeroBtn').hidden=fixed;$('saveBtn').disabled=!state.context;$('finaliseBtn').disabled=!state.context||!state.context.closing;$('reviewUsageBtn').disabled=fixed||!state.context||state.correcting;$('printUsageBtn').disabled=!state.usage||!state.usage.ready;$('printBtn').disabled=editable()&&(!state.context||!state.context.closing);if(!state.context&&editable()&&state.counts.length)$('refreshBtn').disabled=false;$('openingSelect').disabled=true;$('closingDate').disabled=true;$('openingInfo').disabled=true;$('closingInfo').disabled=true;if(state.correcting){$('openingSelect').disabled=true;$('closingDate').disabled=true;$('refreshBtn').disabled=true;}}
+function markDirty(){state.dirty=true;state.usage=null;renderUsage();metadata();}function metadata(){const r=state.record;$('recordInfo').textContent=r?r.id+' · '+r.status+(state.dirty?' · Unsaved changes':''):'New period · Not saved';}
+function merge(items,old){const previous=new Map((old||[]).map(l=>[l.item?l.item.id:l.id,l]));return items.map(item=>{const row=previous.get(item.id);return {item:item,quantity:row&&!blank(row.quantity)?row.quantity:'',cost:row?row.cost:null};});}
+function selections(){const id=state.record&&state.record.status==='Draft'?state.record.id:'';$('draftSelect').replaceChildren(new Option('Choose a saved draft',''));state.drafts.forEach(r=>$('draftSelect').add(new Option(r.from+' → '+r.to+' · '+r.id,r.id)));$('draftSelect').value=id;}
+function showContext(context){state.context=context;$('openingSelect').value=context.opening.id;$('closingDate').value=context.to;$('openingInfo').value=context.opening.id+' · '+context.opening.date;$('closingInfo').value=context.closing?context.closing.id+' · '+context.to:'Pending · expected '+context.to;state.invoices=context.invoices;$('periodInfo').textContent='Period: after '+context.opening.date+' through '+context.to+' (inclusive). Opening '+context.opening.id+'. '+(context.closing?'Closing '+context.closing.id+'.':'Closing stock count pending. GP becomes available once that count is finalised.');$('currencyInfo').textContent='Currency: '+context.currency;warn(context.draftInvoices.length?context.draftInvoices.length+' Draft invoice(s) in this period: '+context.draftInvoices.join(', ')+'. Resolve these before finalising.':'');}
+function renderReadiness(){
+ const box=$('readinessItems');box.replaceChildren();const fixed=state.record&&!editable(),ctx=state.context;
+ function item(label,action,title,warning){const row=txt('div','',warning?'readiness-item warn':'readiness-item');row.append(txt('span',label));if(action){const button=txt('button',title||'Open','secondary');button.type='button';button.addEventListener('click',action);row.append(button);}box.append(row);}
+ function openScreen(method){if(!leave())return;rpc(method).catch(e=>message(e.message||String(e),true));}
+ if(!fixed){
+  if(!state.counts.length)item('Opening count pending. Finalise an opening stock count first.',()=>openScreen('kmsOpenStockCount'),'Open stock count',true);
+  else if(ctx)item('Opening count '+ctx.opening.id+' · '+ctx.opening.date+'.',null,'',false);
+  else item('The current period could not be loaded. Refresh it or review the stock count chain.',()=>openScreen('kmsOpenStockCount'),'Open stock count',true);
+  if(ctx&&!ctx.closing)item('Closing count for '+ctx.to+' is pending.',()=>openScreen('kmsOpenStockCount'),'Open stock count',true);
+  else if(ctx)item('Closing count '+ctx.closing.id+' is finalised.',null,'',false);
+  if(ctx&&(ctx.draftInvoices||[]).length)item(ctx.draftInvoices.length+' Draft invoice(s) need resolving: '+ctx.draftInvoices.join(', ')+'.',()=>openScreen('kmsOpenInvoiceEntry'),'Open invoice entry',true);
+  else if(ctx)item('No unresolved invoice drafts in this period.',null,'',false);
+  const missing=state.rows.filter(r=>r.item.status==='Active'&&blank(r.quantity)).length;
+  if(ctx&&missing)item(missing+' Active dish sale quantities are blank.',()=>{$('salesPanel').scrollIntoView({behavior:'smooth'});$('dishSearch').focus();},'Enter sales',true);
+  else if(ctx)item('Active dish sale quantities are complete.',null,'',false);
+  if(ctx&&blank($('takings').value))item('Enter dry takings for this period.',()=>$('takings').focus(),'Enter takings',true);
+ if(state.sourcesChanged)item('Counts, invoices or recipes changed since this draft was saved.',()=>refresh(),'Refresh period',true);
+  const review=state.reviewPrompts;
+  if(state.reviewLoading)item('Checking allergen and cost reviews…',null,'',false);
+  else if(review){
+   if(review.allergenError)item('Allergen review status could not be checked.',()=>openScreen('kmsOpenAllergenReview'),'Open allergen review',true);
+   else if(review.allergens)item(review.allergens+' allergen source record(s) need review.',()=>openScreen('kmsOpenAllergenReview'),'Review allergens',true);
+   if(review.costError)item('Cost review status could not be checked.',()=>openScreen('kmsOpenCostReview'),'Open cost review',true);
+   else if(review.cost&&!review.cost.baselineSet)item('Set the first cost review baseline.',()=>openScreen('kmsOpenCostReview'),'Review costs',true);
+   else if(review.cost&&review.cost.changed)item(review.cost.changed+' ingredient, Prep or Dish cost record(s) changed since the last review.',()=>openScreen('kmsOpenCostReview'),'Review costs',true);
+  }
+ }
+ if(state.needsCorrection.length)item(state.needsCorrection.length+' prior report(s) need correction.',()=>load(state.needsCorrection[0].id),'Open '+state.needsCorrection[0].id,true);
+ if(fixed&&!state.needsCorrection.length)item('This report is a fixed historical snapshot.',null,'',false);
+ if(!box.children.length)item('Select a period to see what remains.',null,'',false);
+}
+async function loadReviewPrompts(includeCost=true){
+ if(state.reviewLoading)return;state.reviewLoading=true;$('refreshReviews').disabled=true;renderReadiness();
+ try{const result=await rpc('kmsWeeklyReviewPrompts',{allergensOnly:!includeCost},true);if(window.KmsEmbedded&&parent.document.getElementById('screenFrame').contentWindow!==window)return;state.reviewPrompts=Object.assign({},state.reviewPrompts||{},result,{cost:includeCost?result.cost:state.reviewPrompts?.cost||null,costError:includeCost?result.costError:state.reviewPrompts?.costError||''});}
+ catch(e){state.reviewPrompts=Object.assign({},state.reviewPrompts||{},{allergenError:String(e.message||e),costError:includeCost?String(e.message||e):state.reviewPrompts?.costError||''});}
+ finally{state.reviewLoading=false;if(!window.KmsEmbedded||parent.document.getElementById('screenFrame').contentWindow===window){$('refreshReviews').disabled=false;renderReadiness();}}
+}
+function preview(){if(!editable())return state.record;const c=state.context;if(!c)return {};const takings=blank($('takings').value)?null:Number($('takings').value),rate=Number($('taxRate').value)/100,basis=$('basis').value,include=$('invoiceTax').value==='Include Tax/VAT adjustments';const ingredient=round(c.invoices.reduce((s,i)=>s+i.ingredient,0)),other=round(c.invoices.reduce((s,i)=>s+i.other,0)),tax=round(c.invoices.reduce((s,i)=>s+i.tax,0)),purchases=round(ingredient+other+(include?tax:0)),netSales=takings===null?null:round(basis==='Including tax'?takings/(1+rate):takings),closingValue=c.closing?c.closing.total:null,foodUsed=closingValue===null?null:round(c.opening.total+purchases-closingValue),grossProfit=netSales===null||foodUsed===null?null:round(netSales-foodUsed);return {takings,netSales,purchases,openingValue:c.opening.total,closingValue,foodUsed,grossProfit,gp:grossProfit===null||netSales===0?null:grossProfit/netSales,ingredientPurchases:ingredient,otherAdjustments:other,invoiceTaxAmount:tax};}
+function metrics(){const r=preview();['openingValue','purchases','closingValue','foodUsed','netSales','grossProfit'].forEach(id=>$(id).textContent=money(r[id]));$('takingsValue').textContent=money(r.takings);$('gp').textContent=percent(r.gp);$('formulaInfo').textContent='Food used = opening stock + purchases − closing stock. Gross profit = net dry sales − food used. Stock values use usual prices captured at each count; invoice costs use recorded amounts.'+(r.netSales===0?' GP percentage is unavailable when net sales are zero.':'')+(r.foodUsed<0?' Food used is negative: review counts and purchases; price changes can also affect this valuation.':'');metadata();renderReadiness();}
+function invoices(){const body=$('invoiceRows');body.replaceChildren();state.invoices.forEach(i=>{const cost=editable()?round(i.ingredient+i.other+($('invoiceTax').value==='Include Tax/VAT adjustments'?i.tax:0)):i.cost;const tr=document.createElement('tr');[i.date,i.number+' · '+i.id,i.supplier].forEach(v=>tr.append(txt('td',v)));tr.append(txt('td',money(i.printed),'right'),txt('td',money(cost),'right'));body.append(tr);});$('invoiceInfo').textContent=state.invoices.length+' Accepted invoice(s). Draft and Voided invoices are excluded.';}
+function sales(){const body=$('salesRows');body.replaceChildren();const search=$('dishSearch').value.toLocaleLowerCase();const rows=state.rows.filter(r=>(!search||r.item.name.toLocaleLowerCase().includes(search))&&($('showArchived').checked||r.item.status==='Active'||Number(r.quantity)>0));rows.forEach(r=>{const item=r.item,tr=document.createElement('tr'),name=document.createElement('td');name.append(txt('div',item.name));name.append(txt('div',item.status+' · revision '+item.key.split('-v').pop(),'detail'));if(item.issue)name.append(txt('div',item.issue,'detail'));const td=document.createElement('td'),input=document.createElement('input');input.type='number';input.min='0';input.step='any';input.inputMode='decimal';input.value=blank(r.quantity)?'':r.quantity;input.setAttribute('aria-label',item.name+' sold');input.placeholder='—';input.disabled=!editable();td.className='qty';td.append(input);const cost=txt('td','','right');const update=()=>{const amount=editable()?(blank(r.quantity)?null:round(Number(r.quantity)*(item.unitCost||0))):r.cost;cost.textContent=money(amount);};input.addEventListener('input',()=>{r.quantity=input.value;markDirty();update();salesProgress();});tr.append(name,td,txt('td',money(item.unitCost),'right'),cost);update();body.append(tr);});if(!rows.length){const tr=document.createElement('tr'),td=txt('td','No dishes match these filters.','empty');td.colSpan=4;tr.append(td);body.append(tr);}salesProgress();}
+function salesProgress(){const active=state.rows.filter(r=>r.item.status==='Active'),entered=active.filter(r=>!blank(r.quantity)).length;$('salesInfo').textContent=entered+' / '+active.length+' Active dishes entered. Archived dishes can be included if sold during the period. All entered rows are saved, including those hidden by filters.';renderReadiness();}
+function plusWeek(date){const d=new Date(date+'T12:00:00Z');d.setUTCDate(d.getUTCDate()+7);return d.toISOString().slice(0,10);}
+async function initialise(){if(!leave())return;busy(true);message('Loading current period…');try{const data=await rpc('kmsWeeklyCurrent');state.record=data.record||null;state.correcting=false;$('correctionPanel').hidden=true;state.context=null;state.usage=data.usage||null;state.explanations=Object.fromEntries((state.usage?.rows||[]).filter(x=>x.explanationReason||x.explanationNote).map(x=>[x.id,{reason:x.explanationReason||'',note:x.explanationNote||''}]));state.rows=[];state.invoices=[];state.counts=data.counts;state.drafts=data.drafts;state.defaults=data.defaults;state.needsCorrection=data.needsCorrection||[];state.sourcesChanged=!!data.sourcesChanged;state.dirty=false;state.reviewPrompts={cost:data.costReviews||null,costError:data.costError||'',allergens:null,allergenError:''};const r=state.record;$('takings').value=r&&!blank(r.takings)?r.takings:'';$('basis').value=r?r.basis:data.defaults.basis;$('taxRate').value=(r?r.taxRate:data.defaults.taxRate)*100;$('invoiceTax').value=r?r.invoiceTax:data.defaults.invoiceTax;$('notes').value=r?r.notes:'';selections();warn('');if(data.context){showContext(data.context);state.rows=merge(data.context.dishes,data.sales||[]);if(state.sourcesChanged)warn('Period sources or the closing count changed since this draft was saved. Review the refreshed values.');}else{$('openingSelect').value='';$('closingDate').value='';$('openingInfo').value='Opening count pending';$('closingInfo').value='Pending';$('periodInfo').textContent='Finalise an opening stock count through Stock Count first.';}renderUsage();sales();invoices();metrics();message(r?'Current draft loaded.':'Ready.');}catch(e){message(e.message||String(e),true);$('periodInfo').textContent='Current period could not be loaded: '+(e.message||String(e));}finally{busy(false);}loadReviewPrompts(!state.reviewPrompts?.cost&&!state.reviewPrompts?.costError);}
+
+async function refresh(){if(!editable()||state.busy)return;let refreshed=false;busy(true);message('Refreshing period…');try{const data=await rpc('kmsWeeklyCurrent',{id:state.record&&state.record.id||'',openingId:state.context?.opening.id||''}),context=data.context;if(!context)throw Error('Finalise an opening stock count first.');state.reviewPrompts=Object.assign({},state.reviewPrompts||{},{cost:data.costReviews,costError:data.costError||''});showContext(context);state.rows=merge(context.dishes,state.rows);state.sourcesChanged=false;markDirty();sales();invoices();metrics();message('Period refreshed. Review the values before saving.');refreshed=true;}catch(e){state.context=null;state.usage=null;renderUsage();state.invoices=[];metrics();invoices();$('periodInfo').textContent='Period could not be loaded: '+(e.message||String(e));message(e.message||String(e),true);}finally{busy(false);}if(refreshed)loadReviewPrompts(true);}
+async function load(id){if(!id||!leave())return;let draftLoaded=false;busy(true);message('Loading report…');try{const data=await rpc('kmsWeeklyGetRecord',id),r=data.record;state.record=r;state.sourcesChanged=!!data.sourcesChanged;state.correcting=false;$('correctionPanel').hidden=true;state.dirty=false;state.usage=data.usage||null;state.explanations=Object.fromEntries((state.usage?.rows||[]).filter(x=>x.explanationReason||x.explanationNote).map(x=>[x.id,{reason:x.explanationReason||'',note:x.explanationNote||''}]));$('openingSelect').value=r.openingId;$('closingDate').value=r.to;$('openingInfo').value=r.openingId+' · '+r.from;$('closingInfo').value=(r.closingId||'Pending')+' · '+r.to;$('takings').value=blank(r.takings)?'':r.takings;$('basis').value=r.basis;$('taxRate').value=r.taxRate*100;$('invoiceTax').value=r.invoiceTax;$('notes').value=r.notes;warn('');if(r.status!=='Draft'){state.context=null;state.rows=data.sales.map(s=>({item:s,quantity:s.quantity,cost:s.cost}));state.invoices=data.invoices;$('periodInfo').textContent='Period: after '+r.from+' through '+r.to+'. Opening '+r.openingId+'; closing '+r.closingId+'. Fixed finalised snapshot.';$('currencyInfo').textContent='Currency: '+r.currency;}else{showContext(data.context);if(data.costReviews||data.costError)state.reviewPrompts=Object.assign({},state.reviewPrompts||{},{cost:data.costReviews,costError:data.costError||''});state.rows=merge(data.context.dishes,data.sales);draftLoaded=true;if(data.sourcesChanged)warn('Counts, invoices or recipes changed since this draft was saved. Review the refreshed values.');}selections();sales();invoices();metrics();renderUsage();message(r.status==='Draft'?'Draft loaded.':r.status==='Needs correction'?'Report needs correction because a stock count was replaced.':r.status==='Superseded'?'Superseded report · historical snapshot.':'Finalised report · read-only.');}catch(e){message(e.message||String(e),true);}finally{busy(false);}if(draftLoaded)loadReviewPrompts(true);}
+async function save(finalise){if(state.busy||!editable()||!state.context)return;if(state.correcting){await saveCorrection();return;}const missing=state.rows.filter(r=>r.item.status==='Active'&&blank(r.quantity));if(finalise&&missing.length){message('Enter dish sales or 0 for '+missing.length+' Active dishes.',true);return;}if(finalise&&!confirm('Finalise this GP report? Its counts, invoices, sales and calculated values will be fixed.'))return;const payload={id:state.record&&state.record.id||'',version:state.record&&state.record.version||0,openingId:$('openingSelect').value,to:$('closingDate').value,status:finalise?'Finalised':'Draft',takings:$('takings').value,basis:$('basis').value,taxRate:Number($('taxRate').value)/100,invoiceTax:$('invoiceTax').value,notes:$('notes').value,sourceToken:state.context.sourceToken,sales:state.rows.map(r=>({id:r.item.id,quantity:r.quantity})),explanations:explanationPayload(),preserveSavedExplanations:true,usageSourceToken:state.usage?.sourceToken||''};busy(true);message(finalise?'Finalising report…':'Saving draft…');try{const data=await rpc('kmsWeeklySave',payload);state.record=data.record;state.sourcesChanged=false;state.dirty=false;state.usage=data.usage||null;state.rows=data.sales.map(s=>({item:s,quantity:s.quantity,cost:s.cost}));state.invoices=data.invoices;state.drafts=state.drafts.filter(r=>r.id!==data.record.id);if(!finalise)state.drafts.push(data.record);selections();sales();invoices();metrics();renderUsage();message(finalise?'Report finalised. Values are now fixed.':'Draft saved.');}catch(e){message('Save failed. Your edits are still here: '+(e.message||String(e)),true);}finally{busy(false);}}
+function beginCorrection(){if(!state.record||!['Finalised','Needs correction'].includes(state.record.status)||state.busy)return;state.correcting=true;state.context={opening:{id:state.record.openingId,date:state.record.from,total:state.record.openingValue},closing:{id:state.record.closingId,total:state.record.closingValue},to:state.record.to,currency:state.record.currency,invoices:state.invoices};$('correctionReason').value='';$('correctionPanel').hidden=false;warn('The original remains in history. This correction retains saved dish costs and invoice lines. Ingredient usage is recalculated from saved recipe quantities when you save. Review variance explanations again.');state.explanations={};if(state.usage)state.usage.rows.forEach(r=>{r.explanationReason='';r.explanationNote='';});renderUsage();sales();invoices();metrics();readOnly();$('correctionReason').focus();}
+async function saveCorrection(){const reason=$('correctionReason').value.trim();if(reason.length<8){message('Enter a clear correction reason (at least 8 characters).',true);return;}if(state.rows.some(r=>blank(r.quantity))){message('Enter sales for every saved dish, including 0.',true);return;}if(!confirm('Save a replacement report and keep '+state.record.id+' as the original?'))return;
+ const payload={id:state.record.id,version:state.record.version,reason,notes:$('notes').value,takings:$('takings').value,basis:$('basis').value,taxRate:Number($('taxRate').value)/100,invoiceTax:$('invoiceTax').value,sales:state.rows.map(r=>({id:r.item.id,quantity:r.quantity})),explanations:explanationPayload()};busy(true);message('Saving correction…');try{const result=await rpc('kmsWeeklyCorrect',payload);state.dirty=false;state.needsCorrection=state.needsCorrection.filter(r=>r.id!==result.corrects);await load(result.id);message('Corrected report '+result.id+' saved. Original '+result.corrects+' remains in history.');}catch(e){message('Correction failed. Your edits are still here: '+(e.message||String(e)),true);}finally{busy(false);}}
+async function loadHistory(offset){if(state.busy)return;busy(true);try{const data=await rpc('kmsWeeklySearchHistory',{from:$('historyFrom').value,to:$('historyTo').value,offset});if(data.dateWindow){$('historyFrom').value=data.dateWindow.from;$('historyTo').value=data.dateWindow.to;}state.offset=data.offset;state.total=data.total;const wrap=$('historyRows');wrap.replaceChildren();const table=document.createElement('table'),head=document.createElement('thead'),tr=document.createElement('tr');['Period','Report','Status','Net sales','Gross profit','GP',''].forEach(t=>tr.append(txt('th',t)));head.append(tr);table.append(head);const body=document.createElement('tbody');data.items.forEach(r=>{const row=document.createElement('tr');[r.from+' → '+r.to,r.id,r.status,(r.currency||'£')+Number(r.netSales).toFixed(2),(r.currency||'£')+Number(r.grossProfit).toFixed(2),percent(r.gp)].forEach(v=>row.append(txt('td',v)));const td=document.createElement('td'),button=txt('button','Open');button.addEventListener('click',()=>load(r.id));td.append(button);row.append(td);body.append(row);});table.append(body);wrap.append(table);$('pageLabel').textContent=data.total?(offset+1)+'–'+Math.min(offset+25,data.total)+' of '+data.total:'0 reports';message('');}catch(e){message(e.message||String(e),true);}finally{busy(false);$('prevPage').disabled=state.offset===0;$('nextPage').disabled=state.offset+25>=state.total;}}
+function printReport(){const r=preview();if(blank(r.foodUsed))return;const fixed=!editable(),record=state.record,c=state.context,from=fixed?record.from:c.opening.date,to=fixed?record.to:c.to;const area=$('printArea');area.replaceChildren(txt('h1','KMS — Weekly GP report'),txt('p','Dry sales · after '+from+' through '+to+' · '+(fixed?record.id+' · '+record.status:'DRAFT — current preview')));const table=document.createElement('table');[['Opening stock',r.openingValue],['Purchases used for GP',r.purchases],['Closing stock',r.closingValue],['Food used',r.foodUsed],['Dry takings entered',r.takings],['Net dry sales',r.netSales],['Gross profit',r.grossProfit],['GP',percent(r.gp)]].forEach(([name,value])=>{const row=document.createElement('tr');if(['Food used','Gross profit','GP'].includes(name))row.className='emphasis';row.append(txt('td',name),txt('td',name==='GP'?value:money(value),'right'));table.append(row);});area.append(table,txt('p','Takings: '+$('basis').value+'; sales tax '+$('taxRate').value+'%. '+$('invoiceTax').value+'.','small'),txt('p','Food used = opening stock + purchases − closing stock. Stock values use usual prices captured at each count; invoice amounts are as recorded.','small'));if($('notes').value)area.append(txt('p',$('notes').value,'small'));window.print();}
+const quantity=n=>blank(n)?'—':Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
+function usageFlag(r){return r.actual< -1e-7||r.expected<=1e-7&&r.actual>1e-7||!blank(r.variancePercent)&&Math.abs(r.variancePercent)>=0.05-1e-10&&Math.abs(r.varianceCost)>=1;}
+function visibleUsage(){
+ if(!state.usage)return [];const search=$('usageSearch').value.toLocaleLowerCase(),order=$('usageSort').value;
+ const rows=state.usage.rows.filter(r=>(!search||r.name.toLocaleLowerCase().includes(search))&&(!$('usageReviewOnly').checked||usageFlag(r)));
+ return rows.sort((a,b)=>{
+  const byName=()=>a.name.localeCompare(b.name)||String(a.id).localeCompare(String(b.id));
+  if(order==='name')return byName();
+  const av=blank(a.varianceCost)?NaN:Number(a.varianceCost),bv=blank(b.varianceCost)?NaN:Number(b.varianceCost);
+  // Unavailable costs belong after measured values, including negative ones.
+  if(!Number.isFinite(av)||!Number.isFinite(bv))return Number(!Number.isFinite(av))-Number(!Number.isFinite(bv))||byName();
+  const difference=order==='costAsc'?av-bv:order==='costDesc'?bv-av:Math.abs(bv)-Math.abs(av);
+  return difference||byName();
+ });
+}
+const explanationReasons=['Waste','Staff food','Portioning','Count error','Delivery error','Sales entry','Other'];
+function explanationPayload(){return Object.entries(state.explanations).map(([id,v])=>({id,reason:v.reason||'',note:v.note||''}));}
+function renderUsage(){const data=state.usage,body=$('usageRows');body.replaceChildren();$('printUsageBtn').disabled=state.busy||!data||!data.ready;$('usageSummary').textContent='';$('usageNotice').textContent=!data?'Review usage after entering or changing dish sales.':data.fixed?'Fixed finalised usage snapshot.':data.ready?'DRAFT preview — all inputs complete. Values will be fixed when the report is finalised.':data.pending+'. Expected quantities reflect entered sales only; this comparison is incomplete.';
+ if(data&&data.issues.length)$('usageNotice').textContent+=' '+data.issues.join(' ');$('usageNotice').className='notice'+(data&&!data.ready?' warning':'');if(!data)return;
+ const rows=visibleUsage();rows.forEach(r=>{const tr=document.createElement('tr'),name=txt('td',r.name);if(usageFlag(r))name.append(txt('div',r.review,'detail'));tr.append(name,txt('td',r.unit));['opening','delivered','closing','actual','expected','variance'].forEach(k=>tr.append(txt('td',quantity(r[k]),'right')));tr.append(txt('td',percent(r.variancePercent),'right'),txt('td',money(r.varianceCost),'right'));if(usageFlag(r))tr.style.color=r.variance>0?'#8a4135':'#305b78';body.append(tr);
+  const saved=state.explanations[r.id]||{reason:r.explanationReason||'',note:r.explanationNote||''};
+  if(usageFlag(r)||saved.reason||saved.note){const detail=txt('tr','', 'explain'),cell=document.createElement('td');cell.colSpan=10;const wrap=txt('div','', 'explain-fields');wrap.append(txt('span','Explanation (optional)','explain-label'));
+   if(editable()){const select=document.createElement('select');select.setAttribute('aria-label','Variance reason for '+r.name);select.append(new Option('Choose a reason',''));explanationReasons.forEach(reason=>select.add(new Option(reason,reason)));select.value=saved.reason||'';const note=document.createElement('input');note.type='text';note.maxLength=500;note.placeholder='Brief investigation note';note.setAttribute('aria-label','Variance note for '+r.name);note.value=saved.note||'';function update(){state.explanations[r.id]={reason:select.value,note:note.value};state.dirty=true;metadata();}select.addEventListener('change',update);note.addEventListener('input',update);wrap.append(select,note);}
+   else wrap.append(txt('span',[saved.reason,saved.note].filter(Boolean).join(' · ')||'No explanation recorded.'));cell.append(wrap);detail.append(cell);body.append(detail);}
+ });
+ if(!rows.length){const tr=document.createElement('tr'),td=txt('td','No ingredient rows match these filters.','empty');td.colSpan=10;tr.append(td);body.append(tr);}const flags=data.rows.filter(usageFlag).length;$('usageSummary').textContent=rows.length+' / '+data.rows.length+' ingredients shown · '+flags+' review flags'+(data.ready?' · Net variance cost '+money(data.varianceCost):'');}
+async function reviewUsage(){if(state.busy||!state.context||!editable())return;busy(true);message('Reviewing usage…');try{state.usage=await rpc('kmsWeeklyPreviewUsage',{id:state.record&&state.record.id||'',openingId:$('openingSelect').value,to:$('closingDate').value,sourceToken:state.context.sourceToken,sales:state.rows.map(r=>({id:r.item.id,quantity:r.quantity})),explanations:explanationPayload(),preserveSavedExplanations:true});renderUsage();message(state.usage.ready?'Usage preview ready.':'Usage preview is incomplete; check the notice.');}catch(e){state.usage=null;renderUsage();message(e.message||String(e),true);}finally{busy(false);}}
+function printUsage(){const data=state.usage;if(!data||!data.ready)return;const fixed=!editable(),record=state.record,ctx=state.context,area=$('printArea'),from=fixed?record.from:ctx.opening.date,to=fixed?record.to:ctx.to;area.replaceChildren(txt('h1','KMS — Ingredient usage'),txt('p','After '+from+' through '+to+' · '+(fixed?record.id+' · '+record.status:'DRAFT preview')),txt('p','Purchase units, including counted Prep. Actual = opening + received − closing. Variance = actual − expected. Positive is more used, not automatically waste.','small'));
+ const table=document.createElement('table'),head=document.createElement('thead'),hr=document.createElement('tr');['Ingredient','Unit','Opening','Received','Closing','Actual','Expected','Variance','Var %','Var cost'].forEach(h=>hr.append(txt('th',h)));head.append(hr);table.append(head);const body=document.createElement('tbody');visibleUsage().forEach(r=>{const tr=document.createElement('tr');tr.append(txt('td',r.name),txt('td',r.unit));['opening','delivered','closing','actual','expected','variance'].forEach(k=>tr.append(txt('td',quantity(r[k]),'right')));tr.append(txt('td',percent(r.variancePercent),'right'),txt('td',money(r.varianceCost),'right'));body.append(tr);const explained=state.explanations[r.id]||r;if(explained.reason||explained.note||explained.explanationReason||explained.explanationNote){const note=txt('tr',''),cell=txt('td','Review: '+[explained.reason||explained.explanationReason,explained.note||explained.explanationNote].filter(Boolean).join(' · '));cell.colSpan=10;note.append(cell);body.append(note);}});table.append(body);area.append(table,txt('p',visibleUsage().length+' / '+data.rows.length+' ingredients shown. Search/filter: '+($('usageSearch').value||'none')+'; review flags only: '+($('usageReviewOnly').checked?'yes':'no')+'; sort: '+$('usageSort').selectedOptions[0].textContent+'. Variance cost uses saved usual purchase prices; delivery charges and valuation movements are not included.','small'));const style=document.createElement('style');style.id='usagePrintStyle';style.textContent='@media print{@page{size:A4 landscape;margin:12mm}#printArea{font-size:8pt}#printArea h1{font-size:16pt}#printArea th{font-size:7pt;white-space:normal}#printArea td{padding:4px 3px}#printArea th:first-child{width:23%}#printArea thead{display:table-header-group}#printArea tr{break-inside:avoid}}';document.head.append(style);try{window.print();}finally{style.remove();}}
+$('reviewUsageBtn').addEventListener('click',reviewUsage);$('printUsageBtn').addEventListener('click',printUsage);$('usageSearch').addEventListener('input',renderUsage);$('usageReviewOnly').addEventListener('change',renderUsage);$('usageSort').addEventListener('change',renderUsage);
+$('newBtn').addEventListener('click',initialise);$('refreshBtn').addEventListener('click',refresh);$('loadBtn').addEventListener('click',()=>load($('draftSelect').value));['takings','basis','taxRate','invoiceTax'].forEach(id=>$(id).addEventListener(id==='takings'||id==='taxRate'?'input':'change',()=>{markDirty();metrics();invoices();}));$('notes').addEventListener('input',markDirty);$('correctionReason').addEventListener('input',markDirty);$('correctBtn').addEventListener('click',beginCorrection);$('saveBtn').addEventListener('click',()=>save(false));$('finaliseBtn').addEventListener('click',()=>save(true));$('dishSearch').addEventListener('input',sales);$('showArchived').addEventListener('change',sales);$('zeroBtn').addEventListener('click',()=>{const missing=state.rows.filter(r=>blank(r.quantity));if(missing.length&&confirm('Set all '+missing.length+' unentered dish quantities to 0, including hidden rows?')){missing.forEach(r=>r.quantity=0);markDirty();sales();}});$('historyBtn').addEventListener('click',()=>{$('historyPanel').hidden=false;loadHistory(0);});$('closeHistory').addEventListener('click',()=>{$('historyPanel').hidden=true;});$('searchHistory').addEventListener('click',()=>loadHistory(0));$('prevPage').addEventListener('click',()=>loadHistory(Math.max(0,state.offset-25)));$('nextPage').addEventListener('click',()=>loadHistory(state.offset+25));$('printBtn').addEventListener('click',printReport);window.addEventListener('beforeunload',e=>{if(state.dirty){e.preventDefault();e.returnValue='';}});$('refreshReviews').addEventListener('click',()=>loadReviewPrompts(true));if(window.KmsRecovery)KmsRecovery.register({ready:()=>!!(state.context||state.record),label:()=> 'weekly report '+(state.record?.id||state.context?.to||''),
+ capture:()=>({state:KmsRecovery.take(state,['record','context','rows','invoices','correcting','usage','explanations','sourcesChanged']),fields:KmsRecovery.fields(['openingSelect','closingDate','takings','basis','taxRate','invoiceTax','notes','correctionReason'])}),
+ restore:copy=>{KmsRecovery.put(state,copy.state);state.busy=false;if(state.context)showContext(state.context);KmsRecovery.applyFields(copy.fields);state.dirty=true;$('correctionPanel').hidden=!state.correcting;selections();sales();invoices();metrics();renderUsage();metadata();readOnly();}
+});
+initialise();
+</script></body></html>

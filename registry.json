@@ -1,4 +1,12 @@
 {
  "schema": 1,
- "versions": []
+ "versions": [
+  {
+   "version": "0.9.0-step6.5",
+   "release": 1,
+   "source": "d98dfe5c604d21440afba7b155e62f6909772d38",
+   "tree": "6c59f2c5c642e1ab1ee23f54d0ae318ad2aacddc",
+   "hash": "61259cb18138e183648588e9578932a4cf1b11e4db393917ff1a4060f3ba6574"
+  }
+ ]
 }
