@@ -22,6 +22,21 @@ const ROOT_FILES = ['public/404.html', 'public/_headers', 'public/index.html', '
 // is a deliberate owner act outside the ruleset, recorded in the LOG.
 const LOCKED = path => path.startsWith('.github/') || path === 'wrangler.jsonc';
 const WITHDRAWN_CODES = ['defect', 'security'];
+// The approved public/_headers (D8, A1), byte for byte: the security policy on
+// every path, the root and policy revalidated, version folders immutable. Any
+// other text fails, so a change to the policy is a change to this check, which
+// is an owner act. tools/build-web.cjs writes the same text (tested).
+const HEADERS = [
+  '/*',
+  "  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; frame-src 'self' https://accounts.google.com/gsi/; img-src 'self' data: blob:; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'self'",
+  '  X-Content-Type-Options: nosniff',
+  '  Referrer-Policy: strict-origin-when-cross-origin',
+  '/', '  Cache-Control: no-cache',
+  '/index.html', '  Cache-Control: no-cache',
+  '/404.html', '  Cache-Control: no-cache',
+  '/policy.json', '  Cache-Control: no-store',
+  '/ui/*', '  Cache-Control: public, max-age=31536000, immutable'
+].join('\n') + '\n';
 const MANIFEST_KEYS = ['schema', 'version', 'release', 'source', 'screens', 'files', 'hash'];
 const ENTRY_KEYS = ['version', 'release', 'source', 'tree', 'hash'];
 // The outgoing-content scan (A6). Patterns are assembled so this file never
@@ -88,28 +103,17 @@ function scanText(text, extra) {
   return found;
 }
 
+// Reading JSON says only whether it was read: {ok, value}. Valid JSON can be
+// null, false or 0, so every caller then checks the value's shape itself.
 function parseJson(snap, path, errors) {
-  try { return JSON.parse(snap.read(path).toString('utf8')); } catch (e) { errors.push(path + ' is not readable JSON.'); return null; }
+  try { return {ok: true, value: JSON.parse(snap.read(path).toString('utf8'))}; } catch (e) { errors.push(path + ' is not readable JSON.'); return {ok: false}; }
 }
 
-/** The published list built into the root page (6B D2). */
+/** The published list built into the root page (6B D2), as {ok, value}. */
 function publishedList(snap, errors) {
   const text = snap.read('public/index.html').toString('utf8'), lines = text.match(/^ *const PUBLISHED = (.*);\r?$/mg) || [];
-  if (lines.length !== 1) { errors.push('public/index.html must hold one published list.'); return null; }
-  try { return JSON.parse(lines[0].replace(/^ *const PUBLISHED = /, '').replace(/;\r?$/, '')); } catch (e) { errors.push('public/index.html has an unreadable published list.'); return null; }
-}
-
-function headerRules(text) {
-  const rules = {};
-  let current = null;
-  text.split(/\r?\n/).forEach(line => {
-    if (!line.trim() || /^\s*#/.test(line)) return;
-    if (!/^\s/.test(line)) { current = rules[line.trim()] = rules[line.trim()] || {}; return; }
-    const match = line.match(/^\s+([A-Za-z0-9-]+):\s*(.*)$/);
-    if (!match || !current) throw Error('unreadable line');
-    current[match[1]] = match[2];
-  });
-  return rules;
+  if (lines.length !== 1) { errors.push('public/index.html must hold one published list.'); return {ok: false}; }
+  try { return {ok: true, value: JSON.parse(lines[0].replace(/^ *const PUBLISHED = /, '').replace(/;\r?$/, ''))}; } catch (e) { errors.push('public/index.html has an unreadable published list.'); return {ok: false}; }
 }
 
 /**
@@ -133,8 +137,8 @@ function checkState(snap, extraScan) {
   if (errors.length) return {errors, registry: null};
 
   // The registry: one fixed entry per published version, releases rising.
-  const registry = parseJson(snap, 'registry.json', errors);
-  if (!registry) return {errors, registry: null};
+  const registryRead = parseJson(snap, 'registry.json', errors), registry = registryRead.value;
+  if (!registryRead.ok) return {errors, registry: null};
   if (!keysAre(registry, ['schema', 'versions']) || registry.schema !== 1 || !Array.isArray(registry.versions)) return {errors: errors.concat('registry.json must be {schema:1, versions:[...]}.'), registry: null};
   let top = 0;
   registry.versions.forEach((entry, i) => {
@@ -159,8 +163,8 @@ function checkState(snap, extraScan) {
     if (!inside.length) return;
     if (snap.tree(base.slice(0, -1)) !== entry.tree) errors.push(name + ' differs from the folder registered for it.');
     if (!inside.includes('manifest.json') || !inside.includes('index.html')) { errors.push(name + ' needs index.html and manifest.json.'); return; }
-    const manifest = parseJson(snap, base + 'manifest.json', errors);
-    if (!manifest) return;
+    const manifestRead = parseJson(snap, base + 'manifest.json', errors), manifest = manifestRead.value;
+    if (!manifestRead.ok) return;
     if (!keysAre(manifest, MANIFEST_KEYS) || manifest.schema !== 1 || !isObject(manifest.files) || !Array.isArray(manifest.screens)) { errors.push(name + ' has a manifest in the wrong form.'); return; }
     if (manifest.version !== entry.version || manifest.release !== entry.release || manifest.source !== entry.source) errors.push(name + '\'s manifest does not match its registry entry.');
     const listed = Object.keys(manifest.files), actual = inside.filter(p => p !== 'manifest.json');
@@ -174,11 +178,11 @@ function checkState(snap, extraScan) {
 
   // The root page lists exactly the registered versions.
   const published = publishedList(snap, errors);
-  if (published && !sameJson(published, registry.versions.map(e => ({version: e.version, release: e.release})))) errors.push('public/index.html must list exactly the versions in registry.json, in order.');
+  if (published.ok && (!Array.isArray(published.value) || !sameJson(published.value, registry.versions.map(e => ({version: e.version, release: e.release}))))) errors.push('public/index.html must list exactly the versions in registry.json, in order.');
 
   // The withdrawal policy (A1): fixed codes for registered versions only.
-  const policy = parseJson(snap, 'public/policy.json', errors);
-  if (policy) {
+  const policyRead = parseJson(snap, 'public/policy.json', errors), policy = policyRead.value;
+  if (policyRead.ok) {
     if (!keysAre(policy, ['schema', 'updated', 'withdrawn']) || policy.schema !== 1 || typeof policy.updated !== 'string' || policy.updated.length > 40 || !isObject(policy.withdrawn)) errors.push('public/policy.json must be {schema:1, updated, withdrawn:{}}.');
     else Object.entries(policy.withdrawn).forEach(([version, code]) => {
       if (!registry.versions.some(e => e.version === version)) errors.push('public/policy.json withdraws ' + JSON.stringify(version).slice(0, 40) + ', which is not published.');
@@ -186,13 +190,8 @@ function checkState(snap, extraScan) {
     });
   }
 
-  // Headers (D8, A1): the policy everywhere, no caching for the root and policy.
-  try {
-    const rules = headerRules(snap.read('public/_headers').toString('utf8')), csp = (rules['/*'] || {})['Content-Security-Policy'] || '';
-    if (!/(^|; )default-src 'none'(;|$)/.test(csp) || !/(^|; )frame-ancestors 'self'(;|$)/.test(csp)) errors.push('public/_headers must keep the content security policy on every path.');
-    if ((rules['/policy.json'] || {})['Cache-Control'] !== 'no-store') errors.push('public/_headers must keep policy.json uncached.');
-    if ((rules['/'] || {})['Cache-Control'] !== 'no-cache' || (rules['/index.html'] || {})['Cache-Control'] !== 'no-cache') errors.push('public/_headers must keep the root page revalidated.');
-  } catch (e) { errors.push('public/_headers is not readable.'); }
+  // Headers (D8, A1): exactly the approved rules, nothing added, removed or reordered.
+  if (!snap.read('public/_headers').equals(Buffer.from(HEADERS, 'utf8'))) errors.push('public/_headers must be exactly the approved security and caching rules.');
 
   // The scan (A6) on every file except pinned vendor files.
   paths.forEach(path => {
@@ -220,7 +219,7 @@ function checkChange(base, head, extraScan) {
   });
   const after = checkState(head, extraScan);
   errors.push(...after.errors);
-  if (!after.registry) return errors;
+  if (!after.registry) return errors.length ? errors : ['registry.json could not be checked.'];
   const old = before.registry.versions, now = after.registry.versions;
   if (now.length < old.length || !sameJson(now.slice(0, old.length), old)) errors.push('Existing registry.json entries cannot change or be removed.');
   old.forEach(entry => {
@@ -261,7 +260,7 @@ function main(argv) {
   return report('Release check ' + base.slice(0, 12) + '..' + head.slice(0, 12), checkChange(snapshot(dir, base), snapshot(dir, head)));
 }
 
-module.exports = {checkState, checkChange, scanText, snapshot, git, VERSION_PATTERN, VENDOR_PINS, FOLDER_FILE, ROOT_FILES, LOCKED, SCAN};
+module.exports = {checkState, checkChange, scanText, snapshot, git, HEADERS, VERSION_PATTERN, VENDOR_PINS, FOLDER_FILE, ROOT_FILES, LOCKED, SCAN};
 if (require.main === module) {
   try { process.exitCode = main(process.argv.slice(2)) ? 0 : 1; } catch (e) { console.log('Release check could not run: ' + e.message); process.exitCode = 1; }
 }
