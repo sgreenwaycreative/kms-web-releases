@@ -28,6 +28,13 @@
    "source": "3dd277f2a6c545bd45dd9d671ae572407c373740",
    "tree": "76d43680db7f63b05816dede9ef223674db6d0c6",
    "hash": "57a31bb5bb9e6b0a0cce589da04fa129c16166e3233d14f9f708982ee1fa4c67"
+  },
+  {
+   "version": "0.9.0-step6.9",
+   "release": 5,
+   "source": "a193bfe7d337af12fd5e1710600de7de2f13edc5",
+   "tree": "443629ceba68162735ea9405f016a9fa15ea8ba1",
+   "hash": "0c2080d02f9e4b5032a52376a4a298dff3c383b578fcb46408a6250165faa074"
   }
  ]
 }
