@@ -13,11 +13,20 @@ const crypto = require('crypto');
 
 const BRANCH = 'main';
 const VERSION_PATTERN = /^\d+\.\d+\.\d+(-[a-z0-9.]{1,24})?$/;
-// Files in a version folder: the page, its manifest, screens and pinned vendor files.
-const FOLDER_FILE = /^(index\.html|manifest\.json|screens\/[A-Za-z][A-Za-z0-9]{0,63}\.html|vendor\/[a-z0-9][a-z0-9.-]{0,63}\.js)$/;
-// Vendored files are checked by their exact hash instead of the content scan.
+// Files in a version folder: the page, its manifest, screens, pinned vendor
+// files, and exactly the named fonts and their licences (UI pass part 1).
+const FOLDER_FILE = /^(index\.html|manifest\.json|screens\/[A-Za-z][A-Za-z0-9]{0,63}\.html|vendor\/[a-z0-9][a-z0-9.-]{0,63}\.js|fonts\/(atkinson-hyperlegible-latin(-ext)?-(400|700)-normal\.woff2|fraunces-latin(-ext)?-600-normal\.woff2|OFL-atkinson-hyperlegible\.txt|OFL-fraunces\.txt))$/;
+// Vendored files and fonts are checked by their exact hash instead of the
+// content scan. The font licences are text and are scanned like any page.
 const VENDOR_PINS = Object.freeze({'vendor/heic-to.js': 'c189220a7a1e87559758a48ab4700e55629fb23a4cb57489e1e8970be1b9d018',
-  'vendor/qrcode.js': '79ec86f82856005b1c887905cfccfcfbec3821ca61c7fd5a952faa5f778f791c'});
+  'vendor/qrcode.js': '79ec86f82856005b1c887905cfccfcfbec3821ca61c7fd5a952faa5f778f791c',
+  'fonts/atkinson-hyperlegible-latin-400-normal.woff2': 'd64ba838ef5472bba248620ec4fd8b5aa7cf0db2908e0bb230600caf279ba7bc',
+  'fonts/atkinson-hyperlegible-latin-ext-400-normal.woff2': '61eeb0eb8b881a84d069e67be1723f5b353b0b9b866ad8e7ad9dba66cdc4dabd',
+  'fonts/atkinson-hyperlegible-latin-700-normal.woff2': '140e2bd25a7315c8a062508391426b0d8c3297400c947b8d847be28f73a199f0',
+  'fonts/atkinson-hyperlegible-latin-ext-700-normal.woff2': '840ced16f975d8abc2594b436d0206649e0c2a7327e36750ff849d3d37c3c02e',
+  'fonts/fraunces-latin-600-normal.woff2': '3a1de7711d147bad4422825045f87597fd77cca72e7c96d3b0a81735d00dda82',
+  'fonts/fraunces-latin-ext-600-normal.woff2': '69e09c7910e64d829e051f023af4c38a2e74b61d9e9439502f56edd7154b117c'});
+const PINNED = p => p.startsWith('vendor/') || /^fonts\/.+\.woff2$/.test(p);
 const ROOT_FILES = ['public/404.html', 'public/_headers', 'public/index.html', 'public/policy.json'];
 // No pull request may change these. Changing the check or the hosting settings
 // (wrangler.jsonc and the Worker, A5) is a deliberate owner act outside the
@@ -31,7 +40,7 @@ const WITHDRAWN_CODES = ['defect', 'security'];
 // tools/build-web.cjs writes the same text (tested).
 const HEADERS = [
   '/*',
-  "  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; frame-src 'self' https://accounts.google.com/gsi/; img-src 'self' data: blob:; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'self'",
+  "  Content-Security-Policy: default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; frame-src 'self' https://accounts.google.com/gsi/; img-src 'self' data: blob:; font-src 'self'; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'self'",
   '  X-Content-Type-Options: nosniff',
   '  Referrer-Policy: strict-origin-when-cross-origin',
   '/', '  Cache-Control: no-cache',
@@ -175,7 +184,7 @@ function checkState(snap, extraScan) {
     const hash = sha256(JSON.stringify(Object.entries(manifest.files)));
     if (manifest.hash !== hash || entry.hash !== hash) errors.push(name + '\'s manifest hash does not match its files.');
     manifest.screens.forEach(screen => { if (typeof screen !== 'string' || !actual.includes('screens/' + screen + '.html')) errors.push(name + ' lists a screen it does not have.'); });
-    actual.filter(p => p.startsWith('vendor/')).forEach(p => { if (VENDOR_PINS[p] !== manifest.files[p]) errors.push(name + ': ' + p + ' is not a pinned vendor file.'); });
+    actual.filter(PINNED).forEach(p => { if (VENDOR_PINS[p] !== manifest.files[p]) errors.push(name + ': ' + p + ' is not a pinned vendor file.'); });
   });
 
   // The root page lists exactly the registered versions.
@@ -195,9 +204,9 @@ function checkState(snap, extraScan) {
   // Headers (D8, A1): exactly the approved rules, nothing added, removed or reordered.
   if (!snap.read('public/_headers').equals(Buffer.from(HEADERS, 'utf8'))) errors.push('public/_headers must be exactly the approved security and caching rules.');
 
-  // The scan (A6) on every file except pinned vendor files.
+  // The scan (A6) on every file except pinned vendor and font files.
   paths.forEach(path => {
-    const folder = path.match(/^public\/ui\/[^/]+\/(vendor\/.+)$/);
+    const folder = path.match(/^public\/ui\/[^/]+\/((?:vendor|fonts)\/.+)$/);
     if (folder && VENDOR_PINS[folder[1]] === sha256(snap.read(path))) return;
     scanText(snap.read(path).toString('utf8'), extraScan).forEach(found => errors.push(path + ' contains ' + found + '.'));
   });

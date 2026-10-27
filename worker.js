@@ -7,7 +7,7 @@
 // not promise _headers on responses that pass through a Worker, so every header
 // is set here. The policy is the one in public/_headers (tools/build-web.cjs CSP).
 const SECURITY = {
-  'Content-Security-Policy': "default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; frame-src 'self' https://accounts.google.com/gsi/; img-src 'self' data: blob:; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'self'",
+  'Content-Security-Policy': "default-src 'none'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://accounts.google.com/gsi/client; style-src 'self' 'unsafe-inline' https://accounts.google.com/gsi/style; connect-src 'self' https://script.google.com https://script.googleusercontent.com https://accounts.google.com/gsi/; frame-src 'self' https://accounts.google.com/gsi/; img-src 'self' data: blob:; font-src 'self'; worker-src blob:; base-uri 'none'; form-action 'none'; object-src 'none'; frame-ancestors 'self'",
   'X-Content-Type-Options': 'nosniff',
   'Referrer-Policy': 'strict-origin-when-cross-origin'
 };
