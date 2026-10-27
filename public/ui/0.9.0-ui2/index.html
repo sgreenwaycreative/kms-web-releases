@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en" class="kms-styled" data-kms-shell>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>KMS</title>
+  <style>
+    /* Colours, fonts and sizes come from KmsStyle.html (added by the build). */
+    html,body { height:100%; }
+    body { display:flex; flex-direction:column; }
+    header { display:flex; flex-wrap:wrap; align-items:center; gap:8px 14px; padding:8px 16px; background:var(--kms-panel); border-bottom:1px solid var(--kms-line); }
+    header .brand { font:600 var(--kms-section)/1 var(--kms-font-title); }
+    header .brand::after { content:""; display:block; width:24px; height:3px; margin-top:4px; border-radius:3px; background:var(--kms-accent); }
+    #restaurant { font-weight:700; color:var(--kms-muted); }
+    #who { margin-left:auto; font-size:var(--kms-small); color:var(--kms-muted); }
+    html.kms-styled header button { min-height:36px; padding:0 14px; font-size:var(--kms-small); }
+    main { flex:1; min-height:0; position:relative; overflow:auto; }
+    .card { max-width:440px; margin:40px auto; padding:var(--kms-pad); background:var(--kms-panel); border:1px solid var(--kms-line); border-radius:var(--kms-radius-panel); box-shadow:var(--kms-shadow); }
+    .card.wide { max-width:820px; margin:24px auto; }
+    html.kms-styled .card h1 { margin-bottom:10px; }
+    html.kms-styled .card h1::after { content:""; display:block; width:40px; height:4px; margin-top:8px; border-radius:4px; background:var(--kms-accent); }
+    html.kms-styled .card label { margin:14px 0 4px; }
+    .card p { margin:0 0 12px; }
+    .error { min-height:20px; margin:12px 0 0; color:var(--kms-stop); font-weight:700; }
+    .error:empty { min-height:0; margin:0; }
+    .names { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+    html.kms-styled .names button { min-height:36px; padding:0 12px; font-size:var(--kms-small); border-radius:999px; }
+    .stack { display:flex; flex-direction:column; align-items:stretch; gap:10px; margin-top:16px; }
+    html.kms-styled .stack button[type="submit"] { width:100%; }
+    .groups { margin-top:6px; }
+    html.kms-styled .group h2 { margin:22px 0 10px; font-size:var(--kms-small); font-family:var(--kms-font); font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--kms-muted); }
+    html.kms-styled .group h2::before { content:""; display:inline-block; width:8px; height:8px; margin-right:8px; border-radius:50% 0; background:var(--kms-accent); vertical-align:middle; }
+    .tiles { display:grid; gap:10px; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); }
+    html.kms-styled .tiles button { justify-content:flex-start; min-height:64px; padding:14px 16px; text-align:left; border-radius:var(--kms-radius); }
+    html.kms-styled .tiles button:hover:not(:disabled) { box-shadow:inset 4px 0 0 var(--kms-focus); }
+    .home-foot { display:flex; flex-wrap:wrap; justify-content:space-between; align-items:center; gap:12px; margin-top:24px; padding-top:16px; border-top:1px solid var(--kms-line); }
+    .theme { display:flex; flex-wrap:wrap; align-items:center; gap:8px; font-size:var(--kms-small); color:var(--kms-muted); }
+    #homePause, #pauseBox { margin:12px 0; }
+    #pauseBox p { margin:0 0 8px; }
+    #screen { position:absolute; inset:0; width:100%; height:100%; border:0; background:var(--kms-page); }
+    #notice, #banner { display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; padding:10px 16px; border-left:6px solid; color:var(--kms-ink); }
+    #notice { background:var(--kms-stop-bg); border-color:var(--kms-stop); font-weight:700; }
+    #banner { background:var(--kms-check-bg); border-color:var(--kms-check); }
+    html.kms-styled #banner button { min-height:36px; padding:0 14px; font-size:var(--kms-small); }
+    #overlay { position:absolute; inset:0; z-index:5; display:flex; align-items:flex-start; justify-content:center; padding:0 16px; background:var(--kms-backdrop); overflow:auto; }
+    [hidden] { display:none!important; }
+    @media (max-width:560px) { .card { margin:16px 12px; } .card.wide { margin:12px; } #who { margin-left:0; width:100%; order:5; } }
+    @media print { header,#banner,#overlay,#dialog { display:none!important; } main { position:static; overflow:visible; } #screen { position:static; height:auto; } }
+  </style>
+<style>@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-ext-400-normal.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url(fonts/atkinson-hyperlegible-latin-ext-700-normal.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Fraunces';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/fraunces-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Fraunces';font-style:normal;font-weight:600;font-display:swap;src:url(fonts/fraunces-latin-ext-600-normal.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}</style>
+<style>
+/* KMS shared style (UI pass part 1, docs/UI_PASS_PLAN.md sections 2 and 3;
+   which block to use when: docs/STYLE_GUIDE.md). Forest Garden.
+   Every screen gets the named colours below and the shared notices and
+   question box. Only a converted screen (<html class="kms-styled">) gets the
+   whole-page rules and dark mode; any other screen is held in light mode.
+   Screens never set colours or text sizes of their own. */
+:root {
+  /* Named colours, light (the contrast test reads these two lists). */
+  --kms-page: #ECF0E2;
+  --kms-panel: #FDFEF9;
+  --kms-title-row: #DFE7CF;
+  --kms-ink: #2E3C3A;
+  --kms-muted: #55625E;
+  --kms-line: #D6DEC7;
+  --kms-control-line: #768471;
+  --kms-primary: #9CCB8C;
+  --kms-on-primary: #16301B;
+  --kms-focus: #3F7A3A;
+  --kms-editing: #E3EFCF;
+  --kms-on-editing: #2E3C3A;
+  --kms-editing-control: #FDFEF9;
+  --kms-editing-muted: #4C5955;
+  --kms-accent: #6FA85A;
+  --kms-done: #3F6E2A;
+  --kms-done-bg: #E4EFD6;
+  --kms-check: #6E5600;
+  --kms-check-bg: #FAF1BE;
+  --kms-stop: #A8481F;
+  --kms-stop-bg: #F8E4D6;
+  --kms-danger: #2E3C3A;
+  --kms-allergen: #2E3C3A;
+  --kms-on-allergen: #FDFEF9;
+  --kms-paused: #2F6A84;
+  --kms-paused-bg: #DCEBEE;
+  --kms-backdrop: rgba(35, 42, 46, .55);
+  --kms-shadow: 0 1px 2px rgba(34, 52, 58, .08), 0 8px 24px rgba(34, 52, 58, .07);
+  /* Text, sizes and corners. */
+  --kms-font: "Atkinson Hyperlegible", "Segoe UI", Roboto, system-ui, sans-serif;
+  --kms-font-title: "Fraunces", Georgia, "Iowan Old Style", serif;
+  --kms-text: 16px; --kms-small: 14px; --kms-title: 30px; --kms-section: 21px;
+  --kms-control: 44px; --kms-pad: 22px; --kms-gap: 18px; --kms-row: 46px;
+  --kms-radius: 12px; --kms-radius-panel: 16px;
+  color-scheme: light;
+}
+html.kms-styled[data-kms-theme="dark"] {
+  /* Named colours, dark. */
+  --kms-page: #232A2E;
+  --kms-panel: #2D353B;
+  --kms-title-row: #252B2F;
+  --kms-ink: #D3C6AA;
+  --kms-muted: #9DA9A0;
+  --kms-line: #475258;
+  --kms-control-line: #859289;
+  --kms-primary: #8CC49C;
+  --kms-on-primary: #2D353B;
+  --kms-focus: #DBBC7F;
+  --kms-editing: #8CC49C;
+  --kms-on-editing: #1F2A24;
+  --kms-editing-control: #EEF5E8;
+  --kms-editing-muted: #2F3F36;
+  --kms-accent: #8CC49C;
+  --kms-done: #8CC49C;
+  --kms-done-bg: #36443A;
+  --kms-check: #E6CF6E;
+  --kms-check-bg: #3B3A2A;
+  --kms-stop: #EC7E5F;
+  --kms-stop-bg: #3B2D29;
+  --kms-danger: #D3C6AA;
+  --kms-allergen: #D3C6AA;
+  --kms-on-allergen: #2D353B;
+  --kms-paused: #7FBBB3;
+  --kms-paused-bg: #2F3E44;
+  --kms-backdrop: rgba(0, 0, 0, .6);
+  --kms-shadow: none;
+  color-scheme: dark;
+}
+/* The row being edited: on its green, ink, outlines and marks use the row's own
+   text colour, never the page's (Astra, 19:41). Its fields and buttons get a
+   light surface of their own, and disabled ones the row's green, so they never
+   keep the dark page's surfaces under the row's dark text (Astra, U1 review). */
+.kms-editing {
+  --kms-ink: var(--kms-on-editing); --kms-muted: var(--kms-editing-muted); --kms-danger: var(--kms-on-editing);
+  --kms-panel: var(--kms-editing-control); --kms-title-row: var(--kms-editing);
+  --kms-allergen: var(--kms-on-editing); --kms-on-allergen: var(--kms-editing); --kms-control-line: var(--kms-on-editing);
+  --kms-focus: var(--kms-on-editing);
+}
+/* The sample's #6E4600 was 4.13:1 on the dark green row; #5E3C00 is 4.94:1 (U1 contrast test). */
+html.kms-styled[data-kms-theme="dark"] .kms-editing { --kms-check: #5E3C00; }
+
+/* ---------- Whole page: converted screens only ---------- */
+html.kms-styled { background: var(--kms-page); }
+html.kms-styled body { margin: 0; background: var(--kms-page); color: var(--kms-ink); font: var(--kms-text)/1.45 var(--kms-font); }
+html.kms-styled *, html.kms-styled *::before, html.kms-styled *::after { box-sizing: border-box; }
+html.kms-styled :focus-visible { outline: 3px solid var(--kms-focus); outline-offset: 2px; }
+html.kms-styled h1 { margin: 0; font: 600 var(--kms-title)/1.15 var(--kms-font-title); }
+html.kms-styled h2 { margin: 0 0 calc(var(--kms-gap) * .8); font: 600 var(--kms-section)/1.2 var(--kms-font-title); }
+html.kms-styled h3 { margin: 0 0 8px; font-size: var(--kms-text); font-weight: 700; }
+html.kms-styled a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+html.kms-styled .kms-muted { color: var(--kms-muted); }
+html.kms-styled small, html.kms-styled .kms-small { font-size: var(--kms-small); }
+
+/* Page header card with the short accent line under the title. */
+html.kms-styled .kms-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px;
+  margin-bottom: 4px; padding: calc(var(--kms-pad) * .7) var(--kms-pad); background: var(--kms-panel); color: var(--kms-ink);
+  border-radius: var(--kms-radius-panel); box-shadow: var(--kms-shadow); }
+html.kms-styled[data-kms-theme="dark"] .kms-header { border: 1px solid var(--kms-line); }
+html.kms-styled .kms-header h1::after { content: ""; display: block; width: 40px; height: 4px; margin-top: 8px; border-radius: 4px; background: var(--kms-accent); }
+html.kms-styled .kms-header .kms-who { font-size: var(--kms-small); color: var(--kms-muted); }
+
+/* Panels, with a small leaf mark before the title. */
+html.kms-styled .kms-panel { background: var(--kms-panel); border: 1px solid var(--kms-line); border-radius: var(--kms-radius-panel); padding: var(--kms-pad); }
+html.kms-styled .kms-panel + .kms-panel { margin-top: var(--kms-gap); }
+html.kms-styled .kms-panel > h2::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 10px; border-radius: 50% 0;
+  background: var(--kms-accent); vertical-align: middle; }
+
+/* Fields: a label, the control, an optional hint; a mistake has a heavier
+   border in the text colour and its wording in the stop colour. */
+html.kms-styled .kms-fields { display: grid; gap: var(--kms-gap); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+html.kms-styled label, html.kms-styled .kms-label { display: block; margin-bottom: 4px; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+html.kms-styled .kms-hint { margin-top: 4px; font-size: var(--kms-small); color: var(--kms-muted); }
+html.kms-styled input, html.kms-styled select, html.kms-styled textarea, html.kms-styled button { font: inherit; color: inherit; }
+/* :where() keeps this rule as light as a plain "input" rule, so the disabled,
+   read-only, mistake, unit and picker rules below win over it. */
+html.kms-styled input:where(:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"])),
+html.kms-styled select, html.kms-styled textarea {
+  width: 100%; min-height: var(--kms-control); padding: 0 12px; background: var(--kms-panel); color: var(--kms-ink);
+  border: 1px solid var(--kms-control-line); border-radius: 10px; }
+html.kms-styled textarea { padding: 10px 12px; line-height: 1.4; resize: vertical; }
+html.kms-styled input::placeholder, html.kms-styled textarea::placeholder { color: var(--kms-muted); opacity: 1; }
+html.kms-styled input:hover:not(:disabled), html.kms-styled select:hover:not(:disabled), html.kms-styled textarea:hover:not(:disabled) { border-color: var(--kms-ink); }
+html.kms-styled input:focus-visible, html.kms-styled select:focus-visible, html.kms-styled textarea:focus-visible { outline-offset: 1px; border-color: var(--kms-ink); }
+html.kms-styled input:disabled, html.kms-styled select:disabled, html.kms-styled textarea:disabled,
+html.kms-styled input[readonly], html.kms-styled textarea[readonly] { background: var(--kms-title-row); color: var(--kms-muted); border-style: dashed; cursor: not-allowed; }
+html.kms-styled input[readonly], html.kms-styled textarea[readonly] { cursor: default; }
+html.kms-styled .kms-invalid input, html.kms-styled .kms-invalid select, html.kms-styled .kms-invalid textarea,
+html.kms-styled [aria-invalid="true"] { border: 3px solid var(--kms-danger); }
+html.kms-styled .kms-invalid .kms-hint { color: var(--kms-stop); font-weight: 700; }
+/* Dropdowns: the browser's own list, with a drawn arrow in the text colour. */
+html.kms-styled select:not([multiple]):not([size]) { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--kms-ink) 50%), linear-gradient(135deg, var(--kms-ink) 50%, transparent 50%);
+  background-position: calc(100% - 21px) 52%, calc(100% - 15px) 52%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
+html.kms-styled select:disabled { background-image: none; }
+html.kms-styled select option { background: var(--kms-panel); color: var(--kms-ink); }
+/* Number fields: equal-width digits; in tables and .kms-num they line up on the right. */
+html.kms-styled input[type="number"], html.kms-styled table, html.kms-styled .kms-num { font-variant-numeric: tabular-nums; }
+html.kms-styled .kms-num, html.kms-styled td.kms-num input, html.kms-styled .kms-num input { text-align: right; }
+html.kms-styled input[type="number"]::-webkit-inner-spin-button { opacity: .6; }
+/* A unit shown inside a field: <span class="kms-unit"><input …><span>kg</span></span>. */
+html.kms-styled .kms-unit { position: relative; display: block; }
+html.kms-styled .kms-unit > span { position: absolute; top: 0; bottom: 0; right: 12px; display: flex; align-items: center; color: var(--kms-muted); pointer-events: none; }
+html.kms-styled .kms-unit > input { padding-right: 48px; }
+html.kms-styled .kms-unit.kms-before > span { left: 12px; right: auto; }
+html.kms-styled .kms-unit.kms-before > input { padding-left: 30px; padding-right: 12px; }
+/* Date fields: the browser's own calendar (it follows light or dark) and the weekday beside the date. */
+html.kms-styled input[type="date"] { cursor: text; }
+html.kms-styled input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; padding: 6px; margin-right: -4px; border-radius: 6px; }
+html.kms-styled input[type="date"]::-webkit-calendar-picker-indicator:hover { background-color: var(--kms-title-row); }
+html.kms-styled .kms-date { display: flex; align-items: center; gap: 10px; }
+html.kms-styled .kms-date > input { flex: 1 1 auto; min-width: 0; }
+html.kms-styled .kms-weekday { flex: none; min-width: 3.2em; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+/* Tick boxes in the main green; an on/off setting uses role="switch". */
+html.kms-styled input[type="checkbox"], html.kms-styled input[type="radio"] { width: 20px; height: 20px; margin: 0; accent-color: var(--kms-focus); cursor: pointer; vertical-align: middle; }
+html.kms-styled .kms-check { display: inline-flex; align-items: center; gap: 10px; min-height: var(--kms-control); font-size: var(--kms-text); font-weight: 400; color: var(--kms-ink); cursor: pointer; }
+html.kms-styled input[type="checkbox"][role="switch"] { appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 46px; height: 26px;
+  border: 2px solid var(--kms-control-line); border-radius: 999px; background: var(--kms-panel); transition: background-color .15s; }
+html.kms-styled input[type="checkbox"][role="switch"]::before { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--kms-control-line); transition: transform .15s; }
+html.kms-styled input[type="checkbox"][role="switch"]:checked { background: var(--kms-primary); border-color: var(--kms-on-primary); }
+html.kms-styled input[type="checkbox"][role="switch"]:checked::before { transform: translateX(20px); background: var(--kms-on-primary); }
+html.kms-styled input[type="file"] { font-size: var(--kms-small); }
+html.kms-styled input[type="file"]::file-selector-button { min-height: 40px; margin-right: 12px; padding: 0 14px; border: 1px solid var(--kms-control-line);
+  border-radius: 10px; background: var(--kms-panel); color: var(--kms-ink); font: inherit; font-weight: 700; cursor: pointer; }
+/* A row of choices that acts as one (the theme switch). */
+.kms-segmented { display: inline-flex; flex-wrap: wrap; gap: 0; padding: 3px; border: 1px solid var(--kms-control-line); border-radius: 999px; background: var(--kms-panel); }
+.kms-segmented label { display: inline-flex; align-items: center; margin: 0; cursor: pointer; font-size: var(--kms-small); font-weight: 700; color: var(--kms-ink); }
+.kms-segmented input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.kms-segmented span { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; }
+.kms-segmented input:checked + span { background: var(--kms-primary); color: var(--kms-on-primary); }
+.kms-segmented input:focus-visible + span { outline: 3px solid var(--kms-focus); outline-offset: 1px; }
+.kms-segmented input:disabled + span { color: var(--kms-muted); cursor: not-allowed; }
+.kms-segmented input:disabled:checked + span { background: var(--kms-title-row); }
+
+/* ---------- Controls, tier 2 (KmsUi, plan section 13) ---------- */
+/* Read by screen readers only. */
+.kms-sr { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+/* Searchable picker (KmsUi.picker): the field, a clear button and the list under it. */
+html.kms-styled .kms-picker { position: relative; }
+html.kms-styled .kms-picker > input { padding-right: 44px; }
+html.kms-styled .kms-picker > .kms-picker-clear { position: absolute; top: 4px; right: 4px; width: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 8px;
+  background: transparent; color: var(--kms-muted); font-size: var(--kms-section); font-weight: 400; }
+html.kms-styled .kms-picker-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); max-height: min(320px, 50vh); overflow-y: auto; margin: 0; padding: 6px;
+  list-style: none; background: var(--kms-panel); color: var(--kms-ink); border: 1px solid var(--kms-control-line); border-radius: var(--kms-radius); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+html.kms-styled .kms-picker-list [role="option"] { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+html.kms-styled .kms-picker-list [role="option"] small { color: var(--kms-muted); font-size: var(--kms-small); }
+html.kms-styled .kms-picker-list [role="option"].kms-current { font-weight: 700; }
+html.kms-styled .kms-picker-list [role="option"].kms-current::after { content: "✓"; margin-left: auto; }
+html.kms-styled .kms-picker-list [role="option"]:hover { background: var(--kms-title-row); }
+html.kms-styled .kms-picker-list [role="option"][aria-selected="true"] { background: var(--kms-editing); color: var(--kms-on-editing); box-shadow: inset 4px 0 0 var(--kms-on-editing); }
+html.kms-styled .kms-picker-list [role="option"][aria-selected="true"] small { color: var(--kms-on-editing); }
+html.kms-styled .kms-picker-list [role="option"][aria-disabled="true"] { color: var(--kms-muted); cursor: not-allowed; }
+html.kms-styled .kms-picker-list mark { background: none; color: inherit; font-weight: 800; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+html.kms-styled .kms-picker-group { padding: 8px 10px 4px; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+html.kms-styled .kms-picker-empty { padding: 10px; font-size: var(--kms-small); color: var(--kms-muted); }
+/* Shortcut buttons under a date (KmsUi.dateShortcuts, KmsUi.weekField). */
+html.kms-styled .kms-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+html.kms-styled .kms-chip { min-height: 36px; padding: 0 12px; border-radius: 999px; font-size: var(--kms-small); }
+html.kms-styled .kms-chip[aria-pressed="true"] { background: var(--kms-primary); border-color: var(--kms-on-primary); color: var(--kms-on-primary); }
+html.kms-styled .kms-chip[aria-pressed="true"]:hover:not(:disabled) { background: var(--kms-primary); }
+/* Growing notes (KmsUi.grow, or class kms-grow): no tiny scrolling box. */
+html.kms-styled textarea.kms-grow { resize: none; overflow-y: hidden; min-height: var(--kms-control); max-height: 60vh; }
+/* Sticky save bar: stays at the bottom of the screen while a long form scrolls. */
+html.kms-styled .kms-savebar { position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  padding: 12px var(--kms-pad); background: var(--kms-panel); color: var(--kms-ink); border-top: 1px solid var(--kms-line); box-shadow: 0 -4px 16px rgba(34, 52, 58, .08); }
+html.kms-styled[data-kms-theme="dark"] .kms-savebar { box-shadow: 0 -4px 16px rgba(0, 0, 0, .35); }
+html.kms-styled .kms-savebar-note { font-size: var(--kms-small); font-weight: 700; color: var(--kms-check); }
+html.kms-styled .kms-savebar-note:empty { display: none; }
+
+/* A message given as one line of text (a status set by script). */
+html.kms-styled .kms-msg.kms-msg-line { display: block; }
+/* Text in a meaning's colour, such as a total that matches or does not. */
+html.kms-styled .kms-text-done { color: var(--kms-done); }
+html.kms-styled .kms-text-check { color: var(--kms-check); }
+html.kms-styled .kms-text-stop { color: var(--kms-stop); }
+/* The longer status text moved out of the activity line into the page (UiStatus). */
+html.kms-styled .kms-detail { display: block; margin: 12px 0; font-size: var(--kms-small); line-height: 1.4; }
+html.kms-styled .kms-detail:not(.kms-msg) { color: var(--kms-muted); }
+
+/* Buttons: main (green), normal, dangerous (bold text colour), disabled. */
+html.kms-styled button, html.kms-styled .kms-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--kms-control);
+  padding: 0 18px; border: 1px solid var(--kms-control-line); border-radius: var(--kms-radius); background: var(--kms-panel); color: var(--kms-ink);
+  font-weight: 700; line-height: 1.2; cursor: pointer; text-align: center; }
+html.kms-styled button:hover:not(:disabled) { background: var(--kms-title-row); }
+html.kms-styled .kms-primary, html.kms-styled button[type="submit"]:not(.kms-plain) { background: var(--kms-primary); border-color: var(--kms-on-primary); color: var(--kms-on-primary); }
+html.kms-styled .kms-primary:hover:not(:disabled), html.kms-styled button[type="submit"]:not(.kms-plain):hover:not(:disabled) { background: var(--kms-primary); box-shadow: inset 0 0 0 2px var(--kms-on-primary); }
+html.kms-styled .kms-danger { border: 3px solid var(--kms-danger); color: var(--kms-danger); font-weight: 800; }
+html.kms-styled .kms-danger.kms-solid { background: var(--kms-danger); color: var(--kms-panel); }
+html.kms-styled button:disabled, html.kms-styled .kms-btn[aria-disabled="true"] { background: transparent; border-style: dashed; border-color: var(--kms-control-line); color: var(--kms-muted); box-shadow: none; cursor: not-allowed; }
+html.kms-styled .kms-small-btn { min-height: 36px; padding: 0 12px; font-size: var(--kms-small); }
+html.kms-styled .kms-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--kms-gap); }
+html.kms-styled .kms-actions .kms-spacer { flex: 1; }
+/* A button whose action is running: it says so and cannot be pressed again. */
+.kms-working { cursor: progress !important; }
+.kms-working::before { content: ""; flex: none; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: kms-spin .8s linear infinite; }
+
+/* Tables: a darker title row, number columns on the right, check-this rows
+   (left edge and tint) and the row being edited. */
+html.kms-styled .kms-table-wrap { overflow-x: auto; border: 1px solid var(--kms-line); border-radius: var(--kms-radius); }
+html.kms-styled table { width: 100%; border-collapse: collapse; }
+html.kms-styled th, html.kms-styled td { padding: 8px 12px; height: var(--kms-row); text-align: left; border-bottom: 1px solid var(--kms-line); }
+html.kms-styled th { background: var(--kms-title-row); color: var(--kms-muted); font-size: var(--kms-small); font-weight: 700; }
+html.kms-styled tr:last-child td { border-bottom: 0; }
+html.kms-styled th.kms-num, html.kms-styled td.kms-num { text-align: right; }
+html.kms-styled tr.kms-attention td { background: var(--kms-check-bg); }
+html.kms-styled tr.kms-attention td:first-child { box-shadow: inset 5px 0 0 var(--kms-check); }
+html.kms-styled tr.kms-editing td { background: var(--kms-editing); color: var(--kms-on-editing); }
+html.kms-styled .kms-cell-note { display: block; font-size: var(--kms-small); font-weight: 700; color: var(--kms-check); white-space: normal; }
+
+/* Allergen marks never rely on colour: "Yes" filled, "May" dashed, both with text. */
+.kms-mark { display: inline-flex; align-items: center; justify-content: center; min-width: 46px; height: 26px; padding: 0 6px; border-radius: 6px;
+  font-size: var(--kms-small); font-weight: 900; }
+.kms-mark-yes { background: var(--kms-allergen); color: var(--kms-on-allergen); }
+.kms-mark-may { border: 2px dashed var(--kms-allergen); color: var(--kms-allergen); }
+
+/* ---------- Shared pieces: every screen, converted or not ---------- */
+/* Messages, with a darker left edge: done, check this, stop, paused. */
+.kms-msg { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 12px 14px; border-left: 6px solid; border-radius: var(--kms-radius);
+  font: var(--kms-small)/1.4 var(--kms-font); color: var(--kms-ink); }
+.kms-msg + .kms-msg { margin-top: 10px; }
+.kms-msg > .kms-icon { width: 1.4em; font-weight: 800; text-align: center; }
+.kms-msg p { margin: 0; }
+.kms-msg strong { display: block; }
+.kms-msg-done { background: var(--kms-done-bg); border-color: var(--kms-done); }
+.kms-msg-done > .kms-icon, .kms-msg-done strong { color: var(--kms-done); }
+.kms-msg-check { background: var(--kms-check-bg); border-color: var(--kms-check); }
+.kms-msg-check > .kms-icon, .kms-msg-check strong { color: var(--kms-check); }
+.kms-msg-stop { background: var(--kms-stop-bg); border-color: var(--kms-stop); }
+.kms-msg-stop > .kms-icon, .kms-msg-stop strong { color: var(--kms-stop); }
+.kms-msg-paused { background: var(--kms-paused-bg); border-color: var(--kms-paused); }
+.kms-msg-paused > .kms-icon, .kms-msg-paused strong { color: var(--kms-paused); }
+/* Progress panel for long jobs: a bar and the steps, the current one bold. */
+.kms-progress .kms-bar { height: 10px; margin-top: 10px; background: var(--kms-title-row); border: 1px solid var(--kms-control-line); border-radius: 99px; overflow: hidden; }
+.kms-progress .kms-bar > span { display: block; height: 100%; background: var(--kms-focus); transition: width .3s; }
+.kms-progress ol { list-style: none; margin: 10px 0 0; padding: 0; font-size: var(--kms-small); }
+.kms-progress li { display: flex; gap: 8px; padding: 3px 0; color: var(--kms-muted); }
+.kms-progress li.kms-done { color: var(--kms-done); }
+.kms-progress li.kms-now { color: var(--kms-ink); font-weight: 700; }
+/* Waiting for the owner: says the person can leave the page. */
+.kms-waiting { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 2px dashed var(--kms-control-line); border-radius: var(--kms-radius); color: var(--kms-ink); }
+.kms-waiting p { margin: 0; }
+.kms-spinner { flex: none; width: 22px; height: 22px; border: 3px solid var(--kms-line); border-top-color: var(--kms-focus); border-radius: 50%; animation: kms-spin 1s linear infinite; }
+@keyframes kms-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .kms-spinner, .kms-working::before { animation-duration: 2.4s; } }
+
+/* The question box (KmsUi.ask, plan section 3a). */
+.kms-ask-layer { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: 8vh 16px 16px;
+  background: var(--kms-backdrop); overflow-y: auto; }
+.kms-ask { width: 100%; max-width: 460px; padding: var(--kms-pad); background: var(--kms-panel); color: var(--kms-ink); border: 1px solid var(--kms-line);
+  border-radius: var(--kms-radius-panel); box-shadow: 0 12px 40px rgba(0, 0, 0, .25); font: var(--kms-text)/1.45 var(--kms-font); text-align: left; }
+.kms-ask h2 { margin: 0 0 8px; font: 600 var(--kms-section)/1.2 var(--kms-font-title); color: var(--kms-ink); }
+.kms-ask p { margin: 0 0 12px; white-space: pre-line; }
+.kms-ask label { display: block; margin: 4px 0; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+.kms-ask textarea { display: block; width: 100%; min-height: 72px; padding: 10px 12px; border: 1px solid var(--kms-control-line); border-radius: 10px;
+  background: var(--kms-panel); color: var(--kms-ink); font: inherit; box-sizing: border-box; }
+.kms-ask .kms-ask-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.kms-ask button { min-height: var(--kms-control); padding: 0 18px; border: 1px solid var(--kms-control-line); border-radius: var(--kms-radius);
+  background: var(--kms-panel); color: var(--kms-ink); font: 700 var(--kms-text)/1.2 var(--kms-font); cursor: pointer; }
+.kms-ask button.kms-ask-yes { background: var(--kms-primary); border-color: var(--kms-on-primary); color: var(--kms-on-primary); }
+.kms-ask button.kms-ask-yes.kms-danger { background: var(--kms-panel); border: 3px solid var(--kms-danger); color: var(--kms-danger); font-weight: 800; }
+.kms-ask button:disabled { background: transparent; border-style: dashed; color: var(--kms-muted); cursor: not-allowed; }
+.kms-ask :focus-visible { outline: 3px solid var(--kms-focus); outline-offset: 2px; }
+
+@media print {
+  /* Printing always uses the light colours, whatever the screen shows. */
+  html.kms-styled, html.kms-styled[data-kms-theme="dark"] {
+    --kms-page: #FFFFFF; --kms-panel: #FFFFFF; --kms-title-row: #DFE7CF; --kms-ink: #2E3C3A; --kms-muted: #55625E; --kms-line: #D6DEC7;
+    --kms-control-line: #768471; --kms-primary: #9CCB8C; --kms-on-primary: #16301B; --kms-focus: #3F7A3A; --kms-editing: #E3EFCF;
+    --kms-on-editing: #2E3C3A; --kms-editing-control: #FDFEF9; --kms-editing-muted: #4C5955; --kms-accent: #6FA85A; --kms-done: #3F6E2A; --kms-done-bg: #E4EFD6; --kms-check: #6E5600; --kms-check-bg: #FAF1BE;
+    --kms-stop: #A8481F; --kms-stop-bg: #F8E4D6; --kms-danger: #2E3C3A; --kms-allergen: #2E3C3A; --kms-on-allergen: #FFFFFF;
+    --kms-paused: #2F6A84; --kms-paused-bg: #DCEBEE; --kms-shadow: none;
+    color-scheme: light;
+  }
+  html.kms-styled body { background: #FFFFFF; }
+  /* Allergen marks stay clear with background colours turned off. */
+  .kms-mark-yes { border: 2px solid var(--kms-allergen); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .kms-ask-layer, .kms-picker-list, .kms-picker-clear, .kms-chips { display: none !important; }
+  html.kms-styled .kms-savebar { position: static; box-shadow: none; }
+}
+</style>
+<script>
+// The colour mode (plan section 3 item 3): Light, Dark or Device, kept per
+// device under its own key. Set here, in <head>, before the page first draws.
+// Only a converted screen on the web page can be dark; any other page, and
+// every page in Sheets, stays light. Reads and writes only KMS_WEB_THEME.
+window.KmsTheme = (function() {
+  'use strict';
+  const KEY = 'KMS_WEB_THEME', CHOICES = ['light', 'dark', 'device'], root = document.documentElement;
+  const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function choice() {
+    try { const value = window.localStorage.getItem(KEY); return CHOICES.indexOf(value) >= 0 ? value : 'device'; } catch (error) { return 'device'; }
+  }
+  // The shell marks itself; a screen is on the web page when the bridge set its release.
+  function web() { return root.hasAttribute('data-kms-shell') || Number.isSafeInteger(window.KmsWebRelease); }
+  function mode() {
+    if (!root.classList.contains('kms-styled') || !web()) return 'light';
+    const value = choice();
+    return value === 'device' ? (media && media.matches ? 'dark' : 'light') : value;
+  }
+  function apply() { const value = mode(); if (root.getAttribute('data-kms-theme') !== value) root.setAttribute('data-kms-theme', value); }
+  // True when the choice was stored and read back; if not, the device setting is used.
+  function set(value) {
+    if (CHOICES.indexOf(value) < 0) return false;
+    let kept = false;
+    try { window.localStorage.setItem(KEY, value); kept = window.localStorage.getItem(KEY) === value; } catch (error) {}
+    apply();
+    return kept;
+  }
+  apply();
+  if (media) { if (media.addEventListener) media.addEventListener('change', apply); else if (media.addListener) media.addListener(apply); }
+  // The shell and the open screen follow each other's change straight away.
+  window.addEventListener('storage', event => { if (event.key === KEY || event.key === null) apply(); });
+  return {choice: choice, mode: mode, set: set, apply: apply, key: KEY};
+})();
+</script>
+</head>
+<body>
+  <header><span class="brand">KMS</span><span id="restaurant"></span><span id="who"></span><button id="homeButton" type="button" hidden>Home</button><button id="signOutButton" type="button" hidden>Sign out</button></header>
+  <div id="notice" role="alert" hidden><span id="noticeText"></span></div>
+  <div id="banner" role="status" hidden><span id="bannerText"></span><button id="bannerAction" type="button" hidden></button></div>
+  <main>
+    <section id="stopped" class="card" hidden>
+      <h1>KMS cannot open</h1>
+      <p id="stoppedText" role="alert"></p>
+    </section>
+    <section id="signIn" class="card" hidden>
+      <h1 id="signInTitle">Sign in</h1>
+      <p id="signInNote" class="kms-muted">Use your name and 6-digit PIN.</p>
+      <div id="pauseBox" class="kms-msg kms-msg-paused" role="status" hidden><span class="kms-icon" aria-hidden="true">II</span><div><p id="pauseLine"></p><button id="pauseCheck" class="kms-small-btn" type="button">Check again</button></div></div>
+      <form id="signInForm">
+        <label for="staffName">Name</label><input id="staffName" autocomplete="off" spellcheck="false" maxlength="60">
+        <div id="recentNames" class="names"></div>
+        <label for="staffPin">PIN</label><input id="staffPin" type="password" inputmode="numeric" autocomplete="off" maxlength="6" pattern="\d{6}">
+        <div class="stack"><button id="signInButton" type="submit">Sign in</button></div>
+      </form>
+      <div class="stack">
+        <button id="maintenanceSignIn" type="button" hidden>Owner: sign in for maintenance</button>
+        <button id="ordinarySignIn" type="button" hidden>Back to ordinary sign-in</button>
+      </div>
+      <p id="signInError" class="error" role="alert"></p>
+    </section>
+    <section id="home" class="card wide" hidden>
+      <h1 id="homeTitle">KMS</h1>
+      <p id="homeWho" class="kms-muted"></p>
+      <p id="homePause" class="kms-msg kms-msg-paused" role="status" hidden></p>
+      <div id="tiles" class="groups"></div>
+      <div class="home-foot">
+        <button id="homeSignOut" type="button">Sign out</button>
+        <div class="theme"><span id="themeLabel">Colours</span>
+          <div class="kms-segmented" role="radiogroup" aria-labelledby="themeLabel">
+            <label><input type="radio" name="kmsTheme" value="light"><span>Light</span></label><label><input type="radio" name="kmsTheme" value="dark"><span>Dark</span></label><label><input type="radio" name="kmsTheme" value="device"><span>Same as device</span></label>
+          </div>
+        </div>
+      </div>
+      <p id="themeNote" class="kms-muted kms-small" role="status" hidden>This browser would not keep the colour choice, so KMS follows this device's own setting.</p>
+    </section>
+    <section id="ownerCheck" class="card" hidden>
+      <h1>Confirm it is you</h1>
+      <p id="ownerCheckNote" class="kms-muted">Owner screens need a Google sign-in by the account that owns this KMS workbook.</p>
+      <div id="ownerLink" hidden>
+        <label for="ownerLinkCode">Linking code</label><input id="ownerLinkCode" autocomplete="off" spellcheck="false" maxlength="20" placeholder="XXXX-XXXX-XXXX">
+        <p class="kms-muted kms-small">First time only. In the workbook choose KMS &gt; Maintenance &gt; Link owner Google account. The code works once and lasts 10 minutes.</p>
+        <p id="ownerLinkHint">Enter the code first, then continue with Google.</p>
+      </div>
+      <div id="ownerGoogle" style="margin-top:16px;min-height:44px"></div>
+      <div class="kms-actions"><button id="ownerConfirm" class="kms-primary" type="button" hidden>Link and confirm</button><button id="ownerRetry" type="button" hidden>Try again</button><button id="ownerCancel" type="button">Cancel</button></div>
+      <p id="ownerError" class="error" role="alert"></p>
+    </section>
+    <iframe id="screen" title="KMS screen" hidden></iframe>
+    <div id="overlay" hidden></div>
+  </main>
+  <div id="dialog" class="kms-ask-layer" hidden>
+    <section class="kms-ask" role="alertdialog" aria-modal="true" aria-labelledby="dialogTitle" aria-describedby="dialogText"><h2 id="dialogTitle"></h2><p id="dialogText"></p>
+      <div class="kms-ask-buttons"><button id="dialogKeep" class="kms-ask-no" type="button"></button><button id="dialogDiscard" class="kms-ask-yes kms-danger" type="button"></button></div></section>
+  </div>
+  <script>
+  // The KMS web page shell for one published version (6B D1). The root page
+  // chose this tab's restaurant and this folder; the shell keeps the sign-in
+  // for this browser tab only and sends every call to that restaurant's own
+  // script. Screens run in the frame below and reach the shell through
+  // window.KmsWeb.
+  (function() {
+    'use strict';
+    const APP_VERSION = '0.9.0-ui2', APP_RELEASE = Number('6');
+    // The screens in this release, with the lowest role that may use each
+    // (tools/build-web.cjs). Tiles are a comfort only: the server decides.
+    const SCREENS = [{"name":"InvoiceEntry","label":"Input invoice","role":"Chef","group":"Daily"},{"name":"StockCount","label":"Stock count","role":"Chef","group":"Daily"},{"name":"OrderSheet","label":"Weekly order sheet","role":"Chef","group":"Daily"},{"name":"ConsoleDisplay","label":"Recipe console","role":"Chef","group":"Recipes"},{"name":"PrepEditor","label":"Record editor","role":"Chef","group":"Recipes"},{"name":"AllergenMatrix","label":"Allergen matrix","role":"Chef","group":"Recipes"},{"name":"IngredientManager","label":"Ingredients","role":"Chef","group":"Records"},{"name":"SupplierManager","label":"Suppliers","role":"Chef","group":"Records"},{"name":"WeeklyReport","label":"Weekly sales and GP","role":"Manager","group":"Manager"},{"name":"MenuPricing","label":"Menu pricing","role":"Manager","group":"Manager"},{"name":"CostReview","label":"Cost review","role":"Manager","group":"Manager"},{"name":"AllergenReview","label":"Allergen review","role":"Manager","group":"Manager"},{"name":"Settings","label":"Settings, backup and save recovery","role":"Owner","group":"Owner","maintenance":true},{"name":"OwnerStaff","label":"Staff","role":"Owner","group":"Owner"},{"name":"OwnerDevices","label":"Connect a device and KMS address","role":"Owner","group":"Owner","maintenance":true}], ROLES = ['Chef', 'Manager', 'Owner'];
+    // Browser storage shared by every published version (6B D6).
+    const TAB = 'KMS_WEB_TAB', SESSION = 'KMS_WEB_SESSION', NAMES = 'KMS_WEB_NAMES', HELLO = 'KMS_WEB_HELLO';
+    const linkPattern = /^https:\/\/script\.google\.com\/macros\/s\/[A-Za-z0-9_-]{20,}\/exec$/;
+    const addressEnd = url => (/\/s\/([A-Za-z0-9_-]+)\/exec$/.exec(url) || ['', ''])[1].slice(-7);
+    const $ = id => document.getElementById(id);
+    let currentScreen = '';
+    let acceptedPause = null, pauseTimer = null, maintenanceMode = false, maintenanceTimer = null;
+    // Each hello or pauseStatus request is numbered; only an answer to a request
+    // newer than the one last applied is used, so a late answer never wins.
+    let pauseAsked = 0, pauseApplied = 0;
+
+    // Keep this wording identical to kmsBackupPauseLine_ in BackupService.js.
+    function pauseLine(v) {
+      if(v.paused===null)return 'KMS cannot confirm whether it is paused for a backup or restore. Try again shortly.';
+      if(v.state==='moved')return 'KMS has moved to a restored copy. Ask the owner for the new link.';
+      if(v.state==='waiting')return v.kind==='Restore'?v.stage+'.':'A backup stopped and KMS is paused until the owner checks it. Last update '+v.updated+'.';
+      return (v.kind==='Restore'?'Restore':'Backup')+' in progress since '+v.since+'. KMS is paused. Last update '+v.updated+'.';
+    }
+    // An answer is refused only when it is provably older: a lower revision, or
+    // (with a revision unknown) an earlier update time when both times are known.
+    // An unknown answer to a newer request is accepted, so a pause that has ended
+    // is never kept on screen because the status record disagrees (Astra, 60a5e12).
+    function acceptPause(next, asked) {
+      if (!next || ![true, false, null].includes(next.paused)) return;
+      if (asked <= pauseApplied) return;
+      const old = acceptedPause;
+      if (old) {
+        if (typeof old.revision === 'number' && typeof next.revision === 'number') {
+          if (next.revision < old.revision) return;
+        } else {
+          const at = Date.parse(next.updatedAt || ''), before = Date.parse(old.updatedAt || '');
+          if (Number.isFinite(at) && Number.isFinite(before) && at < before) return;
+        }
+      }
+      pauseApplied = asked; acceptedPause = next; renderPause();
+    }
+    function renderPause() {
+      const paused = acceptedPause && acceptedPause.paused !== false;
+      $('pauseBox').hidden = !paused;
+      $('pauseLine').textContent = paused ? pauseLine(acceptedPause) : '';
+      $('maintenanceSignIn').hidden = !acceptedPause || acceptedPause.paused !== true || maintenanceMode;
+      // The launcher shows the last pause KMS reported, without asking again.
+      $('homePause').hidden = !paused; $('homePause').textContent = paused ? pauseLine(acceptedPause) : '';
+      clearTimeout(pauseTimer);
+      // While the sign-in form shows, so a backup that starts later is noticed.
+      if (!$('signIn').hidden) pauseTimer = setTimeout(refreshPause, 30000);
+    }
+    async function refreshPause() {
+      const asked = ++pauseAsked;
+      try { const answer = await send({call: 'pauseStatus'}); if (answer.ok) acceptPause(answer.value, asked); } catch (error) {}
+      renderPause();
+    }
+    // The root's hello answer, if it is this tab's and under 30 seconds old (6B D2).
+    function handedOver() {
+      const record = load(sessionStorage, HELLO), tab = connection();
+      keep(sessionStorage, HELLO, null);
+      return record && tab && record.id === tab.id && Date.now() - record.at >= 0 && Date.now() - record.at < 30000 &&
+        record.answer && record.answer.ok && record.answer.serverVersion === APP_VERSION ? record.answer : null;
+    }
+    async function helloPause() {
+      const asked = ++pauseAsked;
+      try { const answer = handedOver() || await send({call: 'hello'}); if (answer.ok) { acceptPause(answer.value.pause, asked); forwarded(answer.value); } } catch (error) {}
+    }
+    // KMS has moved (6C): the owner set a new address. The root page checks it
+    // and asks before using it, so this page only offers to go back there.
+    function forwarded(value) {
+      const tab = connection();
+      if (!tab || !value || typeof value.forward !== 'string' || !linkPattern.test(value.forward) || value.forward === tab.url) return;
+      banner('KMS has moved to a new address. Reload KMS to check it and carry on there.', 'Reload KMS', async function() {
+        if (!await leave('reload KMS')) return;
+        closeScreen(); location.assign('/');
+      });
+    }
+    function signInMode(maintenance) {
+      maintenanceMode = maintenance;
+      $('signInTitle').textContent = maintenance ? 'Maintenance sign-in' : 'Sign in';
+      $('signInNote').textContent = maintenance ? 'Owner only. Name and Owner PIN, then a Google sign-in.' : 'Use your name and 6-digit PIN.';
+      $('ordinarySignIn').hidden = !maintenance; renderPause();
+    }
+    function maintenanceClock() {
+      clearTimeout(maintenanceTimer);
+      const current = session();
+      if (!current || !current.maintenance) return;
+      const left = current.endsAt - Date.now();
+      if (left <= 0) { sessionEnded('Maintenance sign-in ended after 15 minutes. Sign in again if needed.'); return; }
+      maintenanceTimer = setTimeout(maintenanceClock, left);
+    }
+
+    function load(storage, key) { try { return JSON.parse(storage.getItem(key) || 'null'); } catch (error) { return null; } }
+    // Writes (or removes) and reads back; false if the browser refused or changed it.
+    function keep(storage, key, value) {
+      try { if (value === null) { storage.removeItem(key); return storage.getItem(key) === null; } const text = JSON.stringify(value); storage.setItem(key, text); return storage.getItem(key) === text; } catch (error) { return false; }
+    }
+    // This tab's restaurant, set by the root page.
+    const connection = () => { const tab = load(sessionStorage, TAB); return tab && tab.schema === 1 && typeof tab.id === 'string' && linkPattern.test(tab.url) ? tab : null; };
+    // A sign-in belongs to the restaurant it was issued for (6B D6). Any other
+    // is dropped, so its token is never sent to this tab's restaurant.
+    const session = () => {
+      const current = load(sessionStorage, SESSION), tab = connection();
+      if (current && (!tab || current.connection !== tab.id)) { keep(sessionStorage, SESSION, null); return null; }
+      return current;
+    };
+    // The tab's epoch rises on every sign-in, sign-out and switch (6B A2). Each
+    // request freezes its restaurant, link, token and epoch when it is sent, and
+    // an answer from an older epoch or another restaurant is never applied.
+    let epoch = 0;
+    const isCurrent = frozen => frozen.epoch === epoch && (connection() || {}).id === frozen.id;
+    function freeze() {
+      const tab = connection(), current = session();
+      return tab ? {id: tab.id, url: tab.url, token: current && current.token || '', maintenance: !!(current && current.maintenance), epoch: epoch} : null;
+    }
+
+    // The withdrawn list (6B A1, A8). This check is advisory: the server's
+    // exact-version check is the real boundary. It is read before any sign-in
+    // or request carrying a token, every 10 minutes and whenever the tab
+    // becomes visible. A withdrawn page never reloads or navigates by itself.
+    const POLICY_EVERY = 600000, POLICY_FRESH = 900000, WRITES = ['save', 'ownerWrite', 'ownerApprove'];
+    const WITHDRAWN = 'This version of the KMS page has been withdrawn. Your entries are kept on this device. The owner needs to update KMS.';
+    const UNCHECKED = 'An earlier save\'s outcome could not be checked from this page. It is kept on this device and will be checked after KMS is updated.';
+    const POLICY_WAIT = 'KMS cannot check its web page right now. Saving waits until it can.';
+    let policyAt = 0, policyReading = null, policyRetry = null, policyWaiting = false, withdrawn = null;
+    let recoveryFailed = false, approvalWanted = false, approvalLinked = false;
+    function readPolicy() {
+      if (!policyReading) policyReading = (async () => {
+        const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 10000);
+        try {
+          const response = await fetch('/policy.json', {cache: 'no-store', credentials: 'omit', signal: controller.signal});
+          const value = response.ok ? await response.json() : null;
+          if (!value || value.schema !== 1 || !value.withdrawn || typeof value.withdrawn !== 'object') throw new Error('unreadable');
+          policyAt = Date.now(); policyWaiting = false; clearTimeout(policyRetry);
+          const code = Object.prototype.hasOwnProperty.call(value.withdrawn, APP_VERSION) ? value.withdrawn[APP_VERSION] : null;
+          // Only defect permits the recovery checks; any other code permits none.
+          withdrawn = code === null ? null : code === 'defect' ? 'defect' : 'security';
+        } catch (error) {
+          if (policyWaiting) { clearTimeout(policyRetry); policyRetry = setTimeout(readPolicy, 30000); }
+        } finally { clearTimeout(timer); policyReading = null; renderNotice(); }
+      })();
+      return policyReading;
+    }
+    function renderNotice() {
+      const lines = [];
+      if (withdrawn) { lines.push(WITHDRAWN); if ((withdrawn !== 'defect' || recoveryFailed) && records().count) lines.push(UNCHECKED); }
+      else if (policyWaiting) lines.push(POLICY_WAIT);
+      $('notice').hidden = !lines.length; $('noticeText').textContent = lines.join(' ');
+    }
+    // Unresolved records on this device: saves with an unknown outcome (recovery
+    // copies, keyed by workbook and person) and pending backup-finish choices.
+    function records(context) {
+      const ops = [], finish = [];
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i) || '';
+          if (key.startsWith('KMS_RECOVERY_V1:') && key.includes(':copy:')) {
+            if (context && !key.startsWith('KMS_RECOVERY_V1:' + context.book + ':' + context.actor + ':')) continue;
+            const item = load(localStorage, key);
+            if (item && item.operation) ops.push(item.operation);
+          } else if (key.startsWith('KMS_BACKUP_FINISH_PENDING:')) {
+            if (context && key !== 'KMS_BACKUP_FINISH_PENDING:' + context.book) continue;
+            const item = load(localStorage, key);
+            if (item && item.requestId) finish.push(item);
+          }
+        }
+      } catch (error) {}
+      return {ops: ops, finish: finish, count: ops.length + finish.length};
+    }
+    const recoveryCheck = body => body.call === 'status' || body.call === 'ownerStatus' || body.call === 'ownerRead' && body.method === 'kmsBackupFinishReceipt';
+    // The recovery set (6B A8): on a page withdrawn as a defect that holds an
+    // unresolved record, only that record's own outcome checks, the sign-in and
+    // owner approval they need, and sign-out. Every server check is unchanged.
+    function allowedWhileWithdrawn(body) {
+      if (body.call === 'signOut') return true;
+      if (withdrawn !== 'defect') return false;
+      const current = session(), mine = records(current && current.context);
+      if (body.call === 'signIn') return !current && records().count > 0;
+      if (!current || !mine.count) return false;
+      if (body.call === 'status' || body.call === 'ownerStatus') {
+        return mine.ops.some(op => op.id === body.operationId && op.method === body.method && JSON.stringify(op.args) === JSON.stringify(body.args));
+      }
+      if (body.call === 'ownerRead') return body.method === 'kmsBackupFinishReceipt' && Array.isArray(body.args) && !!body.args[0] && mine.finish.some(f => f.requestId === body.args[0].requestId);
+      // Owner approval only after a check was refused for want of it, and only
+      // for an owner account already linked: no first-time linking here.
+      if (body.call === 'ownerNonce') return approvalWanted;
+      if (body.call === 'ownerApprove') return approvalWanted && approvalLinked && !body.linkCode;
+      return false;
+    }
+    const refusal = (code, message) => ({ok: false, error: {code: code, message: message}});
+    // Null to send now, a refusal, or (only when the list must be read first)
+    // a promise of one; the usual path adds no delay before the request.
+    function gate(body) {
+      if (body.call === 'signOut') return null;
+      const needed = !policyAt && body.call !== 'hello' && body.call !== 'pauseStatus' || WRITES.indexOf(body.call) >= 0 && Date.now() - policyAt >= POLICY_FRESH;
+      return needed ? readPolicy().then(() => checked(body)) : checked(body);
+    }
+    function checked(body) {
+      if (withdrawn && !allowedWhileWithdrawn(body)) { renderNotice(); return refusal('withdrawn', WITHDRAWN + ' Nothing was sent.'); }
+      // A write without a recent read of the list is refused, not held back and
+      // sent later: the screen's outcome check must never find "nothing saved"
+      // while a delayed save is still waiting. The list is read again shortly.
+      if (WRITES.indexOf(body.call) >= 0 && Date.now() - policyAt >= POLICY_FRESH) {
+        policyWaiting = true; renderNotice(); clearTimeout(policyRetry); policyRetry = setTimeout(readPolicy, 30000);
+        return refusal('policy', POLICY_WAIT + ' Nothing was saved; your entries are still here. Try again in a moment.');
+      }
+      return null;
+    }
+    // A request dropped before sending: KMS ran nothing for it.
+    const notSent = () => ({ok: false, stale: true, error: {code: 'notSent', message: 'Nothing was sent: this screen was closed or the sign-in on this tab changed.'}});
+    async function send(body, frozen, still) {
+      frozen = frozen || freeze();
+      if (!frozen) throw new Error('This tab is not connected to KMS. Open KMS again.');
+      let held = gate(body);
+      if (held && typeof held.then === 'function') {
+        held = await held;
+        // The sign-in, restaurant or screen may have changed while the list was read.
+        if (!held && (!isCurrent(frozen) || still && !still())) return notSent();
+      }
+      if (held) return held;
+      if (!withdrawn || !recoveryCheck(body)) return deliver(body, frozen);
+      try {
+        const answer = await deliver(body, frozen);
+        if (!answer.ok && answer.error && !answer.stale) {
+          if (answer.error.code === 'approval') approvalWanted = true;
+          else if (answer.error.code !== 'session') { recoveryFailed = true; renderNotice(); }
+        }
+        return answer;
+      } catch (error) { recoveryFailed = true; renderNotice(); throw error; }
+    }
+
+    async function deliver(body, frozen) {
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), 120000);
+      try {
+        const response = await fetch(frozen.url, {method: 'POST', credentials: 'omit', redirect: 'follow', signal: controller.signal,
+          headers: {'Content-Type': 'text/plain;charset=utf-8'},
+          body: JSON.stringify(Object.assign({api: 1, appVersion: APP_VERSION, token: frozen.token}, body))});
+        if (!response.ok) throw new Error('KMS did not answer properly (' + response.status + '). Try again.');
+        let answer;
+        try { answer = await response.json(); } catch (error) { throw new Error('KMS sent an answer this page could not read. The owner may need to approve the script again.'); }
+        // A late answer, to a request sent before a sign-in, sign-out or switch
+        // (the screen checks backup status every 20 seconds), is never used: it
+        // must not redraw the sign-in, end the new session or show a message.
+        if (!isCurrent(frozen)) return {ok: false, stale: true, error: {code: 'stale', message: 'This answer arrived after the sign-in on this tab changed, so it was not used.'}};
+        if (!answer.ok && answer.error) {
+          if ((answer.error.code === 'session' || answer.error.code === 'paused' && !frozen.maintenance) && frozen.token && body.call !== 'signIn' && body.call !== 'maintenanceSignIn') sessionEnded(answer.error.message);
+          if (answer.error.code === 'version') versionChanged(answer.serverRelease);
+        }
+        return answer;
+      } catch (error) {
+        if (error.name === 'AbortError') throw new Error('KMS took too long to answer. Check the connection.');
+        throw error;
+      } finally { clearTimeout(timer); }
+    }
+
+    let signedInAgain = false, switchOffered = false;
+    function banner(text, action, handler) {
+      signedInAgain = false; switchOffered = false;
+      $('banner').hidden = !text; $('bannerText').textContent = text || '';
+      $('bannerAction').hidden = !action; $('bannerAction').textContent = action || ''; $('bannerAction').onclick = handler || null;
+    }
+    function screenWindow() { try { return currentScreen && $('screen').contentWindow; } catch (error) { return null; } }
+    function screenHasWork() { const w = screenWindow(); try { return !!(w && w.KmsStatus && (w.KmsStatus.isDirty() || w.KmsStatus.isBusy())); } catch (error) { return false; } }
+
+    // Never reloads over unsaved work by itself (design 3.1). Reload KMS goes
+    // through the root page, which opens the folder matching the server (6B D2,
+    // D5); a KMS from before 6B sends no release and counts as older.
+    function versionChanged(serverRelease) {
+      const newer = Number.isSafeInteger(serverRelease) && serverRelease > APP_RELEASE;
+      banner((newer ? 'KMS has been updated.' : "This restaurant's KMS is older than this page.") + ' Nothing more can be saved from this page; your entries are still here. Reload KMS to use the matching page.', 'Reload KMS', async function() {
+        if (!await leave('reload KMS')) return;
+        closeScreen(); location.assign('/');
+      });
+    }
+
+    // The launcher (6C): this person's screens in their groups, in the order
+    // the build lists them. A maintenance sign-in sees only the screens marked
+    // for maintenance. Comfort only: the server decides what each person may do.
+    function allowedScreens() {
+      const current = session(), rank = ROLES.indexOf(current && current.staff && current.staff.role);
+      return SCREENS.filter(screen => current && (current.maintenance ? screen.maintenance === true : rank >= 0 && rank >= ROLES.indexOf(screen.role)));
+    }
+    function tiles() {
+      const allowed = allowedScreens(), groups = [];
+      allowed.forEach(screen => { if (groups.indexOf(screen.group) < 0) groups.push(screen.group); });
+      $('tiles').replaceChildren(...groups.map(group => {
+        const section = document.createElement('section'), heading = document.createElement('h2'), box = document.createElement('div');
+        section.className = 'group'; section.dataset.group = group; heading.textContent = group; box.className = 'tiles';
+        box.append(...allowed.filter(screen => screen.group === group).map(screen => {
+          const b = document.createElement('button'); b.type = 'button'; b.dataset.screen = screen.name; b.textContent = screen.label;
+          b.addEventListener('click', () => openScreen(screen.name));
+          return b;
+        }));
+        section.append(heading, box);
+        return section;
+      }));
+      const current = session(), link = connection();
+      $('homeTitle').textContent = link && link.name ? link.name : 'KMS';
+      $('homeWho').textContent = !current ? '' : current.maintenance ? 'Owner maintenance sign-in. KMS is paused; only these screens are available.' :
+        'Signed in as ' + current.staff.name + ' (' + current.staff.role + ').';
+    }
+
+    function show(view) {
+      if (view === 'home') tiles();
+      ['stopped', 'signIn', 'home'].forEach(id => { $(id).hidden = id !== view; });
+      renderPause();
+      $('screen').hidden = view !== 'screen';
+      const current = session();
+      $('who').textContent = current ? current.maintenance ? 'Maintenance · ends ' + new Date(current.endsAt).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit', hour12: false}) : current.staff.name + ' · ' + current.staff.role : '';
+      $('signOutButton').hidden = !current; $('homeButton').hidden = view !== 'screen';
+      const link = connection(); $('restaurant').textContent = link && link.name ? link.name : '';
+    }
+
+    // Recent staff names belong to one restaurant (6B D6).
+    const namesKey = () => NAMES + ':' + ((connection() || {}).id || '');
+    function recentNames() {
+      const box = $('recentNames'); box.replaceChildren();
+      (load(localStorage, namesKey()) || []).forEach(name => {
+        const b = document.createElement('button'); b.type = 'button'; b.textContent = name;
+        b.addEventListener('click', () => { $('staffName').value = name; $('staffPin').focus(); });
+        box.appendChild(b);
+      });
+    }
+
+    // Sign-in form, either as the page or over a screen whose session ended.
+    function signInView(note, overlay) {
+      signInMode(false);
+      $('signInNote').textContent = note || 'Use your name and 6-digit PIN.';
+      $('signInError').textContent = ''; $('staffPin').value = ''; recentNames();
+      if (overlay) { $('overlay').hidden = false; $('overlay').appendChild($('signIn')); $('signIn').hidden = false; }
+      else { $('overlay').hidden = true; document.querySelector('main').insertBefore($('signIn'), $('home')); show('signIn'); }
+      renderPause(); helloPause();
+      setTimeout(() => ($('staffName').value ? $('staffPin') : $('staffName')).focus(), 0);
+    }
+
+    // The owner's Google sign-in (slice 5E). The server keeps the approval and
+    // checks it on every owner call; this page only asks for it when an owner
+    // call is refused for want of it. Google's own button returns an ID token
+    // carrying a one-use nonce from KMS.
+    let ownerPending = null, gisLoading = null, gisScript = null, ownerCredential = null, ownerEndedAt = 0, ownerAttempt = 0, ownerOptions = {};
+    // Google's sign-in script gets its own bounded wait (6A.4, Astra b774248),
+    // apart from the time the owner takes to choose an account.
+    const GIS_WAIT_MS = 30000;
+    function gis() {
+      if (window.google && window.google.accounts && window.google.accounts.id) return Promise.resolve();
+      if (!gisLoading) gisLoading = new Promise((resolve, reject) => {
+        const script = gisScript = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client'; script.async = true;
+        script.onload = resolve;
+        script.onerror = () => { if (gisScript === script) { gisLoading = null; gisScript = null; } reject(new Error('Google sign-in could not be loaded. Check the connection and try again.')); };
+        document.head.appendChild(script);
+      });
+      let timer;
+      const late = new Promise((resolve, reject) => { timer = setTimeout(() => {
+        // A stalled load is dropped so Try again starts a fresh one.
+        if (gisScript) { gisScript.remove(); gisScript = null; } gisLoading = null;
+        reject(new Error('Google sign-in did not load within 30 seconds. Check the connection, then choose Try again.'));
+      }, GIS_WAIT_MS); });
+      return Promise.race([gisLoading, late]).finally(() => clearTimeout(timer));
+    }
+    // Each approval box belongs to one screen's request (6B A2, Astra's
+    // re-check of d6e7481). Every step checks that its box is still the open
+    // one and that its screen and sign-in are unchanged: before sending (after
+    // any wait for the withdrawn list too) and before applying an answer, an
+    // error or a retry. A closed box's late answer never settles a newer one.
+    const boxOpen = box => !!box && ownerPending === box && screenCurrent(box.ticket);
+    // 6C.2 (B7, Astra's plan review). Within one box each prepared attempt has
+    // its own nonce and Google button; an answer, busy retry or clean-up of an
+    // older attempt changes nothing. A refusal other than these prepares a new
+    // attempt (the typed code is kept); these keep their own handling in send.
+    const OWNER_KEEP_ = ['busy', 'session', 'paused', 'version', 'withdrawn', 'policy'];
+    // A Google sign-in is not sent once this long after its nonce was asked
+    // for; the server's nonce and token limits stay 5 minutes.
+    const OWNER_HELD_MS = 270000;
+    function ownerClose(error) {
+      $('ownerCheck').hidden = true; ownerCredential = null;
+      if ($('signIn').parentNode !== $('overlay')) $('overlay').hidden = true;
+      const pending = ownerPending; ownerPending = null;
+      if (pending) ownerEndedAt = Date.now();
+      if (pending) { if (error) pending.reject(error); else pending.resolve(); }
+    }
+    async function ownerPrepare(options) {
+      const box = ownerPending;
+      if (!box) return;
+      const attempt = ++ownerAttempt, live = () => attempt === ownerAttempt && boxOpen(box), asked = Date.now();
+      ownerOptions = Object.assign({}, options, {error: ''}); $('ownerRetry').hidden = true;
+      $('ownerError').textContent = options.error || ''; $('ownerGoogle').replaceChildren(); $('ownerConfirm').hidden = true; $('ownerConfirm').disabled = false; ownerCredential = null;
+      $('ownerConfirm').textContent = 'Link and confirm'; ownerApprove.busy = 0;
+      $('ownerCheckNote').textContent = options.fresh ? 'This change needs a recent Google sign-in by the account that owns this KMS workbook.' :
+        'Owner screens need a Google sign-in by the account that owns this KMS workbook.';
+      try {
+        const answer = await send({call: 'ownerNonce'}, null, live);
+        if (!live() || answer.stale) return;
+        if (!answer.ok) throw new Error(answer.error.message);
+        const value = answer.value;
+        approvalLinked = !!value.linked;
+        if (withdrawn && !value.linked) throw new Error('First-time owner linking is not available on a withdrawn page. The owner needs to update KMS.');
+        $('ownerLink').hidden = !!value.linked;
+        await gis();
+        if (!live()) return;
+        // Google's answer counts only for this attempt in this epoch (6B A2).
+        const at = epoch;
+        window.google.accounts.id.initialize({client_id: value.clientId, nonce: value.nonce, auto_select: false, cancel_on_tap_outside: false,
+          callback: response => { if (live() && at === epoch) ownerApprove(box, {credential: response && response.credential, nonce: value.nonce, attempt: attempt, asked: asked}); }});
+        window.google.accounts.id.renderButton($('ownerGoogle'), {type: 'standard', theme: 'outline', size: 'large', text: 'continue_with'});
+      } catch (error) {
+        if (!live()) return;
+        $('ownerError').textContent = error.message; $('ownerRetry').hidden = false;
+      }
+    }
+    // held: {credential, nonce, attempt, asked}, one Google sign-in of one attempt.
+    async function ownerApprove(box, held) {
+      const live = () => held.attempt === ownerAttempt && boxOpen(box);
+      if (!live()) return;
+      if (!held.credential) { $('ownerError').textContent = 'Google did not return a sign-in. Try again.'; return; }
+      const code = $('ownerLinkCode').value.trim();
+      if (!$('ownerLink').hidden && !code) {
+        ownerCredential = held; $('ownerConfirm').hidden = false;
+        $('ownerError').textContent = 'Enter the linking code from the workbook, then choose Link and confirm.'; return;
+      }
+      if (!(Date.now() - held.asked < OWNER_HELD_MS)) {
+        ownerPrepare(Object.assign({}, ownerOptions, {error: 'Your Google sign-in timed out. Choose Continue with Google again.'})); return;
+      }
+      $('ownerError').textContent = ''; $('ownerConfirm').disabled = true;
+      try {
+        const answer = await send({call: 'ownerApprove', idToken: held.credential, nonce: held.nonce, linkCode: $('ownerLink').hidden ? '' : code}, null, live);
+        if (!live() || answer.stale) return;
+        if (!answer.ok && answer.error && answer.error.code === 'busy') {
+          // F (Astra S3): KMS was busy and nothing ran, so this Google sign-in is
+          // still unused. Keep it and try again shortly; never make the owner start over.
+          ownerCredential = held;
+          $('ownerConfirm').textContent = 'Try again'; $('ownerConfirm').hidden = false;
+          const tries = (ownerApprove.busy = (ownerApprove.busy || 0) + 1);
+          $('ownerError').textContent = tries <= 3 ? 'KMS is busy for a moment. Trying again…' : answer.error.message + ' Your Google sign-in is kept: choose Try again.';
+          if (tries <= 3) setTimeout(() => { if (live() && ownerCredential === held) ownerApprove(box, held); }, 5000);
+          return;
+        }
+        ownerApprove.busy = 0;
+        if (!answer.ok) {
+          // The old Google button can only fail again: prepare a new one (B7).
+          if (answer.error && OWNER_KEEP_.indexOf(answer.error.code) >= 0) $('ownerError').textContent = answer.error.message;
+          else ownerPrepare(Object.assign({}, ownerOptions, {error: answer.error ? answer.error.message : 'Google sign-in could not be confirmed. Try again.'}));
+          return;
+        }
+        approvalWanted = false;
+        $('ownerLinkCode').value = '';
+        ownerClose(null);
+      } catch (error) { if (live()) ownerPrepare(Object.assign({}, ownerOptions, {error: error.message})); }
+      finally { if (live()) $('ownerConfirm').disabled = false; }
+    }
+    function ownerApproval(options, ticket) {
+      options = options || {};
+      if (ownerPending) return ownerPending.promise;
+      // A shell question outranks the Google box (see choose): the request is
+      // refused before anything is sent, so the screen can simply try again.
+      if (!$('dialog').hidden) return Promise.reject(ownerCancelled('Google approval could not open while another question was open. Nothing was changed; try again.'));
+      let resolve, reject;
+      const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+      cancelScreenQuestion();
+      ownerPending = {promise: promise, resolve: resolve, reject: reject, ticket: ticket};
+      $('overlay').hidden = false; $('overlay').appendChild($('ownerCheck')); $('ownerCheck').hidden = false;
+      ownerPrepare(options);
+      return promise;
+    }
+    function ownerCancelled(text) { const error = new Error(text || 'Owner confirmation was cancelled. Nothing was changed.'); error.kmsCode = 'approval'; return error; }
+
+    function sessionEnded(message) {
+      const previous = session();
+      clearTimeout(maintenanceTimer);
+      if (previous?.maintenance) {
+        const pending = load(localStorage, 'KMS_BACKUP_FINISH_PENDING:' + previous.context.book);
+        if (pending && (pending.choice === 'keep' || pending.action === 'undoMove')) message = 'The answer was lost. Sign in as usual (owner) and open Settings to see what happened.';
+      }
+      endShellQuestion();
+      if (ownerPending) ownerClose(ownerCancelled());
+      cancelScreenQuestion();
+      keep(sessionStorage, SESSION, null);
+      if (!currentScreen) { signInView(message); return; }
+      $('who').textContent = ''; $('signOutButton').hidden = true;
+      signInView((message || 'Your sign-in has ended.') + (previous ? ' Sign in as ' + previous.staff.name + ' to carry on.' : ''), true);
+      if (previous) $('staffName').value = previous.staff.name;
+      sessionEnded.previous = previous;
+    }
+
+    async function signIn(event) {
+      event.preventDefault();
+      const name = $('staffName').value.trim(), pin = $('staffPin').value;
+      $('signInError').textContent = '';
+      if (!name || !/^\d{6}$/.test(pin)) { $('signInError').textContent = 'Enter your name and your 6-digit PIN.'; return; }
+      $('signInButton').disabled = true;
+      try {
+        const answer = await send({call: maintenanceMode ? 'maintenanceSignIn' : 'signIn', name: name, pin: pin});
+        $('staffPin').value = '';
+        if (answer.stale) return;
+        if (!answer.ok) {
+          if (answer.error.code === 'notPaused') { signInMode(false); $('signInError').textContent = 'KMS is not paused. Sign in as usual.'; refreshPause(); }
+          else { $('signInError').textContent = answer.error.message; if (answer.error.code === 'paused') refreshPause(); }
+          return;
+        }
+        const value = answer.value, previous = sessionEnded.previous || null, tab = connection();
+        epoch++;
+        keep(sessionStorage, SESSION, {token: value.token, connection: tab.id, staff: value.staff, context: value.context, idleMinutes: value.idleMinutes,
+          ...(value.maintenance ? {maintenance: true, endsAt: Date.now() + value.endsInMs} : {})});
+        maintenanceClock();
+        keep(localStorage, namesKey(), [value.staff.name].concat((load(localStorage, namesKey()) || []).filter(n => n !== value.staff.name)).slice(0, 6));
+        sessionEnded.previous = null;
+        // A screen carries on only for the same restaurant, workbook and person;
+        // a maintenance screen never carries on under an ordinary sign-in, or the reverse.
+        if (currentScreen && previous && !previous.maintenance && !value.maintenance && previous.connection === tab.id && previous.context &&
+            previous.context.book === value.context.book && previous.context.actor === value.context.actor) {
+          // Same person: the screen and its entries carry on as they were.
+          $('overlay').hidden = true; document.querySelector('main').insertBefore($('signIn'), $('home'));
+          show('screen'); banner('Signed in again. Your entries are still here; save again if a save was refused.'); signedInAgain = true;
+          return;
+        }
+        // Someone else: their screen closes through the leaving routine, still
+        // under the sign-in box. The first person's entries stay on this device
+        // for them only and are never shown to the new person. If they cannot be
+        // stored and the new person does not discard them, the new sign-in is
+        // cancelled so the first person can save or copy them.
+        if (currentScreen) {
+          const result = await leave('continue as ' + value.staff.name);
+          if (!result) {
+            const frozen = freeze(); epoch++; keep(sessionStorage, SESSION, null);
+            send({call: 'signOut', token: value.token}, frozen).catch(() => {});
+            sessionEnded.previous = previous;
+            signInView('Sign-in cancelled. ' + (previous ? previous.staff.name + ' can sign in to save or copy the entries.' : 'Sign in to save or copy the entries.'), true);
+            if (previous) $('staffName').value = previous.staff.name;
+            return;
+          }
+          closeScreen();
+          if (result === 'kept') banner('The unsaved entries on that screen are kept on this device, for ' + (previous ? previous.staff.name : 'the person who made them') + ' only.');
+        }
+        $('overlay').hidden = true; document.querySelector('main').insertBefore($('signIn'), $('home'));
+        if (value.maintenance) { tiles(); openScreen('Settings'); return; }
+        show('home');
+      } catch (error) {
+        $('signInError').textContent = error.message;
+      } finally { $('signInButton').disabled = false; }
+    }
+
+    function openScreen(name) {
+      if (allowedScreens().every(screen => screen.name !== name)) return;
+      currentScreen = name; banner('');
+      $('screen').src = 'screens/' + name + '.html';
+      show('screen');
+    }
+
+    // In-page choices replace window.confirm when leaving (6B A2). Resolves
+    // true for the second, discarding button. One question at a time: while one
+    // is open another is never shown over it and counts as the first button.
+    // It works as a proper dialog (UI pass plan 3a): the page behind and the
+    // screen cannot be used, the safe button has focus first, Tab stays in the
+    // box, Escape is the safe button, focus goes back, and it settles once.
+    //
+    // One rule for all three kinds of question (Astra's U1 review): a shell
+    // question outranks the Google approval box, which outranks a question the
+    // screen is asking. One arriving above closes what is open below it, and
+    // one arriving below an open one is refused; either way the displaced one
+    // settles safely (a shell question as its safe button, the Google box as
+    // "cancelled, nothing was changed", a screen question as cancelled).
+    // still: the asker's own check (its screen and sign-in); once that fails
+    // the question closes as its safe button, and the discarding answer is
+    // never returned for a changed screen or sign-in.
+    let settleDialog = null;
+    function endShellQuestion() { if (settleDialog) settleDialog(false); }
+    function choose(title, text, keepLabel, discardLabel, danger, still) {
+      if (!$('dialog').hidden || still && !still()) return Promise.resolve(false);
+      if (ownerPending) ownerClose(ownerCancelled());
+      cancelScreenQuestion();
+      return new Promise(resolve => {
+        const before = document.activeElement, blocked = [];
+        $('dialogTitle').textContent = title; $('dialogText').textContent = text;
+        $('dialogKeep').textContent = keepLabel; $('dialogDiscard').textContent = discardLabel;
+        $('dialogDiscard').classList.toggle('kms-danger', danger !== false);
+        let settled = false;
+        settleDialog = answer => {
+          if (settled) return; settled = true; settleDialog = null;
+          $('dialog').hidden = true; $('dialogKeep').onclick = $('dialogDiscard').onclick = null;
+          blocked.forEach(el => el.removeAttribute('inert'));
+          if (before && before.isConnected && typeof before.focus === 'function') { try { before.focus(); } catch (error) {} }
+          resolve(answer && (!still || still()));
+        };
+        $('dialogKeep').onclick = () => settleDialog && settleDialog(false);
+        $('dialogDiscard').onclick = () => settleDialog && settleDialog(true);
+        Array.from(document.body.children).forEach(el => { if (el !== $('dialog') && el.tagName !== 'SCRIPT' && !el.hasAttribute('inert')) { el.setAttribute('inert', ''); blocked.push(el); } });
+        $('dialog').hidden = false; $('dialogKeep').focus();
+      });
+    }
+    $('dialog').addEventListener('keydown', event => {
+      if (!settleDialog) return;
+      if (event.key === 'Escape') { event.preventDefault(); settleDialog(false); return; }
+      if (event.key !== 'Tab') return;
+      const first = $('dialogKeep'), last = $('dialogDiscard');
+      if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+      else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
+    });
+    // A question the open screen is asking (KmsUi.ask): while it is open the
+    // shell's own controls cannot be used, and the shell's own questions, the
+    // Google approval box, a sign-in change or closing the screen cancel it.
+    let screenAsking = false;
+    function screenQuestion(open) {
+      screenAsking = !!open;
+      ['header', '#notice', '#banner'].forEach(selector => { const el = document.querySelector(selector); if (el) { if (open) el.setAttribute('inert', ''); else el.removeAttribute('inert'); } });
+    }
+    function cancelScreenQuestion() {
+      if (!screenAsking) return;
+      try { const w = screenWindow(); if (w && w.KmsUi) w.KmsUi.cancel('closed'); } catch (error) {}
+      screenQuestion(false);
+    }
+    // Unsaved entries, a save under way or one whose outcome is unknown; an
+    // ordinary load in progress is not unsaved work.
+    function unsaved() {
+      const w = screenWindow();
+      try { return !!(w && w.KmsStatus && (w.KmsStatus.hasUnsaved ? w.KmsStatus.hasUnsaved() : w.KmsStatus.isDirty() || w.KmsStatus.isBusy())); } catch (error) { return false; }
+    }
+    // The screen stores its entries (and any save's operation ID, method and
+    // arguments) and reports whether the copy was written and read back.
+    function storedOnDevice() {
+      const w = screenWindow();
+      try { if (!w || !w.KmsRecovery || !w.KmsRecovery.persisted) return false; w.KmsRecovery.capture(); return w.KmsRecovery.persisted() === true; } catch (error) { return false; }
+    }
+    const KEPT = 'Your unsaved entries are kept on this device and offered back when you open that screen again.';
+    // The one leaving routine (6B A2) for Reload KMS, switching restaurant, Home,
+    // sign-out and another person signing in. Resolves 'clear' (nothing
+    // unsaved), 'kept' (stored on this device and checked) or 'discarded' (the
+    // person chose to lose them); null means stay on the screen.
+    // Both questions belong to the screen and sign-in they were asked about
+    // (Astra's U1 review): a sign-in that ends, changes or is switched, or a
+    // closed or replaced screen, closes them as Stay, and the screen is checked
+    // again before anything is discarded.
+    async function leave(doing) {
+      if (!$('dialog').hidden) return null;
+      if (!currentScreen || !unsaved()) return 'clear';
+      if (storedOnDevice()) return 'kept';
+      const screen = currentScreen, win = screenWindow(), at = epoch, token = (session() || {}).token;
+      const still = () => currentScreen === screen && screenWindow() === win && epoch === at && (session() || {}).token === token;
+      if (!await choose('Your entries could not be stored', 'KMS could not keep a checked copy of the unsaved entries on this screen on this device, so the screen stays open. Copy or save them first.', 'Stay on this screen', 'Discard and leave', true, still)) return null;
+      if (!await choose('Discard unsaved entries?', 'This discards the unsaved entries on this screen and any save still waiting for its outcome check. They cannot be recovered. Then KMS will ' + doing + '.', 'Keep them', 'Discard and ' + doing, true, still)) return null;
+      if (!still()) return null;
+      // Saved or stored meanwhile: nothing needs discarding.
+      if (!unsaved()) return 'clear';
+      if (storedOnDevice()) return 'kept';
+      try { win.KmsRecovery.discardCurrent(); } catch (error) {}
+      return 'discarded';
+    }
+    async function goHome() {
+      const result = await leave('go Home');
+      if (!result) return;
+      closeScreen();
+      if (result === 'kept') banner(KEPT);
+    }
+
+    // Closes the screen after the leaving routine (or the screen's own Close
+    // button) has dealt with its entries. The frame is replaced, not navigated,
+    // so the closed screen never asks the browser's own "leave?" question.
+    function closeScreen() {
+      endShellQuestion();
+      cancelScreenQuestion();
+      currentScreen = '';
+      // A Google sign-in box opened for the closed screen closes with it.
+      if (ownerPending) ownerClose(ownerCancelled());
+      const old = $('screen'), fresh = old.cloneNode(false); fresh.removeAttribute('src'); old.replaceWith(fresh);
+      // Leaving the screen ends what "Signed in again" was about.
+      if (signedInAgain) banner('');
+      document.querySelector('main').insertBefore($('signIn'), $('home'));
+      $('overlay').hidden = true;
+      if (session()) show('home'); else signInView();
+    }
+
+    // Another tab connected this device to a different restaurant (6B D6). This
+    // tab stays where it is unless the person chooses to switch it.
+    function deviceChanged(event) {
+      if (event.key !== 'KMS_WEB_DEVICE') return;
+      let device = null;
+      try { device = JSON.parse(event.newValue || 'null'); } catch (error) {}
+      const tab = connection();
+      const other = tab && device && device.schema === 1 && Array.isArray(device.connections) ? device.connections.find(c => c && c.id === device.last) : null;
+      if (!other || other.id === tab.id || !linkPattern.test(other.url)) { if (switchOffered) banner(''); return; }
+      banner('Another tab connected this device to ' + (other.name || 'another KMS') + '. This tab stays on ' + (tab.name || 'its KMS') + '.',
+        'Switch this tab to ' + (other.name || 'it'), () => switchTo(other));
+      switchOffered = true;
+    }
+    // Pause, hello and owner-approval state belong to one restaurant (6B A2).
+    function resetConnectionState() {
+      acceptedPause = null; pauseApplied = pauseAsked; clearTimeout(pauseTimer); clearTimeout(maintenanceTimer);
+      keep(sessionStorage, HELLO, null);
+      endShellQuestion();
+      if (ownerPending) ownerClose(ownerCancelled());
+      ownerAttempt++; ownerCredential = null;
+      try { if (window.google && window.google.accounts && window.google.accounts.id) window.google.accounts.id.cancel(); } catch (error) {}
+    }
+    // A connect link opened on this page (6C). The same KMS changes nothing;
+    // another one is checked with hello (no token), asked about, and then
+    // becomes the device's restaurant through the same switch as above. Each
+    // attempt has its own number and the epoch it began in, checked after every
+    // wait: a newer link, a sign-in, sign-out or switch makes an older one do
+    // nothing. Its question never replaces another one already open.
+    const CONNECT_WAIT_MS = 30000;
+    let connectAsked = 0, connectAsking = false;
+    async function connectRequested() {
+      const link = new URLSearchParams(location.hash.slice(1)).get('connect');
+      if (link === null) return;
+      history.replaceState(null, '', location.pathname);
+      const tab = connection();
+      if (!tab) return;
+      if (!linkPattern.test(link)) { banner('That connect link is not a KMS link, so nothing changed.'); return; }
+      if (link === tab.url) { banner('This device is already connected to ' + (tab.name || 'this KMS') + '.'); return; }
+      if (connectAsking) { banner('Answer the connect question that is already open first. Nothing changed for the newer connect link.'); return; }
+      const asked = ++connectAsked, at = epoch;
+      const live = () => asked === connectAsked && at === epoch && (connection() || {}).id === tab.id;
+      let name = '';
+      // One time limit covers the request and reading its answer.
+      const controller = new AbortController(), timer = setTimeout(() => controller.abort(), CONNECT_WAIT_MS);
+      try {
+        const response = await fetch(link, {method: 'POST', credentials: 'omit', redirect: 'follow', signal: controller.signal, headers: {'Content-Type': 'text/plain;charset=utf-8'}, body: JSON.stringify({api: 1, call: 'hello'})});
+        const answer = response.ok ? await response.json() : null;
+        if (!answer || !answer.ok) throw new Error('no answer');
+        name = answer.value && typeof answer.value.name === 'string' ? answer.value.name : '';
+      } catch (error) {
+        if (live()) banner(error.name === 'AbortError' ? 'The KMS in that connect link took too long to answer, so nothing changed.' : 'The KMS in that connect link could not be reached, so nothing changed.');
+        return;
+      } finally { clearTimeout(timer); }
+      if (!live()) return;
+      if (!$('dialog').hidden || ownerPending || screenAsking) { banner('The connect link arrived while another question was open, so nothing changed. Open the connect link again when you have finished.'); return; }
+      // Two KMS with the same name (a restored copy) are told apart by the end of each address (6C.1 B5).
+      const same = (tab.name || '') === name, mark = u => same ? ' (address …' + addressEnd(u) + ')' : '';
+      const here = (tab.name || 'this KMS') + mark(tab.url), there = (name || 'the other KMS') + mark(link);
+      connectAsking = true;
+      let yes;
+      try {
+        yes = await choose('Connect this device to ' + there + ' instead?', 'This tab and new tabs will open ' + there + ' instead of ' + here +
+          '. You will be signed out here. Unsaved entries stay on this device for the person who made them and are never shown in the other KMS.',
+          'Stay on ' + here, 'Connect to ' + there, false, live);
+      } finally { connectAsking = false; }
+      if (!yes || !live()) return;
+      const device = load(localStorage, 'KMS_WEB_DEVICE'), list = device && device.schema === 1 && Array.isArray(device.connections) ? device.connections : [];
+      const known = list.find(c => c && c.url === link);
+      await switchTo(known ? Object.assign({}, known, {name: name || known.name}) : {id: randomId(), url: link, name: name}, true, live);
+    }
+    function randomId() { return Array.from(crypto.getRandomValues(new Uint8Array(16)), b => b.toString(16).padStart(2, '0')).join(''); }
+
+    // Signs out of this restaurant (its token to its own link only), then the
+    // root page opens the other one. No credential is ever forwarded. remember:
+    // also make it this device's restaurant (a connect link, 6C), once the
+    // leaving routine has dealt with the open screen. still: the connect
+    // attempt's own check, repeated once the leaving questions are answered.
+    async function switchTo(other, remember, still) {
+      if (!await leave('switch this tab')) return;
+      if (still && !still()) { banner('Nothing changed: another connect link or a sign-in change came in meanwhile. Open the connect link again if you still want to connect.'); return; }
+      if (remember) {
+        const device = load(localStorage, 'KMS_WEB_DEVICE'), record = device && device.schema === 1 && Array.isArray(device.connections) ? device : {schema: 1, connections: [], last: ''};
+        const entry = {id: other.id, url: other.url, name: other.name || '', at: Date.now()};
+        ['business', 'installation'].forEach(field => { if (other[field]) entry[field] = other[field]; });
+        record.connections = [entry].concat(record.connections.filter(c => c && c.url !== other.url && c.id !== other.id)).slice(0, 10);
+        record.last = other.id;
+        // The device-wide change is refused, not half made, if it cannot be stored.
+        if (!keep(localStorage, 'KMS_WEB_DEVICE', record)) {
+          banner('This browser would not let KMS remember ' + (other.name || 'the other KMS') + ' on this device, so nothing changed. This tab stays on ' + ((connection() || {}).name || 'its KMS') + '.');
+          return;
+        }
+      }
+      const current = session(), frozen = freeze();
+      closeScreen();
+      epoch++; resetConnectionState();
+      keep(sessionStorage, SESSION, null);
+      if (current && frozen) await Promise.race([send({call: 'signOut', token: current.token}, frozen).catch(() => {}), new Promise(resolve => setTimeout(resolve, 5000))]);
+      keep(sessionStorage, TAB, {schema: 1, id: other.id, url: other.url, name: other.name || ''});
+      if ((connection() || {}).id !== other.id) { banner('This browser is blocking the storage KMS needs, so this tab could not be switched.'); return; }
+      location.assign('/');
+    }
+
+    async function signOut() {
+      const result = await leave('sign out');
+      if (!result) return;
+      const current = session(), frozen = freeze();
+      if (ownerPending) ownerClose(ownerCancelled());
+      closeScreen();
+      epoch++;
+      keep(sessionStorage, SESSION, null);
+      signInView(result === 'kept' ? 'Signed out. Your unsaved entries are kept on this device, and only you can see them.' : 'Signed out.');
+      if (current) { try { await send({call: 'signOut', token: current.token}, frozen); } catch (error) {} }
+    }
+
+    const screenCurrent = ticket => !!(ticket && currentScreen && ticket.win === screenWindow() && ticket.epoch === epoch);
+    window.KmsWeb = {
+      appVersion: APP_VERSION, send: send,
+      // Screens send through here with the ticket from the screen they came
+      // from (6B A2). Once that screen is closed, or the sign-in has changed,
+      // nothing more goes out and no Google sign-in box opens for it.
+      ticket: win => currentScreen && win && win === screenWindow() ? {win: win, epoch: epoch} : null,
+      screenSend: (body, ticket) => screenCurrent(ticket) ? send(body, null, () => screenCurrent(ticket)) : Promise.resolve(notSent()),
+      ownerApproval: (options, ticket) => screenCurrent(ticket) ? ownerApproval(options, ticket) : Promise.reject(ownerCancelled()),
+      // The screen's own Close button goes through the one leaving routine.
+      closeScreen: () => goHome(),
+      release: APP_RELEASE,
+      maintenance: () => !!session()?.maintenance,
+      // Lets a screen's load timer leave out the time spent in the Google sign-in box (finding D).
+      ownerWait: () => ({waiting: !!ownerPending, endedAt: ownerEndedAt}),
+      // One question at a time (UI pass plan 3a): a screen asks only when the
+      // shell has no question or Google approval box open, and says when it asks.
+      questionOpen: () => !$('dialog').hidden || !!ownerPending,
+      screenQuestion: open => screenQuestion(open),
+      role: () => { const current = session(); return current && current.staff && current.staff.role || ''; },
+      // A save went through, so the note about signing in again is out of date.
+      writeSucceeded: () => { if (signedInAgain) banner(''); },
+      context: screen => { const current = session(); return current ? {schema: 1, book: current.context.book, actor: current.context.actor, screen: screen} : null; },
+      // The connect link for this tab's restaurant (6C), for the owner only. It
+      // holds only the script address, which is effectively public (design 3.3).
+      connectLink: () => {
+        const current = session(), tab = connection();
+        return tab && current && (current.maintenance || current.staff && current.staff.role === 'Owner') ? location.origin + '/#connect=' + encodeURIComponent(tab.url) : '';
+      }
+    };
+
+    // The colour choice (UI pass plan 3 item 3), remembered on this device by
+    // KmsTheme in KmsStyle.html; the open screen follows it straight away.
+    function themeChoice() {
+      const value = window.KmsTheme ? window.KmsTheme.choice() : 'device';
+      document.querySelectorAll('input[name="kmsTheme"]').forEach(input => { input.checked = input.value === value; });
+    }
+    document.querySelectorAll('input[name="kmsTheme"]').forEach(input => input.addEventListener('change', () => {
+      if (!input.checked || !window.KmsTheme) return;
+      const kept = window.KmsTheme.set(input.value);
+      $('themeNote').hidden = kept;
+      try { const w = screenWindow(); if (w && w.KmsTheme) w.KmsTheme.apply(); } catch (error) {}
+    }));
+    window.addEventListener('storage', event => { if (window.KmsTheme && event.key === window.KmsTheme.key) themeChoice(); });
+    themeChoice();
+
+    $('signInForm').addEventListener('submit', signIn);
+    $('pauseCheck').addEventListener('click', refreshPause);
+    $('maintenanceSignIn').addEventListener('click', () => signInMode(true));
+    $('ordinarySignIn').addEventListener('click', () => signInMode(false));
+    $('signOutButton').addEventListener('click', signOut);
+    $('homeSignOut').addEventListener('click', signOut);
+    $('homeButton').addEventListener('click', goHome);
+    $('ownerCancel').addEventListener('click', () => ownerClose(ownerCancelled()));
+    $('ownerRetry').addEventListener('click', () => { if (ownerPending) ownerPrepare(ownerOptions); });
+    $('ownerConfirm').addEventListener('click', () => { if (ownerCredential) ownerApprove(ownerPending, ownerCredential); });
+    window.addEventListener('storage', deviceChanged);
+    window.addEventListener('hashchange', connectRequested);
+    readPolicy(); setInterval(readPolicy, POLICY_EVERY);
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) readPolicy(); });
+    window.addEventListener('beforeunload', event => { if (screenHasWork()) { event.preventDefault(); event.returnValue = ''; } });
+    // A page put away (or into the back/forward cache) answers no old question.
+    window.addEventListener('pagehide', () => { endShellQuestion(); cancelScreenQuestion(); });
+
+    // Without this tab's restaurant, go back to the root once; #r marks the
+    // second arrival, which stops here instead of looping (6B A2).
+    const returned = location.hash === '#r';
+    if (returned) history.replaceState(null, '', location.pathname);
+    if (!connection()) {
+      if (returned) { $('stoppedText').textContent = 'This browser is blocking the storage KMS needs. Allow this site to store data (or leave private browsing), then open KMS again.'; show('stopped'); }
+      else location.replace('/#r');
+    }
+    else if (!session()) signInView();
+    else if (session().maintenance) { maintenanceClock(); if (session()) openScreen('Settings'); }
+    else show('home');
+    if (connection()) connectRequested();
+  })();
+  </script>
+</body>
+</html>

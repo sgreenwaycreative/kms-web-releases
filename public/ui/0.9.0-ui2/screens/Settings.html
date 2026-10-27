@@ -1,0 +1,1971 @@
+<!DOCTYPE html><html><head><base target="_top"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f7f8;color:#233744;font:14px Arial,sans-serif}.settings-page{max-width:960px;padding:24px;margin:auto}h1{font-size:25px;margin:0 0 6px}h2{font-size:17px;margin:0 0 16px}p{line-height:1.5}.muted,.hint{color:#607782}.hint{font-size:12px;margin:5px 0 0}.card{background:white;border:1px solid #d8e2e5;border-radius:9px;padding:20px;margin:20px 0}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}.full{grid-column:1/-1}label{display:block;font-weight:700;font-size:12px;margin-bottom:7px}input,select,button{font:inherit}input,select{width:100%;min-height:40px;border:1px solid #bdcbd0;border-radius:6px;padding:9px;background:white;color:#233744}input[type="checkbox"]{width:18px;min-height:18px;height:18px;padding:0;margin:0;flex:none;accent-color:#146d70}.checkbox-label{display:flex;align-items:center;gap:10px;font-size:14px;font-weight:400;line-height:1.5}button{border:0;border-radius:7px;padding:10px 14px;background:#146d70;color:white;font-weight:700;cursor:pointer}button.secondary{background:#e8f0f1;color:#18545a}button:disabled{opacity:.5;cursor:default}.actions{display:flex;gap:9px;align-items:center;flex-wrap:wrap}a{color:#146d70}.top{display:flex;justify-content:space-between;align-items:start;gap:12px}#status{font-size:12px;min-height:18px}#status.error{color:#9a3d33}@media(max-width:600px){.settings-page{padding:16px 12px}.grid{grid-template-columns:1fr}.full{grid-column:auto}.card{padding:16px}.top{flex-direction:column}}
+.backup-action-error{position:fixed;left:22px;right:22px;bottom:84px;z-index:26;padding:12px 16px;max-height:30vh;overflow:auto;border:1px solid #c98980;border-radius:8px;background:#fff3f0;color:#7a2d25;box-shadow:0 3px 12px #23374420;font-size:13px;line-height:1.5}.backup-action-error[hidden]{display:none}.backup-action-error button{margin:8px 8px 0 0}
+.backup-overview{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:16px 0 22px}.backup-overview>div{border:1px solid #d8e6e5;background:#f5faf9;border-radius:8px;padding:12px 14px;min-width:0}.backup-overview span{display:block;color:#607782;font-size:12px;margin-bottom:6px}.backup-overview strong{display:block;font-size:14px;line-height:1.4;overflow-wrap:anywhere}.backup-section{border-top:1px solid #d8e2e5;padding-top:18px;margin-top:20px}.backup-section h3{font-size:15px;margin:0 0 12px}.backup-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}.backup-toolbar h3{margin:0}.backup-toolbar select{width:auto;min-width:160px}.backup-progress{border-radius:7px;background:#f4f7f8;padding:10px 12px;margin:12px 0;line-height:1.4}.backup-entry{border:1px solid #dbe5e8;border-radius:8px;padding:12px 14px;margin:9px 0;background:#fff}.backup-entry-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.backup-entry-head strong{font-size:14px}.backup-date{font-size:12px;color:#607782}.backup-badge{display:inline-block;border-radius:100px;background:#e8f0f1;color:#18545a;padding:3px 8px;font-size:11px;font-weight:700}.backup-badge.complete{background:#e4f3eb;color:#196141}.backup-badge.failed{background:#fff0ea;color:#9a3d33}.backup-badge.running{background:#e9f0ff;color:#285184}.backup-entry .actions{margin-top:10px}.backup-entry details{margin-top:8px;color:#526976;font-size:12px}.backup-entry details p{margin:7px 0}.backup-entry .backup-issue{color:#8a4037}.backup-entry summary{cursor:pointer}.backup-empty{color:#607782;font-size:13px;padding:12px 0}.backup-policy{margin-top:10px}.backup-policy summary{color:#18545a;font-weight:700;cursor:pointer}.backup-policy .actions{margin:10px 0}.backup-history-more{margin-top:10px}@media(max-width:600px){.backup-overview{grid-template-columns:1fr}.backup-toolbar{align-items:stretch}.backup-toolbar select{width:100%}}
+</style><script>const SCREEN="Settings",OWNER_SCREEN=true,OWNER_CALLS={"kmsSettingsGet":{"kind":"read"},"kmsBackupStatus":{"kind":"read"},"kmsBackupFinishReceipt":{"kind":"read"},"kmsBackupSignOutPreview":{"kind":"read"},"kmsBackupRetentionPreview":{"kind":"read"},"kmsRecoveryIssues":{"kind":"read"},"kmsOwnerStaffList":{"kind":"read"},"kmsSettingsSave":{"kind":"write","receipt":true},"kmsBackupStart":{"kind":"write"},"kmsBackupCancel":{"kind":"write","fresh":true},"kmsBackupAcknowledge":{"kind":"write"},"kmsBackupResume":{"kind":"write","fresh":true},"kmsBackupPin":{"kind":"write"},"kmsBackupScheduleSet":{"kind":"write"},"kmsBackupRestore":{"kind":"write","fresh":true},"kmsRecoveryResolve":{"kind":"write"},"kmsOwnerStaffAdd":{"kind":"write","fresh":true},"kmsOwnerStaffChange":{"kind":"write","fresh":true},"kmsOwnerStaffClose":{"kind":"write","fresh":true},"kmsForwardingGet":{"kind":"read"},"kmsForwardingSet":{"kind":"write","fresh":true},"kmsForwardingClear":{"kind":"write","fresh":true},"kmsBackupReconcile":{"kind":"write","fresh":true},"kmsBackupFinish":{"kind":"write","fresh":true},"kmsBackupUndoMove":{"kind":"write","fresh":true}};
+// Stand-in for google.script.run inside a KMS screen on the hosted web page
+// (design 3.1). The screen keeps calling google.script.run exactly as it does
+// in Sheets; each call is sent by the page shell (window.parent.KmsWeb) to the
+// restaurant's own script with fetch, no Google cookies, as text/plain.
+// The build inserts this before BrowserRecovery and UiStatus, with SCREEN,
+// OWNER_SCREEN and OWNER_CALLS (the owner call table in OwnerWeb.js) set.
+(function() {
+  'use strict';
+  const web = window.parent !== window && window.parent.KmsWeb;
+  if (!web) { document.documentElement.innerHTML = '<p style="font:16px Arial;padding:24px">Open KMS from its web page.</p>'; return; }
+  // Browser recovery copies belong to this workbook, this person and this screen.
+  window.KmsRecoveryContext = web.context(SCREEN);
+  // Recovery copies record the page release that wrote them (6B A2).
+  window.KmsWebRelease = web.release;
+  window.KmsPerformanceEnabled = true;
+  window.KmsSaveRecoveryEnabled = true;
+  // The screen hides actions this person's role cannot use. The server check is the real guard.
+  window.KmsStaffRole = web.role();
+  window.KmsWebPage = true;
+  window.KmsMaintenance = !!(web.maintenance && web.maintenance());
+  // The HEIC photo converter comes from this release's own folder (6B A4): the
+  // page's security policy allows no other site's scripts. Invoice Entry and
+  // the record editor use this hook; in Sheets they load it from jsDelivr.
+  window.kmsLoadHeicConverter = function() { return import(new URL('../vendor/heic-to.js', location.href).href); };
+  // UiStatus leaves time in the owner's Google sign-in box out of its 45-second timer.
+  window.KmsOwnerWait = function() { return web.ownerWait ? web.ownerWait() : null; };
+  // These refusals happen before KMS runs anything, so a save refused this way
+  // is certainly not saved and the form can say so.
+  // A withdrawn page (withdrawn) or an unchecked withdrawn list (policy) sends
+  // nothing, nor does a request whose screen or sign-in has changed (notSent).
+  const refusedBeforeKms = ['version', 'session', 'role', 'unavailable', 'binding', 'request', 'approval', 'withdrawn', 'policy', 'notSent'];
+  // Refusals are not failures: the screen shows a refusal state, not Save failed.
+  const refusals = refusedBeforeKms.concat(['backup', 'busy', 'locked', 'signIn', 'paused', 'pauseChanged', 'pauseState', 'notPaused']);
+
+  // A closed screen sends nothing and acts on nothing (6B A2): its frame has
+  // been removed from the page, and its requests belong to a sign-in or
+  // restaurant that may have changed.
+  function attached() { try { return !!(window.frameElement && window.frameElement.isConnected); } catch (error) { return false; } }
+
+  function failure(message, code) { const error = new Error(message); error.kmsCode = code || 'failed'; return error; }
+
+  function staffRequest(name, args) {
+    if (name === 'kmsPerformanceCall') return {call: 'read', method: String(args[0]), args: args[1] || []};
+    if (name === 'kmsOperationCall') return {call: 'save', method: String(args[0]), args: args[1] || [], operationId: args[2]};
+    if (name === 'kmsOperationStatus') return {call: 'status', method: String(args[0]), args: args[1] || [], operationId: args[2]};
+    return {call: 'read', method: name, args: args};
+  }
+
+  // Owner calls go by their own routes (slice 5E), never the staff ones.
+  function request(name, args) {
+    // On an owner screen the backup poll reads the owner's own status (R2),
+    // which also works while this page follows its own backup capture.
+    if (OWNER_SCREEN && name === 'kmsBackupActivity') return {body: {call: 'ownerRead', method: 'kmsBackupStatus', args: []}, pick: 'activity', background: true};
+    const body = staffRequest(name, args);
+    const owner = Object.prototype.hasOwnProperty.call(OWNER_CALLS, body.method) ? OWNER_CALLS[body.method] : null;
+    if (owner) body.call = body.call === 'status' ? 'ownerStatus' : owner.kind === 'write' ? 'ownerWrite' : 'ownerRead';
+    return {body: body, fresh: !!(owner && owner.fresh)};
+  }
+
+  // Development only: simulate a save whose confirmation is lost on the way
+  // back. Set sessionStorage KMS_WEB_FAULT to drop-next-save on a localhost page.
+  function dropThisSave(body) {
+    if (body.call !== 'save' || !/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return false;
+    try {
+      if (window.parent.sessionStorage.getItem('KMS_WEB_FAULT') !== 'drop-next-save') return false;
+      window.parent.sessionStorage.removeItem('KMS_WEB_FAULT');
+      return true;
+    } catch (error) { return false; }
+  }
+
+  function dispatch(name, args, options) {
+    // Each request belongs to this screen and the sign-in it was made under
+    // (6B A2); the page checks that again before every step that sends or asks.
+    const ticket = attached() && web.ticket(window);
+    if (!ticket) return;
+    const routed = request(name, args), body = routed.body, save = name === 'kmsOperationCall';
+    function succeed(value) { if (options.success) options.success(value, options.userObject); }
+    function fail(error) { if (options.failure) options.failure(error, options.userObject); else console.error(error); }
+    // An owner call refused for want of the owner's Google sign-in asks for it,
+    // then is sent once more. The refusal came before KMS ran anything, so the
+    // second send is the first attempt (writes keep their request ID).
+    function send() {
+      return web.screenSend(body, ticket).then(function(answer) {
+        if (answer.ok || answer.stale || !answer.error || answer.error.code !== 'approval' || routed.background || !/^owner/.test(body.call)) return answer;
+        return web.ownerApproval({fresh: routed.fresh, message: answer.error.message}, ticket).then(function() { return web.screenSend(body, ticket); }, function(error) {
+          return {ok: false, error: {code: 'approval', message: error && error.message || answer.error.message}};
+        });
+      });
+    }
+    send().then(function(answer) {
+      if (!attached()) return;
+      if (dropThisSave(body)) { fail(failure('Simulated lost confirmation: the save reached KMS but its answer was dropped.', 'network')); return; }
+      if (answer.ok) {
+        if (save && answer.value && answer.value.outcome === 'saved') web.writeSucceeded();
+        succeed(routed.pick ? answer.value && answer.value[routed.pick] : answer.value); return;
+      }
+      const code = answer.error && answer.error.code, message = answer.error && answer.error.message || 'KMS could not finish this request.';
+      if (save && refusedBeforeKms.indexOf(code) >= 0) succeed({outcome: 'rejected', error: message, refusal: true});
+      else { const error = failure(message, code); if (refusals.indexOf(code) >= 0) error.kmsRefusal = true; fail(error); }
+    }, function(error) {
+      if (!attached()) return;
+      // No answer: for a save the outcome is unknown, and UiStatus checks it.
+      fail(failure(error && error.message || 'KMS could not be reached. Check the connection.', 'network'));
+    });
+  }
+
+  function runner(options) {
+    return new Proxy({}, {get: function(_target, name) {
+      if (name === 'withSuccessHandler') return function(handler) { return runner(Object.assign({}, options, {success: handler})); };
+      if (name === 'withFailureHandler') return function(handler) { return runner(Object.assign({}, options, {failure: handler})); };
+      if (name === 'withUserObject') return function(value) { return runner(Object.assign({}, options, {userObject: value})); };
+      return function() { dispatch(String(name), Array.from(arguments), options); };
+    }});
+  }
+
+  window.google = {script: {run: runner({}), host: {close: function() { web.closeScreen(); }, setWidth: function() {}, setHeight: function() {}}}};
+})();
+</script><style>@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/atkinson-hyperlegible-latin-400-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:400;font-display:swap;src:url(../fonts/atkinson-hyperlegible-latin-ext-400-normal.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/atkinson-hyperlegible-latin-700-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Atkinson Hyperlegible';font-style:normal;font-weight:700;font-display:swap;src:url(../fonts/atkinson-hyperlegible-latin-ext-700-normal.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}@font-face{font-family:'Fraunces';font-style:normal;font-weight:600;font-display:swap;src:url(../fonts/fraunces-latin-600-normal.woff2) format('woff2');unicode-range:U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD}@font-face{font-family:'Fraunces';font-style:normal;font-weight:600;font-display:swap;src:url(../fonts/fraunces-latin-ext-600-normal.woff2) format('woff2');unicode-range:U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF}</style>
+<style>
+/* KMS shared style (UI pass part 1, docs/UI_PASS_PLAN.md sections 2 and 3;
+   which block to use when: docs/STYLE_GUIDE.md). Forest Garden.
+   Every screen gets the named colours below and the shared notices and
+   question box. Only a converted screen (<html class="kms-styled">) gets the
+   whole-page rules and dark mode; any other screen is held in light mode.
+   Screens never set colours or text sizes of their own. */
+:root {
+  /* Named colours, light (the contrast test reads these two lists). */
+  --kms-page: #ECF0E2;
+  --kms-panel: #FDFEF9;
+  --kms-title-row: #DFE7CF;
+  --kms-ink: #2E3C3A;
+  --kms-muted: #55625E;
+  --kms-line: #D6DEC7;
+  --kms-control-line: #768471;
+  --kms-primary: #9CCB8C;
+  --kms-on-primary: #16301B;
+  --kms-focus: #3F7A3A;
+  --kms-editing: #E3EFCF;
+  --kms-on-editing: #2E3C3A;
+  --kms-editing-control: #FDFEF9;
+  --kms-editing-muted: #4C5955;
+  --kms-accent: #6FA85A;
+  --kms-done: #3F6E2A;
+  --kms-done-bg: #E4EFD6;
+  --kms-check: #6E5600;
+  --kms-check-bg: #FAF1BE;
+  --kms-stop: #A8481F;
+  --kms-stop-bg: #F8E4D6;
+  --kms-danger: #2E3C3A;
+  --kms-allergen: #2E3C3A;
+  --kms-on-allergen: #FDFEF9;
+  --kms-paused: #2F6A84;
+  --kms-paused-bg: #DCEBEE;
+  --kms-backdrop: rgba(35, 42, 46, .55);
+  --kms-shadow: 0 1px 2px rgba(34, 52, 58, .08), 0 8px 24px rgba(34, 52, 58, .07);
+  /* Text, sizes and corners. */
+  --kms-font: "Atkinson Hyperlegible", "Segoe UI", Roboto, system-ui, sans-serif;
+  --kms-font-title: "Fraunces", Georgia, "Iowan Old Style", serif;
+  --kms-text: 16px; --kms-small: 14px; --kms-title: 30px; --kms-section: 21px;
+  --kms-control: 44px; --kms-pad: 22px; --kms-gap: 18px; --kms-row: 46px;
+  --kms-radius: 12px; --kms-radius-panel: 16px;
+  color-scheme: light;
+}
+html.kms-styled[data-kms-theme="dark"] {
+  /* Named colours, dark. */
+  --kms-page: #232A2E;
+  --kms-panel: #2D353B;
+  --kms-title-row: #252B2F;
+  --kms-ink: #D3C6AA;
+  --kms-muted: #9DA9A0;
+  --kms-line: #475258;
+  --kms-control-line: #859289;
+  --kms-primary: #8CC49C;
+  --kms-on-primary: #2D353B;
+  --kms-focus: #DBBC7F;
+  --kms-editing: #8CC49C;
+  --kms-on-editing: #1F2A24;
+  --kms-editing-control: #EEF5E8;
+  --kms-editing-muted: #2F3F36;
+  --kms-accent: #8CC49C;
+  --kms-done: #8CC49C;
+  --kms-done-bg: #36443A;
+  --kms-check: #E6CF6E;
+  --kms-check-bg: #3B3A2A;
+  --kms-stop: #EC7E5F;
+  --kms-stop-bg: #3B2D29;
+  --kms-danger: #D3C6AA;
+  --kms-allergen: #D3C6AA;
+  --kms-on-allergen: #2D353B;
+  --kms-paused: #7FBBB3;
+  --kms-paused-bg: #2F3E44;
+  --kms-backdrop: rgba(0, 0, 0, .6);
+  --kms-shadow: none;
+  color-scheme: dark;
+}
+/* The row being edited: on its green, ink, outlines and marks use the row's own
+   text colour, never the page's (Astra, 19:41). Its fields and buttons get a
+   light surface of their own, and disabled ones the row's green, so they never
+   keep the dark page's surfaces under the row's dark text (Astra, U1 review). */
+.kms-editing {
+  --kms-ink: var(--kms-on-editing); --kms-muted: var(--kms-editing-muted); --kms-danger: var(--kms-on-editing);
+  --kms-panel: var(--kms-editing-control); --kms-title-row: var(--kms-editing);
+  --kms-allergen: var(--kms-on-editing); --kms-on-allergen: var(--kms-editing); --kms-control-line: var(--kms-on-editing);
+  --kms-focus: var(--kms-on-editing);
+}
+/* The sample's #6E4600 was 4.13:1 on the dark green row; #5E3C00 is 4.94:1 (U1 contrast test). */
+html.kms-styled[data-kms-theme="dark"] .kms-editing { --kms-check: #5E3C00; }
+
+/* ---------- Whole page: converted screens only ---------- */
+html.kms-styled { background: var(--kms-page); }
+html.kms-styled body { margin: 0; background: var(--kms-page); color: var(--kms-ink); font: var(--kms-text)/1.45 var(--kms-font); }
+html.kms-styled *, html.kms-styled *::before, html.kms-styled *::after { box-sizing: border-box; }
+html.kms-styled :focus-visible { outline: 3px solid var(--kms-focus); outline-offset: 2px; }
+html.kms-styled h1 { margin: 0; font: 600 var(--kms-title)/1.15 var(--kms-font-title); }
+html.kms-styled h2 { margin: 0 0 calc(var(--kms-gap) * .8); font: 600 var(--kms-section)/1.2 var(--kms-font-title); }
+html.kms-styled h3 { margin: 0 0 8px; font-size: var(--kms-text); font-weight: 700; }
+html.kms-styled a { color: inherit; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+html.kms-styled .kms-muted { color: var(--kms-muted); }
+html.kms-styled small, html.kms-styled .kms-small { font-size: var(--kms-small); }
+
+/* Page header card with the short accent line under the title. */
+html.kms-styled .kms-header { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 4px 16px;
+  margin-bottom: 4px; padding: calc(var(--kms-pad) * .7) var(--kms-pad); background: var(--kms-panel); color: var(--kms-ink);
+  border-radius: var(--kms-radius-panel); box-shadow: var(--kms-shadow); }
+html.kms-styled[data-kms-theme="dark"] .kms-header { border: 1px solid var(--kms-line); }
+html.kms-styled .kms-header h1::after { content: ""; display: block; width: 40px; height: 4px; margin-top: 8px; border-radius: 4px; background: var(--kms-accent); }
+html.kms-styled .kms-header .kms-who { font-size: var(--kms-small); color: var(--kms-muted); }
+
+/* Panels, with a small leaf mark before the title. */
+html.kms-styled .kms-panel { background: var(--kms-panel); border: 1px solid var(--kms-line); border-radius: var(--kms-radius-panel); padding: var(--kms-pad); }
+html.kms-styled .kms-panel + .kms-panel { margin-top: var(--kms-gap); }
+html.kms-styled .kms-panel > h2::before { content: ""; display: inline-block; width: 10px; height: 10px; margin-right: 10px; border-radius: 50% 0;
+  background: var(--kms-accent); vertical-align: middle; }
+
+/* Fields: a label, the control, an optional hint; a mistake has a heavier
+   border in the text colour and its wording in the stop colour. */
+html.kms-styled .kms-fields { display: grid; gap: var(--kms-gap); grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+html.kms-styled label, html.kms-styled .kms-label { display: block; margin-bottom: 4px; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+html.kms-styled .kms-hint { margin-top: 4px; font-size: var(--kms-small); color: var(--kms-muted); }
+html.kms-styled input, html.kms-styled select, html.kms-styled textarea, html.kms-styled button { font: inherit; color: inherit; }
+/* :where() keeps this rule as light as a plain "input" rule, so the disabled,
+   read-only, mistake, unit and picker rules below win over it. */
+html.kms-styled input:where(:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="range"])),
+html.kms-styled select, html.kms-styled textarea {
+  width: 100%; min-height: var(--kms-control); padding: 0 12px; background: var(--kms-panel); color: var(--kms-ink);
+  border: 1px solid var(--kms-control-line); border-radius: 10px; }
+html.kms-styled textarea { padding: 10px 12px; line-height: 1.4; resize: vertical; }
+html.kms-styled input::placeholder, html.kms-styled textarea::placeholder { color: var(--kms-muted); opacity: 1; }
+html.kms-styled input:hover:not(:disabled), html.kms-styled select:hover:not(:disabled), html.kms-styled textarea:hover:not(:disabled) { border-color: var(--kms-ink); }
+html.kms-styled input:focus-visible, html.kms-styled select:focus-visible, html.kms-styled textarea:focus-visible { outline-offset: 1px; border-color: var(--kms-ink); }
+html.kms-styled input:disabled, html.kms-styled select:disabled, html.kms-styled textarea:disabled,
+html.kms-styled input[readonly], html.kms-styled textarea[readonly] { background: var(--kms-title-row); color: var(--kms-muted); border-style: dashed; cursor: not-allowed; }
+html.kms-styled input[readonly], html.kms-styled textarea[readonly] { cursor: default; }
+html.kms-styled .kms-invalid input, html.kms-styled .kms-invalid select, html.kms-styled .kms-invalid textarea,
+html.kms-styled [aria-invalid="true"] { border: 3px solid var(--kms-danger); }
+html.kms-styled .kms-invalid .kms-hint { color: var(--kms-stop); font-weight: 700; }
+/* Dropdowns: the browser's own list, with a drawn arrow in the text colour. */
+html.kms-styled select:not([multiple]):not([size]) { appearance: none; -webkit-appearance: none; padding-right: 40px; cursor: pointer;
+  background-image: linear-gradient(45deg, transparent 50%, var(--kms-ink) 50%), linear-gradient(135deg, var(--kms-ink) 50%, transparent 50%);
+  background-position: calc(100% - 21px) 52%, calc(100% - 15px) 52%; background-size: 6px 6px, 6px 6px; background-repeat: no-repeat; }
+html.kms-styled select:disabled { background-image: none; }
+html.kms-styled select option { background: var(--kms-panel); color: var(--kms-ink); }
+/* Number fields: equal-width digits; in tables and .kms-num they line up on the right. */
+html.kms-styled input[type="number"], html.kms-styled table, html.kms-styled .kms-num { font-variant-numeric: tabular-nums; }
+html.kms-styled .kms-num, html.kms-styled td.kms-num input, html.kms-styled .kms-num input { text-align: right; }
+html.kms-styled input[type="number"]::-webkit-inner-spin-button { opacity: .6; }
+/* A unit shown inside a field: <span class="kms-unit"><input …><span>kg</span></span>. */
+html.kms-styled .kms-unit { position: relative; display: block; }
+html.kms-styled .kms-unit > span { position: absolute; top: 0; bottom: 0; right: 12px; display: flex; align-items: center; color: var(--kms-muted); pointer-events: none; }
+html.kms-styled .kms-unit > input { padding-right: 48px; }
+html.kms-styled .kms-unit.kms-before > span { left: 12px; right: auto; }
+html.kms-styled .kms-unit.kms-before > input { padding-left: 30px; padding-right: 12px; }
+/* Date fields: the browser's own calendar (it follows light or dark) and the weekday beside the date. */
+html.kms-styled input[type="date"] { cursor: text; }
+html.kms-styled input[type="date"]::-webkit-calendar-picker-indicator { cursor: pointer; padding: 6px; margin-right: -4px; border-radius: 6px; }
+html.kms-styled input[type="date"]::-webkit-calendar-picker-indicator:hover { background-color: var(--kms-title-row); }
+html.kms-styled .kms-date { display: flex; align-items: center; gap: 10px; }
+html.kms-styled .kms-date > input { flex: 1 1 auto; min-width: 0; }
+html.kms-styled .kms-weekday { flex: none; min-width: 3.2em; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+/* Tick boxes in the main green; an on/off setting uses role="switch". */
+html.kms-styled input[type="checkbox"], html.kms-styled input[type="radio"] { width: 20px; height: 20px; margin: 0; accent-color: var(--kms-focus); cursor: pointer; vertical-align: middle; }
+html.kms-styled .kms-check { display: inline-flex; align-items: center; gap: 10px; min-height: var(--kms-control); font-size: var(--kms-text); font-weight: 400; color: var(--kms-ink); cursor: pointer; }
+html.kms-styled input[type="checkbox"][role="switch"] { appearance: none; -webkit-appearance: none; position: relative; flex: none; width: 46px; height: 26px;
+  border: 2px solid var(--kms-control-line); border-radius: 999px; background: var(--kms-panel); transition: background-color .15s; }
+html.kms-styled input[type="checkbox"][role="switch"]::before { content: ""; position: absolute; top: 3px; left: 3px; width: 16px; height: 16px; border-radius: 50%;
+  background: var(--kms-control-line); transition: transform .15s; }
+html.kms-styled input[type="checkbox"][role="switch"]:checked { background: var(--kms-primary); border-color: var(--kms-on-primary); }
+html.kms-styled input[type="checkbox"][role="switch"]:checked::before { transform: translateX(20px); background: var(--kms-on-primary); }
+html.kms-styled input[type="file"] { font-size: var(--kms-small); }
+html.kms-styled input[type="file"]::file-selector-button { min-height: 40px; margin-right: 12px; padding: 0 14px; border: 1px solid var(--kms-control-line);
+  border-radius: 10px; background: var(--kms-panel); color: var(--kms-ink); font: inherit; font-weight: 700; cursor: pointer; }
+/* A row of choices that acts as one (the theme switch). */
+.kms-segmented { display: inline-flex; flex-wrap: wrap; gap: 0; padding: 3px; border: 1px solid var(--kms-control-line); border-radius: 999px; background: var(--kms-panel); }
+.kms-segmented label { display: inline-flex; align-items: center; margin: 0; cursor: pointer; font-size: var(--kms-small); font-weight: 700; color: var(--kms-ink); }
+.kms-segmented input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.kms-segmented span { display: inline-flex; align-items: center; min-height: 36px; padding: 0 14px; border-radius: 999px; }
+.kms-segmented input:checked + span { background: var(--kms-primary); color: var(--kms-on-primary); }
+.kms-segmented input:focus-visible + span { outline: 3px solid var(--kms-focus); outline-offset: 1px; }
+.kms-segmented input:disabled + span { color: var(--kms-muted); cursor: not-allowed; }
+.kms-segmented input:disabled:checked + span { background: var(--kms-title-row); }
+
+/* ---------- Controls, tier 2 (KmsUi, plan section 13) ---------- */
+/* Read by screen readers only. */
+.kms-sr { position: absolute !important; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; border: 0; }
+/* Searchable picker (KmsUi.picker): the field, a clear button and the list under it. */
+html.kms-styled .kms-picker { position: relative; }
+html.kms-styled .kms-picker > input { padding-right: 44px; }
+html.kms-styled .kms-picker > .kms-picker-clear { position: absolute; top: 4px; right: 4px; width: 36px; min-height: 36px; padding: 0; border: 0; border-radius: 8px;
+  background: transparent; color: var(--kms-muted); font-size: var(--kms-section); font-weight: 400; }
+html.kms-styled .kms-picker-list { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 4px); max-height: min(320px, 50vh); overflow-y: auto; margin: 0; padding: 6px;
+  list-style: none; background: var(--kms-panel); color: var(--kms-ink); border: 1px solid var(--kms-control-line); border-radius: var(--kms-radius); box-shadow: 0 8px 24px rgba(0, 0, 0, .18); }
+html.kms-styled .kms-picker-list [role="option"] { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; padding: 6px 10px; border-radius: 8px; cursor: pointer; }
+html.kms-styled .kms-picker-list [role="option"] small { color: var(--kms-muted); font-size: var(--kms-small); }
+html.kms-styled .kms-picker-list [role="option"].kms-current { font-weight: 700; }
+html.kms-styled .kms-picker-list [role="option"].kms-current::after { content: "✓"; margin-left: auto; }
+html.kms-styled .kms-picker-list [role="option"]:hover { background: var(--kms-title-row); }
+html.kms-styled .kms-picker-list [role="option"][aria-selected="true"] { background: var(--kms-editing); color: var(--kms-on-editing); box-shadow: inset 4px 0 0 var(--kms-on-editing); }
+html.kms-styled .kms-picker-list [role="option"][aria-selected="true"] small { color: var(--kms-on-editing); }
+html.kms-styled .kms-picker-list [role="option"][aria-disabled="true"] { color: var(--kms-muted); cursor: not-allowed; }
+html.kms-styled .kms-picker-list mark { background: none; color: inherit; font-weight: 800; text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 3px; }
+html.kms-styled .kms-picker-group { padding: 8px 10px 4px; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+html.kms-styled .kms-picker-empty { padding: 10px; font-size: var(--kms-small); color: var(--kms-muted); }
+/* Shortcut buttons under a date (KmsUi.dateShortcuts, KmsUi.weekField). */
+html.kms-styled .kms-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+html.kms-styled .kms-chip { min-height: 36px; padding: 0 12px; border-radius: 999px; font-size: var(--kms-small); }
+html.kms-styled .kms-chip[aria-pressed="true"] { background: var(--kms-primary); border-color: var(--kms-on-primary); color: var(--kms-on-primary); }
+html.kms-styled .kms-chip[aria-pressed="true"]:hover:not(:disabled) { background: var(--kms-primary); }
+/* Growing notes (KmsUi.grow, or class kms-grow): no tiny scrolling box. */
+html.kms-styled textarea.kms-grow { resize: none; overflow-y: hidden; min-height: var(--kms-control); max-height: 60vh; }
+/* Sticky save bar: stays at the bottom of the screen while a long form scrolls. */
+html.kms-styled .kms-savebar { position: sticky; bottom: 0; z-index: 10; display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px;
+  padding: 12px var(--kms-pad); background: var(--kms-panel); color: var(--kms-ink); border-top: 1px solid var(--kms-line); box-shadow: 0 -4px 16px rgba(34, 52, 58, .08); }
+html.kms-styled[data-kms-theme="dark"] .kms-savebar { box-shadow: 0 -4px 16px rgba(0, 0, 0, .35); }
+html.kms-styled .kms-savebar-note { font-size: var(--kms-small); font-weight: 700; color: var(--kms-check); }
+html.kms-styled .kms-savebar-note:empty { display: none; }
+
+/* A message given as one line of text (a status set by script). */
+html.kms-styled .kms-msg.kms-msg-line { display: block; }
+/* Text in a meaning's colour, such as a total that matches or does not. */
+html.kms-styled .kms-text-done { color: var(--kms-done); }
+html.kms-styled .kms-text-check { color: var(--kms-check); }
+html.kms-styled .kms-text-stop { color: var(--kms-stop); }
+/* The longer status text moved out of the activity line into the page (UiStatus). */
+html.kms-styled .kms-detail { display: block; margin: 12px 0; font-size: var(--kms-small); line-height: 1.4; }
+html.kms-styled .kms-detail:not(.kms-msg) { color: var(--kms-muted); }
+
+/* Buttons: main (green), normal, dangerous (bold text colour), disabled. */
+html.kms-styled button, html.kms-styled .kms-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: var(--kms-control);
+  padding: 0 18px; border: 1px solid var(--kms-control-line); border-radius: var(--kms-radius); background: var(--kms-panel); color: var(--kms-ink);
+  font-weight: 700; line-height: 1.2; cursor: pointer; text-align: center; }
+html.kms-styled button:hover:not(:disabled) { background: var(--kms-title-row); }
+html.kms-styled .kms-primary, html.kms-styled button[type="submit"]:not(.kms-plain) { background: var(--kms-primary); border-color: var(--kms-on-primary); color: var(--kms-on-primary); }
+html.kms-styled .kms-primary:hover:not(:disabled), html.kms-styled button[type="submit"]:not(.kms-plain):hover:not(:disabled) { background: var(--kms-primary); box-shadow: inset 0 0 0 2px var(--kms-on-primary); }
+html.kms-styled .kms-danger { border: 3px solid var(--kms-danger); color: var(--kms-danger); font-weight: 800; }
+html.kms-styled .kms-danger.kms-solid { background: var(--kms-danger); color: var(--kms-panel); }
+html.kms-styled button:disabled, html.kms-styled .kms-btn[aria-disabled="true"] { background: transparent; border-style: dashed; border-color: var(--kms-control-line); color: var(--kms-muted); box-shadow: none; cursor: not-allowed; }
+html.kms-styled .kms-small-btn { min-height: 36px; padding: 0 12px; font-size: var(--kms-small); }
+html.kms-styled .kms-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: var(--kms-gap); }
+html.kms-styled .kms-actions .kms-spacer { flex: 1; }
+/* A button whose action is running: it says so and cannot be pressed again. */
+.kms-working { cursor: progress !important; }
+.kms-working::before { content: ""; flex: none; width: 14px; height: 14px; border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: kms-spin .8s linear infinite; }
+
+/* Tables: a darker title row, number columns on the right, check-this rows
+   (left edge and tint) and the row being edited. */
+html.kms-styled .kms-table-wrap { overflow-x: auto; border: 1px solid var(--kms-line); border-radius: var(--kms-radius); }
+html.kms-styled table { width: 100%; border-collapse: collapse; }
+html.kms-styled th, html.kms-styled td { padding: 8px 12px; height: var(--kms-row); text-align: left; border-bottom: 1px solid var(--kms-line); }
+html.kms-styled th { background: var(--kms-title-row); color: var(--kms-muted); font-size: var(--kms-small); font-weight: 700; }
+html.kms-styled tr:last-child td { border-bottom: 0; }
+html.kms-styled th.kms-num, html.kms-styled td.kms-num { text-align: right; }
+html.kms-styled tr.kms-attention td { background: var(--kms-check-bg); }
+html.kms-styled tr.kms-attention td:first-child { box-shadow: inset 5px 0 0 var(--kms-check); }
+html.kms-styled tr.kms-editing td { background: var(--kms-editing); color: var(--kms-on-editing); }
+html.kms-styled .kms-cell-note { display: block; font-size: var(--kms-small); font-weight: 700; color: var(--kms-check); white-space: normal; }
+
+/* Allergen marks never rely on colour: "Yes" filled, "May" dashed, both with text. */
+.kms-mark { display: inline-flex; align-items: center; justify-content: center; min-width: 46px; height: 26px; padding: 0 6px; border-radius: 6px;
+  font-size: var(--kms-small); font-weight: 900; }
+.kms-mark-yes { background: var(--kms-allergen); color: var(--kms-on-allergen); }
+.kms-mark-may { border: 2px dashed var(--kms-allergen); color: var(--kms-allergen); }
+
+/* ---------- Shared pieces: every screen, converted or not ---------- */
+/* Messages, with a darker left edge: done, check this, stop, paused. */
+.kms-msg { display: grid; grid-template-columns: auto 1fr; gap: 10px; padding: 12px 14px; border-left: 6px solid; border-radius: var(--kms-radius);
+  font: var(--kms-small)/1.4 var(--kms-font); color: var(--kms-ink); }
+.kms-msg + .kms-msg { margin-top: 10px; }
+.kms-msg > .kms-icon { width: 1.4em; font-weight: 800; text-align: center; }
+.kms-msg p { margin: 0; }
+.kms-msg strong { display: block; }
+.kms-msg-done { background: var(--kms-done-bg); border-color: var(--kms-done); }
+.kms-msg-done > .kms-icon, .kms-msg-done strong { color: var(--kms-done); }
+.kms-msg-check { background: var(--kms-check-bg); border-color: var(--kms-check); }
+.kms-msg-check > .kms-icon, .kms-msg-check strong { color: var(--kms-check); }
+.kms-msg-stop { background: var(--kms-stop-bg); border-color: var(--kms-stop); }
+.kms-msg-stop > .kms-icon, .kms-msg-stop strong { color: var(--kms-stop); }
+.kms-msg-paused { background: var(--kms-paused-bg); border-color: var(--kms-paused); }
+.kms-msg-paused > .kms-icon, .kms-msg-paused strong { color: var(--kms-paused); }
+/* Progress panel for long jobs: a bar and the steps, the current one bold. */
+.kms-progress .kms-bar { height: 10px; margin-top: 10px; background: var(--kms-title-row); border: 1px solid var(--kms-control-line); border-radius: 99px; overflow: hidden; }
+.kms-progress .kms-bar > span { display: block; height: 100%; background: var(--kms-focus); transition: width .3s; }
+.kms-progress ol { list-style: none; margin: 10px 0 0; padding: 0; font-size: var(--kms-small); }
+.kms-progress li { display: flex; gap: 8px; padding: 3px 0; color: var(--kms-muted); }
+.kms-progress li.kms-done { color: var(--kms-done); }
+.kms-progress li.kms-now { color: var(--kms-ink); font-weight: 700; }
+/* Waiting for the owner: says the person can leave the page. */
+.kms-waiting { display: flex; gap: 12px; align-items: center; padding: 12px 14px; border: 2px dashed var(--kms-control-line); border-radius: var(--kms-radius); color: var(--kms-ink); }
+.kms-waiting p { margin: 0; }
+.kms-spinner { flex: none; width: 22px; height: 22px; border: 3px solid var(--kms-line); border-top-color: var(--kms-focus); border-radius: 50%; animation: kms-spin 1s linear infinite; }
+@keyframes kms-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .kms-spinner, .kms-working::before { animation-duration: 2.4s; } }
+
+/* The question box (KmsUi.ask, plan section 3a). */
+.kms-ask-layer { position: fixed; inset: 0; z-index: 100; display: flex; align-items: flex-start; justify-content: center; padding: 8vh 16px 16px;
+  background: var(--kms-backdrop); overflow-y: auto; }
+.kms-ask { width: 100%; max-width: 460px; padding: var(--kms-pad); background: var(--kms-panel); color: var(--kms-ink); border: 1px solid var(--kms-line);
+  border-radius: var(--kms-radius-panel); box-shadow: 0 12px 40px rgba(0, 0, 0, .25); font: var(--kms-text)/1.45 var(--kms-font); text-align: left; }
+.kms-ask h2 { margin: 0 0 8px; font: 600 var(--kms-section)/1.2 var(--kms-font-title); color: var(--kms-ink); }
+.kms-ask p { margin: 0 0 12px; white-space: pre-line; }
+.kms-ask label { display: block; margin: 4px 0; font-size: var(--kms-small); font-weight: 700; color: var(--kms-muted); }
+.kms-ask textarea { display: block; width: 100%; min-height: 72px; padding: 10px 12px; border: 1px solid var(--kms-control-line); border-radius: 10px;
+  background: var(--kms-panel); color: var(--kms-ink); font: inherit; box-sizing: border-box; }
+.kms-ask .kms-ask-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; margin-top: 16px; }
+.kms-ask button { min-height: var(--kms-control); padding: 0 18px; border: 1px solid var(--kms-control-line); border-radius: var(--kms-radius);
+  background: var(--kms-panel); color: var(--kms-ink); font: 700 var(--kms-text)/1.2 var(--kms-font); cursor: pointer; }
+.kms-ask button.kms-ask-yes { background: var(--kms-primary); border-color: var(--kms-on-primary); color: var(--kms-on-primary); }
+.kms-ask button.kms-ask-yes.kms-danger { background: var(--kms-panel); border: 3px solid var(--kms-danger); color: var(--kms-danger); font-weight: 800; }
+.kms-ask button:disabled { background: transparent; border-style: dashed; color: var(--kms-muted); cursor: not-allowed; }
+.kms-ask :focus-visible { outline: 3px solid var(--kms-focus); outline-offset: 2px; }
+
+@media print {
+  /* Printing always uses the light colours, whatever the screen shows. */
+  html.kms-styled, html.kms-styled[data-kms-theme="dark"] {
+    --kms-page: #FFFFFF; --kms-panel: #FFFFFF; --kms-title-row: #DFE7CF; --kms-ink: #2E3C3A; --kms-muted: #55625E; --kms-line: #D6DEC7;
+    --kms-control-line: #768471; --kms-primary: #9CCB8C; --kms-on-primary: #16301B; --kms-focus: #3F7A3A; --kms-editing: #E3EFCF;
+    --kms-on-editing: #2E3C3A; --kms-editing-control: #FDFEF9; --kms-editing-muted: #4C5955; --kms-accent: #6FA85A; --kms-done: #3F6E2A; --kms-done-bg: #E4EFD6; --kms-check: #6E5600; --kms-check-bg: #FAF1BE;
+    --kms-stop: #A8481F; --kms-stop-bg: #F8E4D6; --kms-danger: #2E3C3A; --kms-allergen: #2E3C3A; --kms-on-allergen: #FFFFFF;
+    --kms-paused: #2F6A84; --kms-paused-bg: #DCEBEE; --kms-shadow: none;
+    color-scheme: light;
+  }
+  html.kms-styled body { background: #FFFFFF; }
+  /* Allergen marks stay clear with background colours turned off. */
+  .kms-mark-yes { border: 2px solid var(--kms-allergen); -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .kms-ask-layer, .kms-picker-list, .kms-picker-clear, .kms-chips { display: none !important; }
+  html.kms-styled .kms-savebar { position: static; box-shadow: none; }
+}
+</style>
+<script>
+// The colour mode (plan section 3 item 3): Light, Dark or Device, kept per
+// device under its own key. Set here, in <head>, before the page first draws.
+// Only a converted screen on the web page can be dark; any other page, and
+// every page in Sheets, stays light. Reads and writes only KMS_WEB_THEME.
+window.KmsTheme = (function() {
+  'use strict';
+  const KEY = 'KMS_WEB_THEME', CHOICES = ['light', 'dark', 'device'], root = document.documentElement;
+  const media = window.matchMedia ? window.matchMedia('(prefers-color-scheme: dark)') : null;
+  function choice() {
+    try { const value = window.localStorage.getItem(KEY); return CHOICES.indexOf(value) >= 0 ? value : 'device'; } catch (error) { return 'device'; }
+  }
+  // The shell marks itself; a screen is on the web page when the bridge set its release.
+  function web() { return root.hasAttribute('data-kms-shell') || Number.isSafeInteger(window.KmsWebRelease); }
+  function mode() {
+    if (!root.classList.contains('kms-styled') || !web()) return 'light';
+    const value = choice();
+    return value === 'device' ? (media && media.matches ? 'dark' : 'light') : value;
+  }
+  function apply() { const value = mode(); if (root.getAttribute('data-kms-theme') !== value) root.setAttribute('data-kms-theme', value); }
+  // True when the choice was stored and read back; if not, the device setting is used.
+  function set(value) {
+    if (CHOICES.indexOf(value) < 0) return false;
+    let kept = false;
+    try { window.localStorage.setItem(KEY, value); kept = window.localStorage.getItem(KEY) === value; } catch (error) {}
+    apply();
+    return kept;
+  }
+  apply();
+  if (media) { if (media.addEventListener) media.addEventListener('change', apply); else if (media.addListener) media.addListener(apply); }
+  // The shell and the open screen follow each other's change straight away.
+  window.addEventListener('storage', event => { if (event.key === KEY || event.key === null) apply(); });
+  return {choice: choice, mode: mode, set: set, apply: apply, key: KEY};
+})();
+</script>
+<script>
+// Shared screen patterns (UI pass part 1, plan section 3 item 2): the question
+// box that replaces the browser's OK/Cancel box, the progress panel, the status
+// line, waiting for the owner, and a button's "working" state. Every screen
+// gets this file; its look is in KmsStyle.html.
+window.KmsUi = (function() {
+  'use strict';
+  let open = null;
+  // The shell's own window, or null in Sheets and in the shell itself.
+  function shell() { try { return window.parent !== window && window.parent.KmsWeb || null; } catch (error) { return null; } }
+  // Who and where the question was asked: the shell's ticket for this screen
+  // (its sign-in epoch), the restaurant and person, and this screen.
+  function place() {
+    const web = shell();
+    let ticket = null, context = null;
+    try { ticket = web && web.ticket ? web.ticket(window) : null; } catch (error) {}
+    try { context = web && web.context && typeof SCREEN === 'string' ? web.context(SCREEN) : window.KmsRecoveryContext || null; } catch (error) {}
+    return JSON.stringify({epoch: ticket ? ticket.epoch : null, shell: !!web, live: !web || !!ticket, context: context});
+  }
+  function paused() { try { const m = window.KmsStatus && window.KmsStatus.maintenance(); return !!(m && (m.capturing || m.restoring)); } catch (error) { return false; } }
+  // Every field on the page outside the box, so a changed form is noticed.
+  function formState(box) {
+    return JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).filter(el => !box || !box.contains(el))
+      .map(el => [el.id, el.name, el.type === 'file' ? el.files && el.files.length : el.value, el.type === 'checkbox' || el.type === 'radio' ? el.checked : null]));
+  }
+  const FOCUSABLE = 'button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),a[href],[tabindex]:not([tabindex="-1"])';
+
+  // Asks one question in the page (plan section 3a). Resolves once with
+  // {ok: true, reason} for the action button, or {ok: false, why} where why is
+  // 'cancelled' (the safe button, Escape), 'busy' (another question is open),
+  // 'changed' (what it was about changed before the answer) or 'closed' (the
+  // screen, sign-in or restaurant changed, or KMS paused). A yes is never a
+  // save; the caller acts only on ok, and only on what it asked about.
+  // options: title, text, yes, no, danger, reason {label, required},
+  // still() (false once the question is out of date), form (false: page
+  // fields may change while it is open; default true).
+  function ask(options) {
+    options = options || {};
+    if (open) return Promise.resolve({ok: false, why: 'busy'});
+    const web = shell();
+    try { if (web && web.questionOpen && web.questionOpen()) return Promise.resolve({ok: false, why: 'busy'}); } catch (error) {}
+    if (paused()) return Promise.resolve({ok: false, why: 'closed'});
+    return new Promise(resolve => {
+      const layer = document.createElement('div'), box = document.createElement('section'), title = document.createElement('h2'), text = document.createElement('p');
+      const buttons = document.createElement('div'), no = document.createElement('button'), yes = document.createElement('button');
+      const id = 'kmsAsk' + Date.now().toString(36);
+      layer.className = 'kms-ask-layer'; box.className = 'kms-ask';
+      box.setAttribute('role', options.danger ? 'alertdialog' : 'dialog'); box.setAttribute('aria-modal', 'true');
+      box.setAttribute('aria-labelledby', id + 'T'); box.setAttribute('aria-describedby', id + 'D');
+      title.id = id + 'T'; title.textContent = options.title || 'Are you sure?';
+      text.id = id + 'D'; text.textContent = options.text || '';
+      buttons.className = 'kms-ask-buttons';
+      no.type = 'button'; no.className = 'kms-ask-no'; no.textContent = options.no || 'Cancel';
+      yes.type = 'button'; yes.className = 'kms-ask-yes' + (options.danger ? ' kms-danger' : ''); yes.textContent = options.yes || 'Continue';
+      box.append(title, text);
+      let reason = null;
+      if (options.reason) {
+        const label = document.createElement('label'); reason = document.createElement('textarea');
+        reason.id = id + 'R'; label.htmlFor = reason.id; label.textContent = options.reason.label || 'Reason';
+        reason.maxLength = options.reason.max || 500; box.append(label, reason);
+        if (options.reason.required) { yes.disabled = true; reason.addEventListener('input', () => { yes.disabled = !reason.value.trim(); }); }
+      }
+      buttons.append(no, yes); box.append(buttons); layer.append(box);
+      const before = document.activeElement, where = place(), form = options.form === false ? null : formState(null);
+      const blocked = [];
+      let watch = 0;
+      function settle(answer) {
+        if (!open || open.layer !== layer) return;
+        open = null; clearInterval(watch);
+        no.disabled = true; yes.disabled = true;
+        window.removeEventListener('pagehide', closed);
+        layer.remove();
+        blocked.forEach(el => el.removeAttribute('inert'));
+        try { if (web && web.screenQuestion) web.screenQuestion(false); } catch (error) {}
+        if (before && before.isConnected && typeof before.focus === 'function') { try { before.focus(); } catch (error) {} }
+        resolve(answer);
+      }
+      function current() {
+        if (place() !== where || paused()) return 'closed';
+        try { if (options.still && options.still() === false) return 'changed'; } catch (error) { return 'changed'; }
+        if (form !== null && formState(box) !== form) return 'changed';
+        return '';
+      }
+      function closed() { settle({ok: false, why: 'closed'}); }
+      no.addEventListener('click', () => settle({ok: false, why: 'cancelled'}));
+      yes.addEventListener('click', () => {
+        if (!open || open.layer !== layer || yes.disabled) return;
+        // Checked again at the moment of yes: anything changed means do nothing.
+        const changed = current();
+        if (changed) { settle({ok: false, why: changed}); return; }
+        if (reason && options.reason.required && !reason.value.trim()) return;
+        settle({ok: true, reason: reason ? reason.value.trim() : ''});
+      });
+      layer.addEventListener('keydown', event => {
+        if (event.key === 'Escape') { event.preventDefault(); event.stopPropagation(); settle({ok: false, why: 'cancelled'}); return; }
+        if (event.key !== 'Tab') return;
+        const items = Array.from(box.querySelectorAll(FOCUSABLE));
+        if (!items.length) return;
+        const first = items[0], last = items[items.length - 1];
+        if (event.shiftKey && (document.activeElement === first || !box.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+        else if (!event.shiftKey && (document.activeElement === last || !box.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+      });
+      // The page behind cannot be used while the question is open.
+      Array.from(document.body.children).forEach(el => { if (el !== layer && !el.hasAttribute('inert')) { el.setAttribute('inert', ''); blocked.push(el); } });
+      open = {layer: layer, settle: settle};
+      document.body.append(layer);
+      try { if (web && web.screenQuestion) web.screenQuestion(true); } catch (error) {}
+      window.addEventListener('pagehide', closed);
+      // A pause, a sign-in or screen change, or the question going out of date
+      // count as Cancel while it waits.
+      watch = setInterval(() => { const changed = current(); if (changed) settle({ok: false, why: changed}); }, 400);
+      (reason && !options.danger ? reason : no).focus();
+    });
+  }
+  function cancel(why) { if (open) open.settle({ok: false, why: why || 'closed'}); }
+
+  // Runs an action from a button once: the button says it is working and
+  // cannot be pressed again until the action has finished.
+  function working(button, action) {
+    if (!button || button.classList.contains('kms-working')) return Promise.resolve(undefined);
+    const wasDisabled = button.disabled;
+    button.classList.add('kms-working'); button.setAttribute('aria-busy', 'true'); button.disabled = true;
+    return Promise.resolve().then(action).finally(() => {
+      button.classList.remove('kms-working'); button.removeAttribute('aria-busy'); button.disabled = wasDisabled;
+    });
+  }
+
+  // Progress panel: steps [text], the current step's number, and an optional
+  // fraction 0..1 for the bar.
+  function progress(el, steps, now, fraction) {
+    if (!el) return;
+    el.classList.add('kms-progress');
+    const bar = document.createElement('div'), fill = document.createElement('span'), list = document.createElement('ol');
+    const done = typeof fraction === 'number' ? Math.max(0, Math.min(1, fraction)) : steps.length ? Math.min(now, steps.length) / steps.length : 0;
+    bar.className = 'kms-bar'; bar.setAttribute('role', 'progressbar'); bar.setAttribute('aria-valuemin', '0'); bar.setAttribute('aria-valuemax', '100');
+    bar.setAttribute('aria-valuenow', String(Math.round(done * 100))); fill.style.width = (done * 100) + '%'; bar.append(fill);
+    steps.forEach((step, i) => {
+      const li = document.createElement('li');
+      li.className = i < now ? 'kms-done' : i === now ? 'kms-now' : '';
+      li.textContent = (i < now ? '✓ ' : i === now ? '▸ ' : '') + step;
+      if (i === now) li.setAttribute('aria-current', 'step');
+      list.append(li);
+    });
+    el.replaceChildren(bar, list);
+  }
+  // Status line: "Draft saved at 14:32". The time is a fixed 24-hour HH:MM.
+  function statusLine(el, text, at) {
+    if (!el) return;
+    if (!el.hasAttribute('role')) { el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); }
+    const time = at ? ' at ' + String(new Date(at).getHours()).padStart(2, '0') + ':' + String(new Date(at).getMinutes()).padStart(2, '0') : '';
+    const value = text + time + (text && !/[.!?]$/.test(text + time) ? '.' : '');
+    if (el.textContent !== value) el.textContent = value;
+  }
+  // Waiting for the owner: says what is waiting. note: what the person may do
+  // meanwhile, given only by a screen whose work really carries on without
+  // them (UI pass plan 11.8); nothing is promised by default.
+  function waiting(el, text, note) {
+    if (!el) return;
+    const spin = document.createElement('span'), p = document.createElement('p');
+    el.classList.add('kms-waiting'); spin.className = 'kms-spinner'; spin.setAttribute('aria-hidden', 'true');
+    p.textContent = note ? text + ' ' + note : text;
+    el.replaceChildren(spin, p);
+  }
+
+  // ---------- Controls (tier 1) ----------
+  // The weekday beside a date, as "Mon 26 Oct"; empty for no date.
+  function weekday(value) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(value || '')) return '';
+    const date = new Date(value + 'T00:00:00Z');
+    if (!Number.isFinite(date.getTime()) || date.toISOString().slice(0, 10) !== value) return '';
+    return date.toLocaleDateString('en-GB', {weekday: 'short', timeZone: 'UTC'});
+  }
+  // Screens and recovery set values by script too, which fires no event, so a
+  // control that shows something about a field's value watches its setter.
+  const watchers = new WeakMap();
+  function watchValue(el, fn) {
+    let list = watchers.get(el);
+    if (!list) {
+      const proto = Object.getPrototypeOf(el), own = Object.getOwnPropertyDescriptor(proto, 'value') ||
+        Object.getOwnPropertyDescriptor(el instanceof HTMLSelectElement ? HTMLSelectElement.prototype : el instanceof HTMLTextAreaElement ? HTMLTextAreaElement.prototype : HTMLInputElement.prototype, 'value');
+      list = []; watchers.set(el, list);
+      Object.defineProperty(el, 'value', {configurable: true, get() { return own.get.call(this); }, set(v) { own.set.call(this, v); list.slice().forEach(f => f()); }});
+      ['input', 'change'].forEach(type => el.addEventListener(type, () => list.slice().forEach(f => f())));
+    }
+    list.push(fn);
+    fn();
+  }
+  function dateField(input) {
+    if (input.dataset.kmsWeekday) return;
+    input.dataset.kmsWeekday = '1';
+    const wrap = document.createElement('span'), day = document.createElement('span');
+    wrap.className = 'kms-date'; day.className = 'kms-weekday'; day.setAttribute('aria-hidden', 'true');
+    input.replaceWith(wrap); wrap.append(input, day);
+    watchValue(input, () => { const text = weekday(input.value); if (day.textContent !== text) day.textContent = text; });
+  }
+  function controls(scope) {
+    if (!document.documentElement.classList.contains('kms-styled')) return;
+    (scope || document).querySelectorAll('input[type="date"]').forEach(dateField);
+    (scope || document).querySelectorAll('input[type="number"]:not([inputmode])').forEach(input => {
+      input.setAttribute('inputmode', /^(any|0?\.\d+)$/.test(input.getAttribute('step') || '') ? 'decimal' : 'numeric');
+    });
+    (scope || document).querySelectorAll('textarea.kms-grow').forEach(grow);
+  }
+
+  // ---------- Controls (tier 2, plan section 13) ----------
+  let uid = 0;
+  const nextId = prefix => prefix + (++uid).toString(36);
+  // Text for comparing what was typed: no capitals or accents, so "salo" finds "Šalotai".
+  const plain = text => String(text || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  // Today and other days as yyyy-mm-dd in the device's own time, as screens enter them.
+  function isoDay(offsetDays, from) {
+    const d = from ? new Date(from + 'T12:00:00') : new Date();
+    d.setDate(d.getDate() + (offsetDays || 0));
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
+  // The Monday on or before a date (yyyy-mm-dd); empty for no date.
+  function monday(value) {
+    if (!weekday(value)) return '';
+    const d = new Date(value + 'T00:00:00Z');
+    d.setUTCDate(d.getUTCDate() - (d.getUTCDay() + 6) % 7);
+    return d.toISOString().slice(0, 10);
+  }
+  function fire(el, types) { (types || ['input', 'change']).forEach(type => el.dispatchEvent(new Event(type, {bubbles: true}))); }
+  function speaker(after) {
+    const live = document.createElement('span');
+    live.className = 'kms-sr'; live.setAttribute('role', 'status'); live.setAttribute('aria-live', 'polite');
+    after.after(live);
+    return live;
+  }
+  // The label that names a field, moved to the control that now stands in for it.
+  function labelFor(el, target) {
+    const label = el.id ? document.querySelector('label[for="' + el.id + '"]') : null;
+    if (label && target) label.htmlFor = target.id;
+    return label;
+  }
+  // A <select> kept as the screen's value while another control stands in for
+  // it: script that sets its value, its options or disabled is followed.
+  function follow(select, refresh) {
+    watchValue(select, refresh);
+    new MutationObserver(refresh).observe(select, {childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['disabled']});
+  }
+  // Chooses a value on the screen's <select> as a person would, so its own
+  // change handler runs (and may ask, or put the old value back).
+  function choose(select, value) {
+    if (select.value === value) return false;
+    select.value = value; fire(select);
+    return true;
+  }
+
+  // Searchable picker: a combobox over the options of a long <select>, which
+  // stays hidden as the value the screen reads and sets. Typing filters (no
+  // capitals or accents needed), recently chosen come first, Arrow keys move,
+  // Enter chooses, Escape closes, and leaving the field keeps the choice that
+  // was made. options: placeholder, noun ['supplier', 'suppliers'], recent()
+  // (values to list first; by default those chosen on this page).
+  function picker(select, options) {
+    if (!select || select.dataset.kmsPicker) return null;
+    options = options || {};
+    select.dataset.kmsPicker = '1';
+    const wrap = document.createElement('div'), input = document.createElement('input'), clear = document.createElement('button'), list = document.createElement('ul');
+    const noun = options.noun || ['choice', 'choices'];
+    wrap.className = 'kms-picker';
+    input.id = (select.id || nextId('kmsPick')) + 'Search'; input.type = 'text'; input.autocomplete = 'off'; input.spellcheck = false;
+    input.setAttribute('role', 'combobox'); input.setAttribute('aria-autocomplete', 'list'); input.setAttribute('aria-expanded', 'false');
+    input.setAttribute('enterkeyhint', 'done');
+    list.id = input.id + 'List'; list.className = 'kms-picker-list'; list.setAttribute('role', 'listbox'); list.hidden = true;
+    input.setAttribute('aria-controls', list.id);
+    clear.type = 'button'; clear.className = 'kms-picker-clear'; clear.tabIndex = -1; clear.textContent = '×'; clear.hidden = true;
+    const label = labelFor(select, input);
+    if (label) { label.id = label.id || input.id + 'Label'; list.setAttribute('aria-labelledby', label.id); }
+    clear.setAttribute('aria-label', 'Clear search' + (label ? ': ' + label.textContent : ''));
+    select.replaceWith(wrap); wrap.append(input, clear, list, select);
+    select.hidden = true; select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
+    const live = speaker(wrap);
+    let shown = [], active = -1, chosen = [];
+    const items = () => Array.from(select.options).map(o => ({value: o.value, label: o.textContent, detail: o.dataset.kmsDetail || '', disabled: o.disabled}));
+    const current = () => items().find(item => item.value === select.value);
+    // The field shows the chosen option; an empty choice shows as the placeholder.
+    function show() {
+      const item = current(), blank = items().find(i => i.value === '');
+      input.placeholder = options.placeholder || (blank ? blank.label : 'Type to search');
+      const text = item && item.value !== '' ? item.label : '';
+      if (document.activeElement !== input || list.hidden) { if (input.value !== text) input.value = text; }
+      input.disabled = select.disabled;
+      if (select.disabled) close();
+      clear.hidden = !input.value || input.disabled;
+    }
+    function render(query) {
+      const q = plain((query || '').trim()), all = items(), value = select.value;
+      const match = all.filter(i => i.value !== '' && (!q || plain(i.label + ' ' + i.detail).indexOf(q) >= 0));
+      const recent = (options.recent ? options.recent() : chosen).filter(v => v !== '');
+      // Recently chosen first, only where the list is long enough to need it.
+      const first = all.length > 7 ? recent.map(v => match.find(i => i.value === v)).filter(Boolean) : [];
+      const rest = match.filter(i => first.indexOf(i) < 0);
+      list.replaceChildren(); shown = []; active = -1; input.removeAttribute('aria-activedescendant');
+      const head = text => { const li = document.createElement('li'); li.className = 'kms-picker-group'; li.setAttribute('role', 'presentation'); li.setAttribute('aria-hidden', 'true'); li.textContent = text; list.append(li); };
+      const row = item => {
+        const li = document.createElement('li'), name = document.createElement('span');
+        li.id = list.id + shown.length; li.setAttribute('role', 'option'); li.setAttribute('aria-selected', 'false');
+        if (item.disabled) li.setAttribute('aria-disabled', 'true');
+        if (item.value === value) li.classList.add('kms-current');
+        const at = q ? plain(item.label).indexOf(q) : -1;
+        if (at >= 0) { const m = document.createElement('mark'); m.textContent = item.label.slice(at, at + q.length); name.append(item.label.slice(0, at), m, item.label.slice(at + q.length)); }
+        else name.textContent = item.label;
+        li.append(name);
+        if (item.detail) { const small = document.createElement('small'); small.textContent = item.detail; li.append(small); }
+        // Pressing an option must not take the focus from the field first.
+        li.addEventListener('pointerdown', event => event.preventDefault());
+        li.addEventListener('mousedown', event => event.preventDefault());
+        li.addEventListener('click', () => pick(item));
+        list.append(li); shown.push({li, item});
+      };
+      const blank = all.find(i => i.value === '');
+      if (blank && !q) row(blank);
+      if (first.length) { head('Recently used'); first.forEach(row); if (rest.length) head('All ' + noun[1]); }
+      rest.forEach(row);
+      if (!match.length && q) { const none = document.createElement('li'); none.className = 'kms-picker-empty'; none.setAttribute('role', 'presentation'); none.textContent = 'No ' + noun[0] + ' matches “' + query.trim() + '”.'; list.append(none); }
+      list.hidden = false; input.setAttribute('aria-expanded', 'true');
+      live.textContent = !q ? '' : match.length ? match.length + ' ' + (match.length === 1 ? noun[0] : noun[1]) + ' found.' : 'No ' + noun[0] + ' matches.';
+      if (q && shown.length) move(0);
+      else { const at = shown.findIndex(s => s.item.value === value && value !== ''); if (at >= 0) move(at, true); }
+    }
+    function move(i, quiet) {
+      if (!shown.length) return;
+      if (active >= 0 && shown[active]) shown[active].li.setAttribute('aria-selected', 'false');
+      active = (i + shown.length) % shown.length;
+      const li = shown[active].li;
+      li.setAttribute('aria-selected', 'true'); input.setAttribute('aria-activedescendant', li.id);
+      if (!quiet && li.scrollIntoView) li.scrollIntoView({block: 'nearest'});
+    }
+    function close() {
+      list.hidden = true; input.setAttribute('aria-expanded', 'false'); input.removeAttribute('aria-activedescendant'); active = -1;
+    }
+    function pick(item) {
+      if (!item || item.disabled) return;
+      close();
+      if (item.value !== '') chosen = [item.value].concat(chosen.filter(v => v !== item.value)).slice(0, 3);
+      choose(select, item.value);
+      show();
+    }
+    input.addEventListener('focus', () => { if (!input.disabled) { try { input.select(); } catch (error) {} } });
+    input.addEventListener('click', () => { if (list.hidden && !input.disabled) render(''); });
+    input.addEventListener('input', () => { render(input.value); clear.hidden = !input.value; });
+    input.addEventListener('keydown', event => {
+      if (input.disabled) return;
+      if (event.key === 'ArrowDown') { event.preventDefault(); if (list.hidden) { render(''); if (!event.altKey && active < 0) move(0); } else move(active + 1); }
+      else if (event.key === 'ArrowUp') { event.preventDefault(); if (list.hidden) { render(''); move(shown.length - 1); } else move(active - 1); }
+      else if (event.key === 'Enter') { if (!list.hidden && active >= 0) { event.preventDefault(); pick(shown[active].item); } }
+      else if (event.key === 'Escape') { if (!list.hidden) { event.preventDefault(); event.stopPropagation(); close(); show(); } }
+      else if (event.key === 'Tab') { close(); }
+    });
+    // Leaving the field closes the list and shows the choice as it is; typing alone never chooses.
+    wrap.addEventListener('focusout', event => { if (!wrap.contains(event.relatedTarget)) { close(); show(); } });
+    clear.addEventListener('click', () => { input.value = ''; clear.hidden = true; input.focus(); render(''); });
+    follow(select, show);
+    return {input, list, refresh: show, open: () => render(input.value), close};
+  }
+
+  // Shortcut buttons under a date (Today, Yesterday) or a From/To pair (Last 7
+  // days, This month). target: a date field, or [from, to]. Each shortcut:
+  // {label, days} with days a number (one date) or [fromDays, toDays], or
+  // {label, month: true} for the first of this month to today, or {label,
+  // value()} giving the dates. A shortcut sets the date as a person would; the
+  // one that matches shows as pressed. after: the element the row goes under
+  // (by default the last field).
+  function dateShortcuts(target, shortcuts, after) {
+    const fields = Array.isArray(target) ? target : [target];
+    if (!fields[0] || fields[0].dataset.kmsShortcuts) return null;
+    fields[0].dataset.kmsShortcuts = '1';
+    const row = document.createElement('div'), label = labelFor(fields[0]);
+    row.className = 'kms-chips'; row.setAttribute('role', 'group');
+    row.setAttribute('aria-label', 'Date shortcuts' + (label ? ': ' + label.textContent : ''));
+    const values = shortcut => {
+      if (shortcut.value) return shortcut.value();
+      if (shortcut.month) return [isoDay(0).slice(0, 8) + '01', isoDay(0)];
+      const days = Array.isArray(shortcut.days) ? shortcut.days : [shortcut.days];
+      return days.map(n => isoDay(n));
+    };
+    const buttons = shortcuts.map(shortcut => {
+      const button = document.createElement('button');
+      button.type = 'button'; button.className = 'kms-chip'; button.textContent = shortcut.label; button.setAttribute('aria-pressed', 'false');
+      button.addEventListener('click', () => {
+        if (fields.some(f => f.disabled)) return;
+        // From first, then To, so the screen's own range rules see them in order.
+        values(shortcut).forEach((value, i) => { if (fields[i] && fields[i].value !== value) { fields[i].value = value; fire(fields[i]); } });
+        refresh();
+      });
+      row.append(button);
+      return {button, shortcut};
+    });
+    function refresh() {
+      const now = fields.map(f => f.value).join('|'), off = fields.some(f => f.disabled);
+      buttons.forEach(({button, shortcut}) => { button.setAttribute('aria-pressed', String(values(shortcut).join('|') === now)); button.disabled = off; });
+    }
+    const last = fields[fields.length - 1], place = () => { const host = after || last.closest('.kms-date') || last; host.after(row); };
+    place();
+    fields.forEach(f => {
+      watchValue(f, refresh);
+      new MutationObserver(refresh).observe(f, {attributes: true, attributeFilter: ['disabled']});
+    });
+    // The weekday wrapper is added when the page is ready; the row stays under it.
+    if (!after) document.addEventListener('DOMContentLoaded', () => { if (!row.previousElementSibling || !row.previousElementSibling.contains(last)) place(); }, {once: true});
+    return {row, refresh};
+  }
+
+  // A week-commencing field: any date chosen moves to the Monday of its week,
+  // before the screen's own handlers see it, and This week / Next week
+  // shortcuts are added. A date set by script is left as it is.
+  function weekField(input) {
+    if (!input || input.dataset.kmsWeek) return null;
+    input.dataset.kmsWeek = '1';
+    if (!input.min) { input.min = '2000-01-03'; input.step = '7'; } // 3 January 2000 was a Monday.
+    const live = speaker(input);
+    const snap = event => {
+      if (event.target !== input || !input.value) return;
+      const start = monday(input.value);
+      if (start && start !== input.value) {
+        input.value = start;
+        live.textContent = 'Moved to the Monday of that week, ' + new Date(start + 'T00:00:00Z').toLocaleDateString('en-GB', {weekday: 'long', day: 'numeric', month: 'long', timeZone: 'UTC'}) + '.';
+      }
+    };
+    // Captured on the document, so it runs before any handler on the field itself.
+    document.addEventListener('input', snap, true); document.addEventListener('change', snap, true);
+    // Worked out when pressed, so a page left open over a weekend stays right.
+    const chips = dateShortcuts(input, [{label: 'This week', value: () => [monday(isoDay(0))]}, {label: 'Next week', value: () => [isoDay(7, monday(isoDay(0)))]}]);
+    return {chips, monday};
+  }
+
+  // Segmented choice: two to four options of a <select>, all shown at once as
+  // one row. The <select> stays hidden as the value the screen reads and sets.
+  function segmented(select) {
+    if (!select || select.dataset.kmsSegmented) return null;
+    const choices = Array.from(select.options);
+    if (choices.length < 2 || choices.length > 4) return null;
+    select.dataset.kmsSegmented = '1';
+    const group = document.createElement('div'), name = nextId('kmsSeg'), label = labelFor(select);
+    group.className = 'kms-segmented'; group.setAttribute('role', 'radiogroup');
+    if (label) { label.id = label.id || name + 'Label'; label.removeAttribute('for'); group.setAttribute('aria-labelledby', label.id); }
+    // An option the dropdown disables (itself or its group) cannot be chosen here either.
+    const off = o => !o || select.disabled || o.disabled || (o.parentElement && o.parentElement.tagName === 'OPTGROUP' && o.parentElement.disabled);
+    let radios = [], built = '';
+    // Rebuilt only when the options themselves change, so focus stays put otherwise.
+    function build() {
+      const list = Array.from(select.options), key = JSON.stringify(list.map(o => [o.value, o.textContent]));
+      if (key === built) return;
+      built = key; group.textContent = '';
+      radios = list.map(o => {
+        const wrap = document.createElement('label'), radio = document.createElement('input'), text = document.createElement('span');
+        radio.type = 'radio'; radio.name = name; radio.value = o.value; text.textContent = o.textContent;
+        radio.addEventListener('change', () => {
+          if (radio.checked && !off(Array.from(select.options).find(x => x.value === radio.value))) choose(select, radio.value);
+          show();
+        });
+        wrap.append(radio, text); group.append(wrap);
+        return radio;
+      });
+    }
+    build();
+    select.replaceWith(group); group.after(select);
+    select.hidden = true; select.tabIndex = -1; select.setAttribute('aria-hidden', 'true');
+    function show() {
+      build();
+      const list = Array.from(select.options);
+      radios.forEach((r, i) => { r.checked = r.value === select.value; r.disabled = off(list[i]); });
+    }
+    show();
+    follow(select, show);
+    return {group, refresh: show};
+  }
+
+  // Growing notes: a text box that grows to fit what is in it, so nothing is
+  // hidden behind a tiny scrolling box (up to a limit, then it scrolls).
+  function grow(textarea) {
+    if (!textarea || textarea.dataset.kmsGrow) return;
+    textarea.dataset.kmsGrow = '1'; textarea.classList.add('kms-grow');
+    let width = 0;
+    function fit() {
+      if (!textarea.isConnected || !textarea.offsetParent && textarea.scrollHeight === 0) return;
+      textarea.style.height = 'auto';
+      const edge = textarea.offsetHeight - textarea.clientHeight, height = textarea.scrollHeight + edge;
+      if (height > edge) textarea.style.height = height + 'px'; else textarea.style.removeProperty('height');
+      const max = parseFloat(getComputedStyle(textarea).maxHeight);
+      textarea.style.overflowY = Number.isFinite(max) && height > max ? 'auto' : 'hidden';
+    }
+    watchValue(textarea, fit);
+    textarea.addEventListener('focus', fit);
+    window.addEventListener('resize', fit);
+    // Text wraps differently when the box changes width (a hidden panel opening, a phone turning).
+    if (window.ResizeObserver) new ResizeObserver(entries => { const w = entries[0].contentRect.width; if (w !== width) { width = w; fit(); } }).observe(textarea);
+    return fit;
+  }
+
+  // Sticky save bar: <footer class="kms-savebar"> holds the screen's save
+  // buttons and stays at the bottom of the screen while the form scrolls. On a
+  // screen with the activity line (UiStatus) the bar is fixed there and the
+  // line says when there are unsaved changes; elsewhere, note(el, unsaved)
+  // shows "Unsaved changes" in the bar itself.
+  function saveNote(el, unsaved, text) {
+    if (!el) return;
+    const value = unsaved ? text || 'Unsaved changes' : '';
+    if (el.textContent !== value) el.textContent = value;
+    el.classList.add('kms-savebar-note');
+  }
+  // Every screen: the mouse wheel over a number field being typed in would
+  // quietly change its value. The field lets go instead, and the page scrolls.
+  document.addEventListener('wheel', event => {
+    const el = event.target;
+    if (el && el.tagName === 'INPUT' && el.type === 'number' && document.activeElement === el) el.blur();
+  }, {passive: true, capture: true});
+  document.addEventListener('DOMContentLoaded', () => controls(document), {once: true});
+
+  return {ask: ask, cancel: cancel, isOpen: () => !!open, working: working, progress: progress, statusLine: statusLine, waiting: waiting, weekday: weekday, controls: controls,
+    picker: picker, dateShortcuts: dateShortcuts, weekField: weekField, monday: monday, today: () => isoDay(0), segmented: segmented, grow: grow, saveNote: saveNote};
+})();
+</script>
+<style>
+ #kmsBrowserRecovery{position:fixed;left:22px;right:22px;bottom:80px;z-index:26;padding:12px 16px;background:var(--kms-check-bg);color:var(--kms-ink);border:1px solid var(--kms-check);border-left-width:6px;border-radius:10px;font:var(--kms-small)/1.4 var(--kms-font);box-shadow:var(--kms-shadow)}
+ #kmsBrowserRecovery p{margin:0 0 8px}#kmsBrowserRecovery button{display:inline-flex;align-items:center;min-height:36px;margin:0 8px 0 0;padding:0 12px;border:1px solid var(--kms-control-line);border-radius:10px;background:var(--kms-panel);color:var(--kms-ink);font:700 var(--kms-small)/1.2 var(--kms-font);cursor:pointer}#kmsBrowserRecovery[hidden]{display:none}
+ @media print{#kmsBrowserRecovery{display:none!important}}
+</style>
+<script>
+// Recovery copies are local to this browser. They are never database records.
+window.KmsRecovery=(function(){
+ 'use strict';
+ const scope=window.KmsRecoveryContext,maxCopies=8,maxKeys=512,maxChars=750000;
+ const writer=crypto.randomUUID?crypto.randomUUID():Date.now()+'-'+Math.random().toString(16).slice(2);
+ // The web page's release (6B A2); null in Sheets. Each copy records it and
+ // its screen adapter's format, so a page never applies a copy it cannot read.
+ const release=Number.isSafeInteger(window.KmsWebRelease)?window.KmsWebRelease:null;
+ let lastText=null,lastOk=false;
+ let adapter,ownKey,storage,enabled=false,active=null,offered=new Set(),panel,timer,restoring=false,ready=false,copyFailed=false,initialized=false,suppressed=null,notice=false,storageFault=false,alive=true;
+ const prefix=scope&&scope.book&&scope.actor&&scope.screen?'KMS_RECOVERY_V1:'+scope.book+':'+scope.actor+':'+scope.screen+':':'';
+ function clone(value){return JSON.parse(JSON.stringify(value));}
+ function fields(ids){return ids.map(id=>{const el=document.getElementById(id);return el&&el.type!=='file'?[id,el.value,el.type==='checkbox'?el.checked:null]:null;}).filter(Boolean);}
+ function applyFields(values){(values||[]).forEach(([id,value,checked])=>{const el=document.getElementById(id);if(el&&el.type!=='file'){el.value=value;if(checked!==null)el.checked=checked;}});}
+ function take(state,keys){return Object.fromEntries(keys.map(key=>[key,clone(state[key]===undefined?null:state[key])]));}
+ function put(state,values){Object.keys(values).forEach(key=>state[key]=clone(values[key]));}
+ function show(text,actions){
+  notice=!active;
+  if(!document.body)return;
+  if(!panel){panel=document.createElement('aside');panel.id='kmsBrowserRecovery';panel.setAttribute('role','status');panel.setAttribute('aria-live','polite');document.body.append(panel);}
+  panel.replaceChildren();const p=document.createElement('p');p.textContent=text;panel.append(p);
+  (actions||[]).forEach(([label,action])=>{const button=document.createElement('button');button.type='button';button.textContent=label;button.addEventListener('click',guarded(action));panel.append(button);});
+  const footer=document.querySelector('.kms-activity-footer');panel.style.bottom=((footer?.getBoundingClientRect().height||66)+12)+'px';panel.hidden=false;
+ }
+ function hide(){notice=false;if(panel)panel.hidden=true;}
+ function guarded(fn,fallback){return function(...args){try{return fn(...args);}catch(error){storageFault=true;copyFailed=true;show('Browser recovery could not be accessed. Keep this window open until saves are confirmed; existing copies have not been discarded.',[]);return fallback;}};}
+ function read(key){const text=storage.getItem(key);try{if(!text)return null;const item=JSON.parse(text);if(item.schema!==1||item.book!==scope.book||item.actor!==scope.actor||item.screen!==scope.screen)return null;return item;}catch(error){return null;}}
+ function entries(){if(!enabled)return [];if(storage.length>maxKeys)throw Error('Browser recovery storage needs clearing');const keys=[];for(let i=0;i<storage.length;i++){const key=storage.key(i);if(key&&key.startsWith(prefix+'copy:'))keys.push(key);}return keys.map(key=>({key,item:read(key)})).filter(x=>x.item).sort((a,b)=>b.item.updated-a.item.updated);}
+ function init(){
+  if(initialized||!prefix)return;initialized=true;
+  if(['ConsoleDisplay','AllergenMatrix','OrderSheet'].includes(scope.screen))return;
+  try{storage=window.localStorage;const probe=prefix+'probe';storage.setItem(probe,writer);if(storage.getItem(probe)!==writer)throw Error('Read-back failed');storage.removeItem(probe);enabled=true;}
+  catch(error){enabled=false;show('Browser recovery is unavailable here. Keep this window open until saves are confirmed.',[]);}
+ }
+ function reserve(){
+  if(ownKey)return ownKey;
+  if(entries().length>=maxCopies)throw Error('Recovery copies are full. Restore or discard an earlier copy first.');
+  ownKey=prefix+'copy:'+writer;return ownKey;
+ }
+ function format(){return adapter&&Number.isSafeInteger(adapter.format)&&adapter.format>0?adapter.format:1;}
+ function write(item){
+  if(!enabled)return false;
+  item.release=release;if(item.draft)item.format=format();
+  try{const key=reserve(),text=JSON.stringify(item);if(text.length>maxChars)throw Error('Recovery copy is too large');storage.setItem(key,text);if(storage.getItem(key)!==text)throw Error('Recovery copy could not be verified');lastText=text;lastOk=true;return true;}
+  catch(error){lastOk=false;copyFailed=true;show('A browser recovery copy could not be kept. Your entries are still in this window. Keep it open until the save is confirmed.',active&&!active.item.operation?[['Discard earlier copy',discard],['Later',later]]:[['Review earlier copies',()=>{active=null;hide();offer();}]]);return false;}
+ }
+ function base(){return {schema:1,book:scope.book,actor:scope.actor,screen:scope.screen,writer,updated:Date.now(),draft:null,operation:null};}
+ function snapshot(){if(suppressed&&suppressed===JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id))))return null;if(!adapter||!adapter.ready()||!window.KmsStatus?.isDirty())return null;return {label:adapter.label(),value:clone(adapter.capture()),updated:Date.now()};}
+ function capture(){
+  clearTimeout(timer);if(!enabled||storageFault||restoring||!ready)return;
+  const draft=snapshot(),old=ownKey&&read(ownKey);
+  if(!draft&&!old?.operation){if(ownKey){storage.removeItem(ownKey);ownKey=null;}lastText=null;return;}
+  // Each window owns a separate key; another window's copy is never replaced.
+  if(old&&old.writer!==writer){ownKey=null;show('Another window is using this recovery slot. Keep your current form open.',[]);return;}
+  const item=old||base();item.updated=Date.now();
+  if(draft){const serial=JSON.stringify(draft.value);if(!item.draft||JSON.stringify(item.draft.value)!==serial)item.draft=draft;}
+  else if(!item.operation)item.draft=null;
+  write(item);
+ }
+ function schedule(){clearTimeout(timer);timer=setTimeout(guarded(capture),180);}
+ function operationStart(request){
+  if(!enabled||storageFault)return;
+  capture();const item=ownKey&&read(ownKey)||base();
+  item.operation={id:request.id,method:request.method,args:clone(request.args),started:Date.now(),draftAt:item.draft?.updated||0};item.updated=Date.now();write(item);
+ }
+ function keepDraftAfterSave(item,op,result){
+  if(item.draft&&/kmsSave(?:Prep|Dish)HtmlPhoto/.test(op.method)){
+   const state=item.draft.value.state;if(state?.recipe){['editToken','allergenReviewToken','photoFileId','photoFilename','photoStatus'].forEach(key=>{if(result[key]!==undefined)state.recipe[key]=result[key];});state.pendingPhotoChange=null;}
+   return !!state?.changed;
+  }
+  return !!(item.draft&&item.draft.updated>op.draftAt);
+ }
+ function operationEnd(request,outcome){
+  if(!enabled||!ownKey)return;
+  const item=read(ownKey);if(!item||item.writer!==writer||item.operation?.id!==request.id)return;
+  if(outcome.outcome==='resolved'){if(item.draft&&(outcome.resolution?.resolution==='Not saved, verified'||item.draft.updated>item.operation.draftAt)){item.operation=null;write(item);}else{storage.removeItem(ownKey);ownKey=null;}}else if(outcome.outcome==='saved'){
+   if(keepDraftAfterSave(item,item.operation,outcome.value||{})){item.operation=null;item.updated=Date.now();write(item);}
+   else{storage.removeItem(ownKey);ownKey=null;}
+  }else if(outcome.outcome==='rejected'){item.operation=null;item.updated=Date.now();write(item);}
+ }
+ // A copy from a newer page, or a draft format this screen has no explicit
+ // compatibility code for, is kept untouched: never applied, checked or deleted.
+ function newerRelease(item){return release!==null&&Number.isSafeInteger(item.release)&&item.release>release;}
+ function draftFormat(item){return item.format===undefined?1:item.format;}
+ function readable(item){const f=draftFormat(item);return f===format()||!!(adapter&&adapter.upgrade&&Object.prototype.hasOwnProperty.call(adapter.upgrade,f)&&typeof adapter.upgrade[f]==='function');}
+ function kept(item){
+  const newer=newerRelease(item)||Number.isSafeInteger(draftFormat(item))&&draftFormat(item)>format();
+  show(newer?'This entry was made with a newer KMS page. It is kept; open it after KMS is updated.':'This entry was made with a different KMS page and cannot be opened here. It is kept on this device.',[['Later',later]]);
+ }
+ function available(){return entries().find(x=>x.item.writer!==writer&&!offered.has(x.key));}
+ function offer(){
+  if(!enabled||active||notice||window.KmsStatus?.isBusy()||window.KmsStatus?.isDirty())return;
+  const next=available();if(!next)return;
+  active=next;const item=next.item;
+  if(newerRelease(item)){kept(item);return;}
+  if(item.operation){checkPrompt(item);return;}
+  if(!item.draft){storage.removeItem(next.key);active=null;offer();return;}
+  if(!ready||!adapter?.ready()){active=null;return;}
+  if(!readable(item)){kept(item);return;}
+  show('Recover unsaved '+item.draft.label+' from '+new Date(item.updated).toLocaleString()+'? Restoring brings back the form for review; it does not save it.',[['Restore edits',restore],['Discard copy',discard],['Later',later]]);
+ }
+ function checkPrompt(item){show('An earlier save for '+(item.draft?.label||'this screen')+' needs an outcome check. It will not be submitted again.',[['Check save outcome',check],['Later',later]]);}
+ // A save blocked by an unsettled earlier save must always lead back to its
+ // outcome check, even after Later or while the form has entries (item 7b).
+ function showPending(){
+  if(!enabled)return false;
+  if(active?.item.operation){if(!panel||panel.hidden)(newerRelease(active.item)?kept:checkPrompt)(active.item);return true;}
+  const next=entries().find(x=>x.item.operation);if(!next)return false;
+  offered.delete(next.key);active=next;(newerRelease(next.item)?kept:checkPrompt)(next.item);return true;
+ }
+ function later(){if(active)offered.add(active.key);active=null;hide();}
+ // The in-page question (KmsUi.ask, plan section 3a) does not stop the page,
+ // so it is bound to the copy it asks about: the same selected copy, unchanged
+ // on this device, and still eligible, or the answer does nothing.
+ function discardable(){return !!active&&!active.item.operation&&!newerRelease(active.item)&&!(active.item.draft&&!readable(active.item));}
+ function restorable(){return !!active?.item.draft&&!active.item.operation&&!!adapter&&adapter.ready()&&!window.KmsStatus.isBusy()&&!newerRelease(active.item)&&readable(active.item);}
+ function bound(selected,eligible){const text=storage.getItem(selected.key);return ()=>alive&&active===selected&&storage.getItem(selected.key)===text&&eligible();}
+ let asking=false;
+ function ask(options,selected,eligible,then){
+  if(asking||!window.KmsUi)return;asking=true;const still=bound(selected,eligible);
+  // Anything but a yes to an unchanged question does nothing; the panel still
+  // offers the copy if it is there, so the person can ask again.
+  window.KmsUi.ask(Object.assign({still},options)).then(guarded(answer=>{asking=false;if(answer.ok&&still())then(selected);}),()=>{asking=false;});
+ }
+ function discard(){
+  if(!discardable())return;
+  ask({title:'Discard this recovery copy?',text:'The unsaved entries in this copy are removed from this device. Saved records will not change.',no:'Keep copy',yes:'Discard copy',danger:true,form:false},active,discardable,selected=>{
+   storage.removeItem(selected.key);active=null;hide();offer();
+  });
+ }
+ function restore(){
+  if(!restorable())return;
+  if(!window.KmsStatus.isDirty()){restoreNow(active);return;}
+  ask({title:'Replace the form with the earlier copy?',text:'Your current unsaved entries on this form are discarded and the earlier copy is put back for review. Nothing is saved.',no:'Keep current form',yes:'Restore earlier copy',danger:true},active,()=>restorable()&&window.KmsStatus.isDirty(),guarded(restoreNow));
+ }
+ function restoreNow(selected){
+  restoring=true;
+  try{
+   // An earlier format reaches the screen only through its compatibility code.
+   const f=draftFormat(selected.item),value=f===format()?clone(selected.item.draft.value):adapter.upgrade[f](clone(selected.item.draft.value));
+   adapter.restore(value);
+   // Retain the original copy until its restored successor is safely stored.
+   restoring=false;capture();const successor=ownKey&&read(ownKey);
+   if(successor?.draft)storage.removeItem(selected.key);
+   active=null;show('Edits restored for review. Nothing has been saved. If this record changed elsewhere, reload and compare before saving.',[['Dismiss',hide]]);
+  }catch(error){show('The copy could not be restored: '+(error.message||String(error))+'. It has been retained.',[['Later',later]]);}
+  finally{restoring=false;window.KmsStatus.refresh();}
+ }
+ function check(){
+  if(!active?.item.operation||newerRelease(active.item))return;
+  const selected=active,op=selected.item.operation,finish=window.KmsStatus.begin('Checking save…',false);
+  show('Checking the earlier save. No business changes are being repeated.',[]);
+  let finished=false;const timeout=setTimeout(()=>{if(finished||!alive)return;finished=true;finish(Error('Save outcome check timed out'));if(active===selected)show('The outcome check did not finish. The save has not been repeated.',[['Check again',check],['Later',later]]);},45000);
+  const complete=()=>{if(finished||!alive)return false;finished=true;clearTimeout(timeout);return true;};
+  google.script.run.withSuccessHandler(guarded(outcome=>{
+   if(!complete())return;finish();if(active!==selected)return;
+   if(outcome?.outcome==='resolved'){const retain=selected.item.draft&&(outcome.resolution?.resolution==='Not saved, verified'||selected.item.draft.updated>op.draftAt);if(retain){selected.item.operation=null;storage.setItem(selected.key,JSON.stringify(selected.item));}else storage.removeItem(selected.key);active=null;show('The workbook owner reconciled this save. '+(retain?'Your unsaved copy remains available for review.':'Open or reload the saved record before making another change.'),[['Dismiss',()=>{hide();offer();}]]);}
+   else if(outcome?.outcome==='saved'){
+    const result=outcome.value||{},record=result.record||result,id=record.id||record.key||result.id||'';
+    selected.item.operation=null;
+    if(keepDraftAfterSave(selected.item,op,result)){storage.setItem(selected.key,JSON.stringify(selected.item));active=null;show('The earlier save completed'+(id?' ('+id+')':'')+'. Unsaved edits remain available for review.',[['Review edits',()=>{hide();offer();}]]);}
+    else{storage.removeItem(selected.key);active=null;show('The earlier save completed'+(id?' ('+id+')':'')+'. Open or reload that saved record to see its current values.',[['Dismiss',()=>{hide();offer();}]]);}
+   }else if(outcome?.outcome==='rejected'){
+    // A rejected check is a definite answer: say so, then offer any draft (item 7a).
+    const item=selected.item,said='The earlier save did not happen. Nothing was saved by it.';item.operation=null;
+    if(!item.draft){storage.removeItem(selected.key);active=null;show(said+' You can enter the change again.',[['Dismiss',()=>{hide();offer();}]]);}
+    else{storage.setItem(selected.key,JSON.stringify(item));
+     if(ready&&adapter?.ready())show(said+' Recover unsaved '+item.draft.label+' from '+new Date(item.updated).toLocaleString()+'? Restoring brings back the form for review; it does not save it.',[['Restore edits',restore],['Discard copy',discard],['Later',later]]);
+     else{active=null;show(said+' Your unsaved copy remains available for review.',[['Dismiss',()=>{hide();offer();}]]);}}
+   }else show('This write is still unconfirmed. Keep this recovery copy and ask the workbook owner to investigate. Do not enter the same invoice or recipe again.',[['Check again',check],['Later',later]]);
+  })).withFailureHandler(guarded(error=>{if(!complete())return;finish(error);if(active===selected)show('The outcome check did not finish. The save has not been repeated.',[['Check again',check],['Later',later]]);})).kmsOperationStatus(op.method,op.args,op.id);
+ }
+ function refresh(){
+  if(!adapter){if(enabled){ready=true;offer();}return;}
+  if(!ready&&adapter.ready())ready=true;offer();
+  schedule();
+ }
+ function register(value){adapter=value;init();refresh();}
+ // Do not start network calls on every keypress or poll the database for drafts.
+ document.addEventListener('DOMContentLoaded',guarded(()=>{init();if(!adapter){ready=true;offer();}}),{once:true});
+ ['input','change','click'].forEach(type=>document.addEventListener(type,()=>Promise.resolve().then(guarded(refresh))));
+ window.addEventListener('pagehide',()=>{guarded(capture)();alive=false;});document.addEventListener('visibilitychange',guarded(()=>{if(document.hidden)capture();}));
+ window.addEventListener('beforeunload',event=>{guarded(capture)();if(window.KmsStatus?.isDirty()||window.KmsStatus?.isBusy()){event.preventDefault();event.returnValue='';}});
+ // True only when this window's latest copy was written and read back
+ // unchanged, and is still there; false after a storage fault, a failed
+ // write, or when recovery is unavailable (6B A2).
+ function persisted(){
+  if(!enabled||storageFault||!lastOk||!ownKey||lastText===null)return false;
+  return storage.getItem(ownKey)===lastText;
+ }
+ function discardCurrent(){const item=ownKey&&read(ownKey);if(item?.operation)return false;suppressed=JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id)));if(ownKey){storage.removeItem(ownKey);ownKey=null;}return true;}
+ return {discardCurrent:guarded(discardCurrent,false),suppressCurrent:()=>{suppressed=JSON.stringify(fields(Array.from(document.querySelectorAll('input[id],select[id],textarea[id]')).map(el=>el.id)));},register:guarded(register),refresh:guarded(refresh),capture:guarded(capture),operationStart:guarded(operationStart),operationEnd:guarded(operationEnd),fields,applyFields,take,put,
+  persisted:guarded(persisted,false),hasPending:()=>!!active?.item.operation,showPending:guarded(showPending,false),pendingSaves:guarded(()=>storageFault||enabled&&entries().some(x=>x.item.operation),true),available:()=>enabled&&!copyFailed};
+})();
+</script>
+<style>
+  .kms-activity-footer {
+    position:fixed!important; inset:auto 0 0!important; width:auto!important; margin:0!important;
+    box-sizing:border-box; background:var(--kms-panel); border-top:1px solid var(--kms-line);
+    padding:11px 22px!important; z-index:20; min-height:66px;
+  }
+  .kms-activity-actions { padding-right:344px; box-sizing:border-box; }
+  .kms-activity-footer.kms-activity-simple { padding-right:366px!important; }
+  .kms-activity-footer .kms-activity-actions { margin-top:0; }
+  body[data-kms-layout="console"] .kms-activity-footer { position:relative!important; inset:auto!important; flex:none; }
+  #kmsActivity {
+    position:absolute; right:22px; bottom:11px; height:44px; width:328px;
+    display:flex; align-items:center; justify-content:flex-end; gap:16px;
+    font:700 24px/1.3 var(--kms-font); color:var(--kms-muted); white-space:nowrap;
+  }
+  #kmsActivity[data-state="busy"],#kmsActivity[data-state="maintenance"] { color:var(--kms-paused); }
+  #kmsActivity[data-state="warning"],#kmsActivity[data-state="dirty"] { color:var(--kms-check); }
+  #kmsActivity[data-state="success"] { color:var(--kms-done); }
+  #kmsActivity[data-state="error"] { color:var(--kms-stop); }
+  .kms-activity-icon { width:28px; height:28px; box-sizing:border-box; flex:none; display:inline-flex; align-items:center; justify-content:center; }
+  #kmsActivity[data-state="busy"] .kms-activity-icon,#kmsActivity[data-state="maintenance"] .kms-activity-icon {
+    border:4px solid var(--kms-line); border-top-color:var(--kms-paused); border-radius:50%;
+    animation:kms-activity-spin .8s linear infinite;
+  }
+  #kmsActivity[data-state="maintenance"] > span:last-child { font-size:20px;line-height:1.1;white-space:pre-line; }
+  @keyframes kms-activity-spin { to { transform:rotate(360deg); } }
+  @media(prefers-reduced-motion:reduce) { #kmsActivity[data-state="busy"] .kms-activity-icon,#kmsActivity[data-state="maintenance"] .kms-activity-icon { animation-duration:2.4s; } }
+  @media(max-width:760px) {
+    .kms-activity-footer { padding-left:12px!important; padding-right:12px!important; }
+    /* On smaller displays give the larger status its own space below actions. */
+    .kms-activity-actions { padding-right:0; padding-bottom:58px; }
+    .kms-activity-footer.kms-activity-simple { padding-right:12px!important; }
+    body[data-kms-layout="console"] .kms-activity-footer { padding-bottom:66px!important; }
+    #kmsActivity { right:12px; width:min(328px, calc(100vw - 24px)); }
+  }
+  @media print {
+    .kms-activity-footer,#kmsActivity,#kmsSaveRecovery { display:none!important; }
+    .kms-activity-content { padding-bottom:0!important; }
+  }
+</style>
+<script>
+// History date changes are local: no server call and no draft data changes.
+window.KmsHistoryDates=(function(){
+  function yearFrom(value,direction){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(value))return '';
+    const date=new Date(value+'T00:00:00Z');if(!Number.isFinite(date.getTime())||date.toISOString().slice(0,10)!==value)return '';
+    const year=date.getUTCFullYear()+direction,month=date.getUTCMonth(),day=Math.min(date.getUTCDate(),new Date(Date.UTC(year,month+1,0)).getUTCDate());
+    return new Date(Date.UTC(year,month,day)).toISOString().slice(0,10);
+  }
+  function bind(from,to){
+    if(!from||!to)return;
+    from.addEventListener('change',function(){const end=yearFrom(from.value,1);if(end)to.value=end;});
+    to.addEventListener('change',function(){const end=yearFrom(from.value,1);if(to.value&&end&&(to.value<from.value||to.value>end))from.value=yearFrom(to.value,-1);});
+  }
+  document.addEventListener('DOMContentLoaded',function(){[['historyFrom','historyTo'],['fromDate','toDate']].forEach(ids=>bind(document.getElementById(ids[0]),document.getElementById(ids[1])));},{once:true});
+  return {yearFrom:yearFrom};
+})();
+// Native Apps Script runners are immutable. Wrap each chain rather than modifying
+// google.script.run, and finish only when its callback has finished as well.
+window.KmsStatus = (function() {
+  'use strict';
+  const pending = new Map();
+  let alive=true;window.addEventListener('pagehide',function(){alive=false;},{once:true});
+  let badge, label, icon, dirtyCheck = function() { return false; };
+  let nextId = 0, failure = '', savedUntil = 0, savedTimer, cycleWrote = false;
+  const recoverable = new Set(['kmsSavePrepHtmlRecipe','kmsSaveDishHtmlRecord','kmsSavePrepHtmlPhoto','kmsSaveDishHtmlPhoto',
+    'kmsSaveIngredientHtmlRecord','kmsSupplierSave','kmsInvoiceSave','kmsInvoiceVoid','kmsInvoiceSavePhoto','kmsInvoiceRemovePhoto','kmsStocktakeSave','kmsStocktakeCorrect',
+    'kmsWeeklySave','kmsWeeklyCorrect','kmsMenuPricingSave','kmsSettingsSave','kmsMarkSelectedAllergensReviewed',
+    'kmsMarkSupplierAllergensReviewed','kmsMarkIngredientAllergensReviewed','kmsMarkRecipeAllergensReviewed','kmsCostReviewMark']);
+  let unresolved = null, recoveryPanel;
+  let maintenance=window.KmsMaintenanceInitial||null,maintenanceTimer,maintenanceReading=false;
+  const maintenanceListeners=new Set();
+  function maintenanceOwner(){try{return window.parent!==window&&window.parent.KmsApp&&typeof window.parent.KmsStatus?.maintenance==='function'&&window.parent.KmsStatus||null;}catch(error){return null;}}
+  function maintenanceState(){const owner=maintenanceOwner();return owner?owner.maintenance():maintenance;}
+  // F: while a job runs, a last update over 3 minutes before the server's answer
+  // is shown as not recently confirmed (its time), instead of freezing or guessing.
+  // A fixed 24-hour HH:MM in the device's own time zone, whatever its language.
+  function clock(at){const d=new Date(at);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');}
+  function maintenanceQuiet(value){const at=Date.parse(value?.updated||value?.latest?.updated||'');if(!(value?.capturing||value?.restoring)||!Number.isFinite(at)||!(value.observedAt-at>180000))return '';return clock(at);}
+  function scheduleMaintenance(){
+    clearTimeout(maintenanceTimer);const value=maintenanceState();
+    if(alive&&!maintenanceOwner()&&!document.hidden&&(value?.capturing||value?.restoring))maintenanceTimer=setTimeout(checkMaintenance,20000);
+  }
+  function setMaintenance(value){
+    const owner=maintenanceOwner();if(owner){owner.setMaintenance(value);return;}
+    if(!value||!Number.isFinite(value.observedAt))return;
+    // A refused answer changes nothing here; the poll that asked schedules the
+    // next one itself, so refusing never stops the polling.
+    // F: an answer with a lower status revision is older, whatever its time; an
+    // answer without one is judged by when the server read it, and keeps the
+    // revision already seen, so a later, older answer is still refused.
+    if(maintenance){const a=value.revision,b=maintenance.revision;
+      if(typeof a==='number'&&typeof b==='number'&&a!==b){if(a<b)return;}
+      else if(value.observedAt<maintenance.observedAt)return;
+      if(typeof a!=='number'&&typeof b==='number')value=Object.assign({},value,{revision:b});}
+    maintenance=value;render();maintenanceListeners.forEach(fn=>fn());scheduleMaintenance();
+  }
+  function checkMaintenance(){
+    if(!alive||maintenanceOwner()||maintenanceReading)return;maintenanceReading=true;let done=false;
+    const timeout=setTimeout(()=>failed(),45000);
+    function failed(){if(done||!alive)return;done=true;clearTimeout(timeout);maintenanceReading=false;if(maintenance)maintenance=Object.assign({},maintenance,{uncertain:true});render();maintenanceListeners.forEach(fn=>fn());scheduleMaintenance();}
+    try{google.script.run.withSuccessHandler(value=>{if(done||!alive)return;done=true;clearTimeout(timeout);maintenanceReading=false;setMaintenance(value);scheduleMaintenance();}).withFailureHandler(failed).kmsBackupActivity();}catch(error){failed();}
+  }
+  function observeMaintenance(method,result){
+    if(result?.activity)setMaintenance(result.activity);
+    else if(result?.backup?.activity)setMaintenance(result.backup.activity);
+    else if(/^kmsBackup(?:Start|Restore|Resume|Cancel)$/.test(method)&&result?.updated)setMaintenance({observedAt:Date.parse(result.updated),updated:result.updated,capturing:result.kind==='Backup'&&result.status==='Capturing',restoring:result.kind==='Restore'&&result.status==='Restoring',status:result.status,id:result.id});
+  }
+  window.addEventListener('pagehide',()=>{clearTimeout(maintenanceTimer);maintenanceListeners.clear();},{once:true});
+  document.addEventListener('visibilitychange',()=>{if(document.hidden)clearTimeout(maintenanceTimer);else if(maintenanceState()?.capturing||maintenanceState()?.restoring)checkMaintenance();});
+  function formValues() {
+    return JSON.stringify(Array.from(document.querySelectorAll('input,select,textarea')).map(function(input) {
+      return [input.id,input.name,input.value,input.type==='checkbox'?input.checked:null];
+    }));
+  }
+  function recoveryNotice(message, request) {
+    if(!recoveryPanel) {
+      recoveryPanel=document.createElement('div');recoveryPanel.id='kmsSaveRecovery';
+      recoveryPanel.style.cssText='position:fixed;left:22px;right:22px;bottom:80px;padding:12px 16px;background:var(--kms-check-bg);color:var(--kms-ink);border:1px solid var(--kms-check);border-left-width:6px;border-radius:10px;z-index:25;font:var(--kms-small)/1.4 var(--kms-font);';
+      const explanation=document.createElement('span'),check=document.createElement('button');
+      check.type='button';check.textContent='Check save outcome';check.style.marginLeft='12px';
+      check.addEventListener('click',function(){if(unresolved&&unresolved.check&&!pending.size)unresolved.check();});
+      recoveryPanel.append(explanation,check);document.body.appendChild(recoveryPanel);
+    }
+    recoveryPanel.firstChild.textContent=message;recoveryPanel.hidden=false;
+    const footer=document.querySelector('.kms-activity-footer');
+    recoveryPanel.style.bottom=((footer&&footer.getBoundingClientRect().height||66)+12)+'px';
+    recoveryPanel.lastChild.hidden=!request;
+  }
+  function clearRecovery(request) {
+    request.completed=true;
+    if(unresolved===request)unresolved=null;
+    if(recoveryPanel)recoveryPanel.hidden=true;
+  }
+  function newOperationId() {
+    const bytes=new Uint8Array(16);window.crypto.getRandomValues(bytes);
+    return Date.now()+'-'+Array.from(bytes,function(value){return value.toString(16).padStart(2,'0');}).join('');
+  }
+  function dirty() { return !!dirtyCheck(); }
+  function render() {
+    if (!badge) return;
+    let text = 'Ready', kind = 'ready';
+    if (pending.size) {
+      const tasks = Array.from(pending.values());
+      const task = tasks.find(function(t) { return t.write; }) || tasks[tasks.length - 1];
+      text = task.label; kind = 'busy';
+    } else if (failure) { text = failure; kind = /^(Saved|Refused|Signed out)/.test(failure)?'warning':'error'; }
+    else if (maintenanceState()?.capturing||maintenanceState()?.restoring) {const value=maintenanceState();const quiet=maintenanceQuiet(value);text=value.uncertain?'Backup status unconfirmed\nCheck Settings':quiet?'Progress not recently confirmed\nLast update '+quiet:value.capturing?'Backup capturing…\nSaves paused':'Restoring backup…\nOriginal saves available';kind='maintenance';}
+    else if (dirty()) { text = 'Unsaved changes'; kind = 'dirty'; }
+    else if (Date.now() < savedUntil) { text = 'Saved'; kind = 'success'; }
+    if (badge.dataset.state !== kind) badge.dataset.state = kind;
+    const busyValue = kind === 'busy' || kind === 'maintenance' ? 'true' : 'false';
+    if (badge.getAttribute('aria-busy') !== busyValue) badge.setAttribute('aria-busy', busyValue);
+    // Avoid repeated live-region announcements on every keystroke or click.
+    if (label.textContent !== text) label.textContent = text;
+    const symbol = kind === 'success' ? '✓' : kind === 'error' ? '!' : kind === 'dirty' ? '•' : '';
+    if (icon.textContent !== symbol) icon.textContent = symbol;
+  }
+  function refresh() { Promise.resolve().then(function(){render();if(window.KmsRecovery)window.KmsRecovery.refresh();}); }
+  function begin(text, write) {
+    if (!pending.size) { failure = ''; savedUntil = 0; cycleWrote = false; clearTimeout(savedTimer); }
+    const id = ++nextId;
+    pending.set(id, {label:text, write:!!write}); render();
+    return function(error) {
+      // An await continuation may start its follow-up read. Keep that inside the
+      // same activity cycle, just like requests started directly in a callback.
+      Promise.resolve().then(function() {
+        const task = pending.get(id);
+        if (!task) return;
+        pending.delete(id);
+        if (error) failure = error.kmsRefusal ? (error.kmsCode==='session' ? 'Signed out' : 'Refused') : error.kmsOutcome==='unknown' ? 'Save unconfirmed' : error.kmsOutcome==='savedViewError' ? 'Saved; reload form' : task.label === 'Preparing photo…' ? 'Photo failed' : task.label === 'Processing backup…' ? 'Backup action failed' : task.write ? 'Save failed' : 'Load failed';
+        else if (task.write) { cycleWrote = true; try { document.dispatchEvent(new CustomEvent('kms-write-succeeded')); } catch (ignored) {} }
+        if (!pending.size && cycleWrote && !failure) {
+          savedUntil = Date.now() + 2500;
+          savedTimer = setTimeout(refresh, 2550);
+        }
+        refresh();
+      });
+    };
+  }
+  function operation(method, args) {
+    const write = /Save|Mark|Accept|Void|Correct|Archive|Delete|Remove|Finalis|Resolve/.test(method);
+    const payload = args[0];
+    const finalise = write && payload && payload.status === 'Finalised';
+    return {write:write, label:/^kmsBackup(?:Start|Restore|Resume|Cancel|Pin)$/.test(method)?'Processing backup…':method==='kmsRecoveryResolve'?'Reconciling…':method==='kmsDesktopShortcutInstaller' ? 'Preparing installer…' : finalise ? 'Finalising…' : /Void/.test(method) ? 'Voiding…' : /Accept/.test(method) || write && payload && payload.status === 'Accepted' ? 'Accepting…' : write ? 'Saving…' : /PreviewUsage/.test(method) ? 'Reviewing usage…' : 'Loading…'};
+  }
+  function run(options) {
+    options = options || {};
+    return new Proxy({}, {get:function(_target, method) {
+      if (method === 'withSuccessHandler') return function(handler) { return run(Object.assign({}, options, {success:handler})); };
+      if (method === 'withFailureHandler') return function(handler) { return run(Object.assign({}, options, {failure:handler})); };
+      if (method === 'withUserObject') return function(value) { return run(Object.assign({}, options, {userObject:value})); };
+      return function() {
+        const args = Array.from(arguments);
+        // Internal screen shortcuts stay inside the shared KMS window. Do not
+        // start a child RPC activity cycle before its navigation guard runs.
+        const navigation = window.KmsEmbedded && window.KmsEmbedded.navigateMethod(String(method));
+        if (navigation) {
+          Promise.resolve(navigation).then(function(result) { if (options.success) options.success(result, options.userObject); }, function(error) { if (options.failure) options.failure(error, options.userObject); else console.error(error); });
+          return;
+        }
+        const task = operation(String(method), args);
+        if(task.write&&maintenanceState()?.capturing){const error=new Error('Backup capture is in progress; saves are paused. Your edits remain in this form. Wait for capture to finish, then save again.');if(options.failure)options.failure(error,options.userObject);else console.error(error);render();return;}
+        let finish = options.background && !task.write ? function() {} : begin(task.label, task.write);
+        const started=Date.now();let suppliedInitial=false,settled=false,watchdog;
+        function stopWatchdog(){clearTimeout(watchdog);}
+        // 45 seconds of KMS time: on the web page, time in the owner's Google
+        // sign-in box does not count, and the resent request gets a full 45 seconds.
+        function arm(fire){stopWatchdog();const armed=Date.now();const tick=function(){const owner=window.KmsOwnerWait&&window.KmsOwnerWait();
+          if(owner&&owner.waiting){watchdog=setTimeout(tick,1000);return;}
+          const ended=owner&&owner.endedAt||0,left=ended>armed?45000-(Date.now()-ended):0;if(left>0){watchdog=setTimeout(tick,left);return;}fire();};
+          watchdog=setTimeout(tick,45000);}
+        function trace(outcome){if(window.KmsPerformanceEnabled)console.log('KMS browser '+String(method)+': '+(Date.now()-started)+(suppliedInitial?' ms initial response wait (':' ms round trip (')+outcome+')');}
+        const onFailure = function(error) {
+          if(!alive||!window.document||settled)return;if(!error||error.kmsOutcome!=='unknown')settled=true;stopWatchdog();
+          trace('failed');
+          try { if (options.failure) options.failure(error, options.userObject); else console.error(error); }
+          finally { finish(error || new Error('Request failed')); }
+        };
+        try {
+          const onSuccess = function(result) {
+            if(!alive||!window.document||settled)return;settled=true;stopWatchdog();
+            trace('completed');observeMaintenance(String(method),result);
+            let callbackError;const callbackStarted=Date.now();
+            try { if (options.success) options.success(result, options.userObject); }
+            catch (error) { callbackError = error; throw error; }
+            finally {
+              if(window.KmsPerformanceEnabled)console.log('KMS browser '+String(method)+': '+(Date.now()-callbackStarted)+' ms result handling');
+              finish(callbackError);
+            }
+          };
+          if(window.KmsSaveRecoveryEnabled&&recoverable.has(String(method))) {
+            if(!unresolved&&window.KmsRecovery?.pendingSaves()){const offered=window.KmsRecovery.showPending&&window.KmsRecovery.showPending();const blocked=new Error(offered?'An earlier save needs an outcome check first. Use Check save outcome in the recovery panel.':'An earlier save needs an outcome check before another change can be saved.');blocked.kmsRefusal=true;onFailure(blocked);return;}
+            const serial=JSON.stringify(args),key=String(method)+'|'+serial;
+            if(unresolved?.confirmed){const error=new Error('The earlier save completed. Reload the saved record before saving again.');error.kmsOutcome='savedViewError';onFailure(error);return;}
+            // A busy reply proves only that this delivery did nothing; another
+            // delivery of the same ID may have saved (Codex F3). The ID is kept
+            // until a receipt settles it: an unchanged form resends it, and a
+            // changed form first asks for its outcome.
+            if(unresolved&&unresolved.busy&&unresolved.key!==key) {
+              const earlier=unresolved;settled=true;
+              const notSent=function(text){settled=false;onFailure(new Error((text?text+' ':'')+'Your earlier save has not been confirmed yet, so this change was not sent. Your entries remain in this form. Try again in a moment.'));};
+              arm(function(){notSent('KMS did not answer.');});
+              google.script.run.withSuccessHandler(function(outcome){
+                if(!alive||!window.document||!settled)return;stopWatchdog();
+                const result=outcome&&outcome.outcome;
+                if(result==='rejected'){if(window.KmsRecovery)window.KmsRecovery.operationEnd(earlier,outcome);clearRecovery(earlier);finish();run(options)[method].apply(null,args);return;}
+                if(result==='saved'||result==='resolved'){settled=false;earlier.busy=false;earlier.confirmed=true;if(window.KmsRecovery)window.KmsRecovery.operationEnd(earlier,outcome);const error=new Error('The earlier save completed. Reload the saved record before saving again.');error.kmsOutcome='savedViewError';onFailure(error);return;}
+                if(result==='unknown'&&!outcome.busy){settled=false;earlier.busy=false;earlier.sent=true;const error=new Error((outcome.error||'The earlier save is unconfirmed.')+' Use Check save outcome before continuing.');error.kmsOutcome='unknown';recoveryNotice(error.message,earlier);onFailure(error);return;}
+                notSent(outcome&&outcome.error||'');
+              }).withFailureHandler(function(){if(!alive||!window.document||!settled)return;notSent('KMS could not check it.');})
+                .kmsOperationStatus(earlier.method,earlier.args,earlier.id);
+              return;
+            }
+            if(unresolved&&unresolved.busy){unresolved.busy=false;unresolved.sent=false;}
+            if(unresolved&&unresolved.key!==key) {
+              const error=new Error('An earlier save is unconfirmed. Check save outcome before making another change.');error.kmsOutcome='unknown';onFailure(error);return;
+            }
+            const request=unresolved||{id:newOperationId(),method:String(method),args:JSON.parse(serial),key:key,form:formValues()};
+            unresolved=request;
+            function unknown(error,reason) {
+              stopWatchdog();
+              if(!alive||!window.document||request.completed||request.confirmed)return;
+              request.failureReported=true;
+              const detail=new Error((reason?reason+' ':'')+'The save outcome is unconfirmed. Your entries remain in this form. Use Check save outcome before continuing.');
+              detail.kmsOutcome='unknown';recoveryNotice(detail.message,request);onFailure(detail);
+            }
+            function receive(outcome) {
+              if(!alive||!window.document||request.completed)return;
+              if(!outcome||!outcome.outcome){unknown();return;}
+              if(outcome.outcome==='resolved'){stopWatchdog();request.confirmed=true;if(window.KmsRecovery){window.KmsRecovery.operationEnd(request,outcome);window.KmsRecovery.suppressCurrent();}const error=new Error('The workbook owner has reconciled this save. Reload the saved record before making another change.');error.kmsOutcome='savedViewError';recoveryNotice(error.message,null);finish(error);return;}
+              if(outcome.outcome==='saved') {
+                stopWatchdog();request.confirmed=true;
+                if(window.KmsRecovery)window.KmsRecovery.operationEnd(request,outcome);
+                if(request.failureReported&&options.awaited||formValues()!==request.form) {
+                  const result=outcome.value||{},record=result.record||result;
+                  const detail=new Error('Saved'+(record.id?' as '+record.id:'')+'. '+(formValues()!==request.form?'Later edits remain unsaved. Copy those edits, then reload the saved record before saving again.':'Reload the saved record before continuing; the earlier request is already complete.'));
+                  detail.kmsOutcome='savedViewError';if(window.KmsRecovery)window.KmsRecovery.suppressCurrent();recoveryNotice(detail.message,null);finish(detail);return;
+                }
+                try{onSuccess(outcome.value);clearRecovery(request);if(outcome.warning){failure='Saved; check notice';recoveryNotice(outcome.warning,null);refresh();}}
+                catch(error){error.kmsOutcome='savedViewError';recoveryNotice('Your save completed, but the display could not refresh. Reload the saved record before saving again.',null);finish(error);console.error(error);}
+                return;
+              }
+              if(outcome.outcome==='rejected') {stopWatchdog();if(window.KmsRecovery)window.KmsRecovery.operationEnd(request,outcome);clearRecovery(request);const rejected=new Error(outcome.error||'Save rejected. No changes were made.');if(outcome.refusal)rejected.kmsRefusal=true;onFailure(rejected);return;}
+              // Busy: this delivery did nothing, but the save keeps its ID (see above).
+              if(outcome.outcome==='busy') {stopWatchdog();request.busy=true;if(recoveryPanel)recoveryPanel.hidden=true;const busy=new Error(outcome.error||'KMS is busy. Nothing was saved by this request. Try again in a moment.');busy.kmsRefusal=true;busy.kmsCode='busy';onFailure(busy);return;}
+              unknown(null,outcome.busy&&outcome.error);
+            }
+            function check() {
+              if(request.completed||request.confirmed)return;
+              arm(function(){unknown();});
+              google.script.run.withSuccessHandler(receive).withFailureHandler(unknown)
+                .kmsOperationStatus(request.method,request.args,request.id);
+            }
+            request.check=function(){settled=false;finish=begin('Checking save…',true);check();};
+            if(request.sent){check();return;}
+            request.sent=true;
+            if(window.KmsRecovery)window.KmsRecovery.operationStart(request);
+            arm(function(){recoveryNotice('This save is taking longer than usual. Checking its outcome; it will not be submitted again.',request);check();});
+            google.script.run.withSuccessHandler(receive).withFailureHandler(check)
+              .kmsOperationCall(request.method,request.args,request.id);
+            return;
+          }
+          arm(function(){onFailure(new Error(/^kmsBackup(?:Start|Restore|Resume|Cancel|Pin)$/.test(String(method))?'The backup request has not been confirmed. Check backup status before retrying; it may still be running.':'This load did not finish. Your current entries have not been replaced. Try loading again.'));});
+          const initial=window.KmsEmbedded&&window.KmsEmbedded.takeInitial&&window.KmsEmbedded.takeInitial(String(method),args);
+          if(initial) {
+            suppliedInitial=true;
+            Promise.resolve(initial.response || initial).then(function(outcome){
+              if(outcome.error)onFailure(new Error(outcome.error));else onSuccess(outcome.value);
+            });
+          } else {
+            const runner=google.script.run.withSuccessHandler(onSuccess).withFailureHandler(onFailure);
+            if(window.KmsPerformanceEnabled)runner.kmsPerformanceCall(String(method),args);
+            else runner[method].apply(runner,args);
+          }
+        } catch (error) { onFailure(error); }
+      };
+    }});
+  }
+  function mount() {
+    const body = document.body;
+    let footer = body.dataset.kmsFooter && document.querySelector(body.dataset.kmsFooter);
+    if (!footer) { footer = document.createElement('footer'); body.appendChild(footer); footer.className = 'kms-activity-simple'; }
+    footer.classList.add('kms-activity-footer');
+    const actions = body.dataset.kmsActions && document.querySelector(body.dataset.kmsActions);
+    if (actions) { footer.classList.remove('kms-activity-simple'); if (!footer.contains(actions)) footer.appendChild(actions); actions.classList.add('kms-activity-actions'); }
+    else footer.classList.add('kms-activity-simple');
+    // Long explanations belong in the content, so they cannot cover the badge or
+    // make a save/failure resize the action bar. Retain the existing message ID.
+    const detail = body.dataset.kmsDetail && document.querySelector(body.dataset.kmsDetail);
+    if (detail && footer.contains(detail)) {
+      const content = document.querySelector(body.dataset.kmsContent || 'main') || body;
+      content.appendChild(detail);
+      // A converted screen takes its look from KmsStyle; any other keeps its own.
+      if (document.documentElement.classList.contains('kms-styled')) detail.classList.add('kms-detail');
+      else detail.style.cssText = 'display:block;margin:12px 0;font-size:12px;line-height:1.4;';
+    }
+    badge = document.createElement('div'); badge.id = 'kmsActivity'; badge.setAttribute('role','status'); badge.setAttribute('aria-live','polite'); badge.setAttribute('aria-atomic','true');
+    icon = document.createElement('span'); icon.className = 'kms-activity-icon'; icon.setAttribute('aria-hidden','true');
+    label = document.createElement('span'); badge.append(icon,label); footer.appendChild(badge);
+    const content = document.querySelector(body.dataset.kmsContent || 'main') || body;
+    content.classList.add('kms-activity-content');
+    // Console already has a flex layout and a separate scrolling main pane.
+    function fit() { if (body.dataset.kmsLayout !== 'console') content.style.paddingBottom = (footer.getBoundingClientRect().height + 22) + 'px'; }
+    fit(); window.addEventListener('resize',fit);
+    if (window.ResizeObserver) new ResizeObserver(fit).observe(footer);
+    if (detail) new MutationObserver(refresh).observe(detail,{childList:true,subtree:true,characterData:true});
+    ['input','change','click'].forEach(function(event) { document.addEventListener(event,refresh); });
+    const owner=maintenanceOwner();if(owner){const unsubscribe=owner.subscribeMaintenance(render);window.addEventListener('pagehide',unsubscribe,{once:true});if(window.KmsMaintenanceInitial)owner.setMaintenance(window.KmsMaintenanceInitial);}else scheduleMaintenance();
+    render();
+  }
+  document.addEventListener('DOMContentLoaded',mount,{once:true});
+  return {maintenance:maintenanceState,maintenanceQuiet:maintenanceQuiet,clock:clock,setMaintenance:setMaintenance,subscribeMaintenance:function(fn){const owner=maintenanceOwner();if(owner)return owner.subscribeMaintenance(fn);maintenanceListeners.add(fn);return ()=>maintenanceListeners.delete(fn);},run:run, begin:begin, refresh:refresh, isDirty:dirty, hasUnsettledSave:function() { return Array.from(pending.values()).some(function(task){return task.write;})||!!(unresolved&&!unresolved.confirmed)||!!(window.KmsRecovery&&window.KmsRecovery.hasPending()); }, hasUnsaved:function() { return dirty()||Array.from(pending.values()).some(function(task){return task.write;})||!!(unresolved&&!unresolved.confirmed)||!!(window.KmsRecovery&&window.KmsRecovery.hasPending()); }, isBusy:function() { return pending.size>0||!!(unresolved&&!unresolved.confirmed&&!unresolved.busy)||!!(window.KmsRecovery&&window.KmsRecovery.hasPending()); }, setDirtyCheck:function(check) { dirtyCheck = check; refresh(); }};
+})();
+</script>
+</head><body data-kms-footer="#settingsFooter" data-kms-actions="#settingsActions" data-kms-detail="#status" data-kms-content=".settings-page">
+<main class="settings-page"><div class="top"><div><h1>Settings</h1><p class="muted">Defaults used across KMS. Changes apply after saving.</p></div><div class="actions"><button id="reloadButton" class="secondary">Reload</button><button id="closeButton" class="secondary">Close</button></div></div>
+<section class="card"><h2>Opening KMS</h2><label class="checkbox-label" for="autoOpen"><input id="autoOpen" type="checkbox" checked>Open KMS when this workbook opens</label><p class="hint">Applies to this workbook for users with edit access. You can always open it from the KMS menu.</p><p id="autoOpenStatus" class="hint"></p></section>
+<section id="shortcutCard" class="card"><h2>Desktop shortcut</h2><p>Keep this workbook one click away with a KMS icon on your Windows desktop.</p><button id="shortcutButton" class="secondary" disabled>Install desktop shortcut</button><p class="hint">Download the installer, open it and select <strong>Create shortcut</strong>. Windows 10/11 (64-bit). Your usual Google sign-in and workbook access still apply.</p><p class="hint">Prototype installer: unsigned, so Windows may display a security warning or block it.</p></section>
+<section class="card"><h2>Costing and reporting</h2><div class="grid">
+<div><label for="currency">Currency symbol or code</label><input id="currency" maxlength="12" placeholder="£, €, GBP…"><p class="hint">A display label. Changing it does not convert stored prices.</p></div>
+<div><label for="taxRate">Sales tax rate (%)</label><input id="taxRate" type="number" min="0" max="99" step="any"><p class="hint">Used for dish margins and new weekly reports.</p></div>
+<div><label for="targetGp">Default target GP (%)</label><input id="targetGp" type="number" min="0" max="99" step="any"><p class="hint">Used when a dish has no GP override.</p></div>
+<div><label for="priceBasis">Default takings entry basis</label><select id="priceBasis"><option>Including tax</option><option>Excluding tax</option></select><p class="hint">For new weekly reports. Menu selling prices always include tax.</p></div>
+</div><p class="hint">Finalised stock counts and reports retain their saved values.</p></section>
+<section class="card"><h2>Region and editing</h2><div class="grid">
+<div><label for="locale">Spreadsheet locale</label><select id="locale"><option value="en_GB">United Kingdom</option><option value="lt_LT">Lithuania</option><option value="en_US">United States</option><option value="en_IE">Ireland</option><option value="en_AU">Australia</option><option value="en_NZ">New Zealand</option><option value="en_CA">Canada (English)</option><option value="fr_FR">France</option><option value="de_DE">Germany</option><option value="es_ES">Spain</option><option value="it_IT">Italy</option><option value="nl_NL">Netherlands</option><option value="pt_PT">Portugal</option></select><p class="hint">Controls spreadsheet number and date conventions.</p></div>
+<div><label for="timeZone">Operating time zone</label><input id="timeZone" list="timeZones" placeholder="Europe/London"><datalist id="timeZones"><option value="Europe/London"><option value="Europe/Vilnius"><option value="Europe/Paris"><option value="America/New_York"><option value="America/Los_Angeles"><option value="Australia/Sydney"><option value="UTC"></datalist><p class="hint">Used for spreadsheet timestamps and KMS date checks.</p></div>
+<div><label for="leaseMinutes">Editor lock timeout (minutes)</label><input id="leaseMinutes" type="number" min="1" max="60" step="1"><p class="hint">An inactive editor lock expires after this interval. Normally leave at 5.</p></div>
+</div></section>
+<section class="card"><h2>Photos</h2><p>Recipe photos use <strong>4:3 JPG or PNG</strong> images. Missing photos close the space in specifications.</p><p class="hint">Storage folders are created automatically beside the workbook when needed. Existing photos stay in their saved locations.</p><p id="photoFolders" class="hint"></p></section>
+
+
+<section id="maintenancePanel" class="card" hidden><h2>Maintenance</h2>
+<p id="maintenancePauseLine" role="status"></p><p id="maintenanceDetails"></p>
+<p id="maintenanceJob"></p><p id="maintenanceResult" role="status" aria-live="polite"></p>
+<div class="actions">
+<button id="maintenanceRefresh" type="button" class="secondary">Refresh status</button>
+<button id="maintenanceReconcile" type="button">Reconcile</button>
+<button id="maintenanceCancel" type="button">Cancel</button>
+<button id="maintenanceResume" type="button">Resume restore</button>
+<button id="maintenanceKeep" type="button">Keep using this workbook</button>
+<button id="maintenanceMove" type="button">Move to the restored copy</button>
+<button id="maintenanceUndo" type="button">Undo move</button>
+<button id="maintenanceRetry" type="button" hidden>Try again</button>
+</div></section>
+<section id="backupCard" class="card"><h2>Backup and restore</h2>
+<p class="hint">Full backups and verified restoration into a separate copy.</p>
+<p id="backupAttention" role="status" hidden>The last backup did not finish</p>
+<p id="finishReceiptResult" role="status" hidden></p>
+<div id="restorePurpose" class="backup-progress" hidden><h3>Which kind of restore?</h3>
+<p>Test restore — Checks the backup in a separate copy marked TEST RESTORE. KMS keeps working. The copy can never become the working KMS.</p>
+<p>Recovery restore — Use when this workbook is damaged or lost. KMS pauses for everyone until you finish in maintenance.</p>
+<div class="actions"><button id="restoreTest" type="button">Test restore</button><button id="restoreRecovery" type="button">Recovery restore</button><button id="restorePurposeCancel" class="secondary" type="button">Cancel</button></div></div>
+<div class="backup-overview" aria-label="Backup overview"><div><span>Nightly backup</span><strong id="backupScheduleStatus" role="status">Checking schedule…</strong></div><div><span>Last verified backup</span><strong id="backupBrief">Checking backups…</strong></div></div>
+<div class="backup-section"><h3>Schedule</h3>
+<div class="grid"><div><label for="backupTimeZone">Backup time zone</label><input id="backupTimeZone" list="timeZones" placeholder="Europe/London"><p class="hint">Nightly capture runs near 03:00 in this zone, even when KMS is closed. This does not change the workbook's operating time zone.</p></div>
+<div><label class="checkbox-label" for="backupNightly"><input id="backupNightly" type="checkbox">Enable nightly backup</label><p class="hint">Google may start it about 15 minutes either side of 03:00. Saves and archive maintenance pause during capture.</p></div></div>
+<div class="actions" style="margin-top:14px"><button id="backupScheduleSave" type="button" class="secondary" disabled>Save backup schedule</button></div>
+<details class="backup-policy"><summary>Retention policy and preview</summary><p id="backupRetentionStatus" class="hint"></p><div class="actions"><button id="backupRetentionPreview" type="button" class="secondary" disabled>Preview retention</button></div></details></div>
+<div class="backup-section"><div class="backup-toolbar"><h3>Backup activity</h3><div class="actions"><button id="backupRefresh" type="button" class="secondary">Refresh status</button><button id="backupStart" type="button" disabled>Create full backup</button></div></div>
+<p id="backupStatus" class="backup-progress" role="status" aria-live="polite">Checking backup status…</p><p class="hint">Capture pauses saves and archive maintenance. It continues after KMS is closed.</p></div>
+<div class="backup-section"><div class="backup-toolbar"><div><h3>History <span id="backupHistoryCount" class="hint"></span></h3></div><label for="backupHistoryFilter">Show <select id="backupHistoryFilter"><option value="all">All attempts</option><option value="verified">Verified backups</option><option value="issues">Failed attempts</option><option value="restores">Restores</option></select></label></div><div id="backupItems"></div><button id="backupHistoryMore" type="button" class="secondary backup-history-more" hidden>Show older attempts</button></div>
+</section>
+<section class="card"><h2>Save recovery</h2><p class="hint">Check saves whose outcome could not be confirmed. Confirmed receipts clear their holds automatically. The owner can reconcile an unresolved attempt after inspecting its saved target.</p><button id="recoveryCheckButton" type="button">Check unconfirmed saves</button><div id="recoveryIssues" role="status"></div></section>
+<details id="diagnosticsCard" class="card"><summary><strong>Diagnostics</strong></summary>
+<p>Compare browser response time with a tiny server call that reads and changes no workbook data.</p>
+<button id="runtimeCheckButton" class="secondary">Run response-time check</button>
+<p id="runtimeCheckStatus" class="hint" role="status" aria-live="polite">Four calls, run one at a time. Your unsaved settings are preserved.</p>
+<textarea id="runtimeCheckResults" readonly hidden rows="11" aria-label="Response-time results" style="width:100%;margin-top:12px;font:12px/1.5 monospace"></textarea>
+<button id="selectRuntimeResultsButton" class="secondary" hidden>Select results</button>
+<p class="hint">Select the results, then press Ctrl+C to copy. Google's execution duration is shown separately in Apps Script → Executions.</p>
+</details>
+<p id="status" role="status" aria-live="polite">Loading settings…</p></main>
+
+<div id="backupActionError" class="backup-action-error" role="alert" hidden><span id="backupActionErrorText"></span><div><button id="backupErrorCheck" type="button" class="secondary">Check backup status</button><button id="backupErrorDismiss" type="button" class="secondary">Dismiss</button></div></div>
+<footer id="settingsFooter"><div id="settingsActions" class="actions"><button id="saveButton" disabled>Save settings</button><span id="changed" class="hint">No unsaved changes</span></div></footer>
+<script>
+(function(){'use strict';
+const $=id=>document.getElementById(id),keys=['autoOpen','currency','taxRate','targetGp','priceBasis','leaseMinutes','locale','timeZone'],state={data:null,busy:false,dirty:false};
+KmsStatus.setDirtyCheck(()=>state.dirty);
+function message(text,error){$('status').textContent=text;$('status').className=error?'error':'';}
+function values(){return {autoOpen:$('autoOpen').checked,currency:$('currency').value.trim(),taxRate:$('taxRate').value===''?NaN:Number($('taxRate').value)/100,targetGp:$('targetGp').value===''?NaN:Number($('targetGp').value)/100,priceBasis:$('priceBasis').value,leaseMinutes:$('leaseMinutes').value===''?NaN:Number($('leaseMinutes').value),locale:$('locale').value,timeZone:$('timeZone').value.trim()};}
+function controls(){keys.forEach(key=>$(key).disabled=state.busy||!state.data||!state.data.editable);$('saveButton').disabled=state.busy||!state.data?.editable||!state.dirty;$('reloadButton').disabled=state.busy;$('closeButton').disabled=state.busy;$('shortcutButton').disabled=state.busy;$('runtimeCheckButton').disabled=state.busy;}
+function dirty(){const current=values();state.dirty=!!state.data&&keys.some(key=>typeof current[key]==='number'? !Number.isFinite(current[key])||Math.abs(current[key]-state.data.values[key])>1e-12:current[key]!==state.data.values[key]);$('changed').textContent=state.dirty?'Unsaved settings changes':'No unsaved changes';controls();}
+function render(data){if(data.busy||data.maintenance)data.editable=false;state.data=data;$('shortcutCard').hidden=data.desktopShortcut===false;if(data.backup?.lastVerified)$('backupBrief').textContent='Last verified backup: '+new Date(data.backup.lastVerified.updated).toLocaleString()+'. '+(data.backup.capturing?'Capture is in progress; saving will become available afterward.':'');if(data.backup?.latest?.error)$('backupStatus').textContent=data.backup.latest.error.message+' '+data.backup.latest.error.action;$('autoOpenStatus').textContent=data.autoOpenReady?'Automatic opening is set up.':'One-time setup: open KMS from the KMS menu and approve Google permissions if asked, or save settings with automatic opening selected.';keys.forEach(key=>{if(key==='locale'&&![...$('locale').options].some(option=>option.value===data.values[key]))$('locale').add(new Option(data.values[key],data.values[key]));if(key==='autoOpen')$(key).checked=data.values[key]!==false;else $(key).value=['taxRate','targetGp'].includes(key)?Number((data.values[key]*100).toPrecision(15)):data.values[key];});const folders=$('photoFolders');folders.replaceChildren();[['Prep photo folder',data.prepPhotoFolder],['Dish photo folder',data.dishPhotoFolder]].forEach(([label,url])=>{if(!url)return;const a=document.createElement('a');a.textContent=label;a.href=url;a.target='_blank';a.rel='noopener';folders.append(a,document.createTextNode(' · '));});if(!folders.childNodes.length)folders.textContent='No photo folders have been created for this workbook yet.';dirty();}
+function load(){if(window.KmsMaintenance){setMaintenanceMode(true);message('Owner maintenance. Refresh status to check progress.');loadBackups();return;}if(state.busy||state.dirty&&!confirm('Reload and discard unsaved settings?'))return;state.busy=true;controls();message('Loading settings…');KmsStatus.run().withSuccessHandler(data=>{state.busy=false;render(data);message(data.maintenance?'KMS is paused. Settings are read-only until the pause ends.':data.busy?'Shown read-only because KMS was busy. Reload in a moment to make changes.':data.editable?'Ready.':'Read-only: your account cannot edit the protected settings table.');setMaintenanceMode(!!data.maintenance);loadBackups();}).withFailureHandler(error=>{state.busy=false;controls();message('Could not load settings: '+(error.message||String(error)),true);loadBackups();}).kmsSettingsGet();}
+function save(){if(state.busy||!state.dirty)return;for(const key of keys){if(!$(key).checkValidity()){message('Check the highlighted setting.',true);$(key).reportValidity();return;}}const current=values();if(!current.currency||!Number.isFinite(current.taxRate)||!Number.isFinite(current.targetGp)||!Number.isInteger(current.leaseMinutes)){message('Complete the currency, tax, GP and timeout fields.',true);return;}try{new Intl.DateTimeFormat('en',{timeZone:current.timeZone});}catch(error){message('Enter a recognised time zone, such as Europe/London.',true);$('timeZone').focus();return;}state.busy=true;controls();message('Saving settings…');KmsStatus.run().withSuccessHandler(data=>{state.busy=false;render(data);message('Settings saved. Reopen other screens to use the new defaults.');}).withFailureHandler(error=>{state.busy=false;controls();message('Save failed. Your edits are still here: '+(error.message||String(error)),true);}).kmsSettingsSave({values:current,token:state.data.token});}
+function downloadShortcut(){if(state.busy)return;state.busy=true;controls();message('Preparing shortcut installer…');function failed(error){state.busy=false;controls();message('Could not prepare installer: '+(error.message||String(error)),true);}KmsStatus.run().withSuccessHandler(file=>{try{if(!file||file.filename!=='KMS-Shortcut-Setup.exe'||typeof file.base64!=='string')throw Error('Installer download was incomplete. Try again.');const binary=atob(file.base64),bytes=Uint8Array.from(binary,char=>char.charCodeAt(0));if(bytes.length<2||bytes[0]!==77||bytes[1]!==90)throw Error('Installer download was invalid. Try again.');const url=URL.createObjectURL(new Blob([bytes],{type:'application/octet-stream'})),link=document.createElement('a');link.href=url;link.download=file.filename;link.target='_blank';link.hidden=true;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),60000);state.busy=false;controls();message('Installer download started. Open it and select Create shortcut.');}catch(error){failed(error);}}).withFailureHandler(failed).kmsDesktopShortcutInstaller();}
+$('shortcutButton').addEventListener('click',downloadShortcut);
+async function runRuntimeCheck(){
+ if(state.busy)return;
+ state.busy=true;controls();
+ const finish=KmsStatus.begin('Checking response time…',false),runs=[],order=['direct','wrapped','wrapped','direct'];
+ const output=$('runtimeCheckResults'),progress=$('runtimeCheckStatus');
+ output.hidden=false;output.value='KMS response-time check — no workbook reads or writes\n';
+ $('selectRuntimeResultsButton').hidden=false;
+ function append(row){
+  output.value+=JSON.stringify(row)+'\n';
+  console.log('KMS browser runtime probe '+JSON.stringify(row));
+ }
+ try{
+  for(let index=0;index<order.length;index++){
+   const route=order[index],startedAt=new Date().toISOString();
+   progress.textContent='Running '+(index+1)+' of '+order.length+' ('+route+')…';
+   const started=performance.now();
+   let response;
+   try{
+    response=await new Promise((resolve,reject)=>{
+     const runner=google.script.run.withSuccessHandler(resolve).withFailureHandler(reject);
+     if(route==='direct')runner.kmsRuntimeProbe();
+     else runner.kmsPerformanceCall('kmsRuntimeProbe',[]);
+    });
+   }catch(error){
+    append({run:index+1,route:route,startedAtUTC:startedAt,browserMs:Math.round(performance.now()-started),error:error.message||String(error)});
+    throw error;
+   }
+   const browserMs=Math.round(performance.now()-started);
+   if(response?.probe!=='kmsRuntimeProbe'||!Number.isFinite(response.enteredAtMs)||!Number.isFinite(response.internalMs))throw Error('The response-time diagnostic returned an unexpected result.');
+   const row={run:index+1,route:route,startedAtUTC:startedAt,serverReachedUTC:new Date(response.enteredAtMs).toISOString(),browserMs:browserMs,internalMs:response.internalMs};
+   runs.push(row);append(row);
+  }
+  progress.textContent='Complete. Copy these results, then check the matching execution durations in Apps Script.';
+  finish();return runs;
+ }catch(error){
+  progress.textContent='Check stopped: '+(error.message||String(error))+'. Completed results are retained; you can retry.';
+  finish(error);
+ }finally{state.busy=false;controls();}
+}
+
+let backupBusy=false,backupOwner=false,backupRequests=new Map(),backupActionFailure='',backupRevision=0;
+// D4: the status line says what is happening now. A failed or cancelled newest job is a past result, named with its
+// job and time (Google's own text stays in the history's "Why this attempt failed"); it stops showing only once a
+// later backup has completed and verified. Errors on a job still running or unconfirmed are current and shown as before.
+let backupLastVerified=null;
+function backupShortDate(value){const d=new Date(value);if(!Number.isFinite(d.getTime()))return 'date unavailable';const p=n=>String(n).padStart(2,'0');return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear()+' '+p(d.getHours())+':'+p(d.getMinutes());}
+function backupLatestLine(item,observedAt){
+ if(item&&['Failed','Cancelled'].includes(item.status)){
+  const verified=backupLastVerified,later=verified&&verified.id!==item.id&&Date.parse(verified.updated)>Date.parse(item.updated||item.created);
+  if(later)return 'No backup or restore running.';
+  const action=item.error?.action?' '+item.error.action:'';
+  return 'Last '+(item.kind==='Restore'?'restore':'backup')+', '+backupShortDate(item.updated||item.created)+': '+(item.status==='Cancelled'?'cancelled.':'failed ('+(item.error?.category||'reason in the history below')+').')+action;
+ }
+ const line=backupProgress(item,observedAt);
+ return item?.error?(item.error.category?item.error.category+': ':'')+item.error.message+' '+item.error.action:line;
+}
+function backupMessage(text){$('backupStatus').textContent=backupActionFailure||text;}
+function clearBackupActionError(){backupActionFailure='';$('backupActionError').hidden=true;}
+function showBackupActionError(method,payload,error){const detail=error?.message||String(error||'No error detail was returned.');backupActionFailure=(method==='kmsBackupResume'?'Resume restore':'Backup action')+' was not confirmed'+(payload.id?' ('+payload.id+')':'')+': '+detail+' Check backup status before retrying. Your settings edits are unchanged.';backupMessage(backupActionFailure);$('backupActionErrorText').textContent=backupActionFailure;const footer=$('settingsFooter');$('backupActionError').style.bottom=((footer?.getBoundingClientRect().height||66)+12)+'px';$('backupActionError').hidden=false;}
+// F: a running job whose last update is over 3 minutes old says so, with its time.
+function backupQuiet(item,observedAt){const at=Date.parse(item?.updated||'');if(!['Capturing','Restoring'].includes(item?.status)||!Number.isFinite(at)||!(observedAt-at>180000))return '';return 'Progress not recently confirmed (last update '+KmsStatus.clock(at)+')';}
+function backupProgress(item,observedAt){if(!item)return 'No backup has been created yet.';const quiet=backupQuiet(item,observedAt);if(quiet)return [item.kind||'Attempt',quiet].join(' · ');const parts=[item.kind||'Attempt',item.status||'Status unavailable',item.stage||'Check backup status'];if(Number.isFinite(item.files))parts.push((item.completedFiles||0)+'/'+item.files+' files');if(Number.isFinite(item.checkedBlocks))parts.push(item.checkedBlocks+' checked blocks');return parts.join(' · ');}
+function backupControls(){ maintenanceControls(); $('backupRefresh').disabled=backupBusy; $('backupStart').disabled=backupBusy||!backupOwner; $('backupScheduleSave').disabled=backupBusy||!backupOwner;$('backupRetentionPreview').disabled=backupBusy||!backupOwner;$('backupNightly').disabled=backupBusy||!backupOwner;$('backupTimeZone').disabled=backupBusy||!backupOwner; }
+function backupRequestId(){return crypto.randomUUID?crypto.randomUUID():Array.from({length:32},()=>Math.floor(Math.random()*16).toString(16)).join('');}
+// F: "KMS is busy" means nothing ran. The same action, with the same request
+// ID, is tried again a few times before the owner is asked to retry it.
+function backupBusyAnswer(error){return error?.kmsCode==='busy'||/^(KMS is busy|A backup is running and KMS is busy)/.test(String(error?.message||''));}
+function backupAction(method,payload,onSuccess,tries){
+ if(backupBusy)return;clearBackupActionError();backupBusy=true;backupControls();backupMessage(tries?'KMS is busy for a moment. Trying again…':method==='kmsBackupResume'?'Checking restore files and resuming…':'Processing request…');
+ KmsStatus.run().withSuccessHandler(result=>{backupBusy=false;clearBackupActionError();if(payload.requestId)for(const [key,value] of backupRequests)if(value===payload.requestId)backupRequests.delete(key);backupControls();if(onSuccess)onSuccess(result);loadBackups();})
+ .withFailureHandler(error=>{backupBusy=false;backupControls();if(backupBusyAnswer(error)&&(tries||0)<3){backupMessage('KMS is busy for a moment. Trying again…');setTimeout(()=>backupAction(method,payload,onSuccess,(tries||0)+1),5000);return;}showBackupActionError(method,payload,error);})[method](payload);
+}
+// One panel and action path for the hosted page and Settings in Sheets.
+let maintenanceActive=!!window.KmsMaintenance,maintenanceStatus=null,maintenanceHidden=[],backupAcknowledged=false,receiptChecked=false,restoreItem=null;
+const finishKey='KMS_BACKUP_FINISH_PENDING:'+(window.KmsRecoveryContext?.book||'sheets');
+function readFinish(){try{return JSON.parse(localStorage.getItem(finishKey)||'null');}catch(error){return null;}}
+let pendingFinish=readFinish();
+function storeFinish(record){pendingFinish=record;try{if(record)localStorage.setItem(finishKey,JSON.stringify(record));else localStorage.removeItem(finishKey);}catch(error){}}
+function finishOutcome(receipt){return receipt.outcome==='moved'?'KMS has moved to the restored copy.':'KMS is open again in this workbook.';}
+function checkFinishReceipt(){
+ if(receiptChecked||!pendingFinish||maintenanceActive)return;receiptChecked=true;
+ KmsStatus.run({background:true}).withSuccessHandler(receipt=>{
+  $('finishReceiptResult').hidden=false;$('finishReceiptResult').textContent=receipt.found?finishOutcome(receipt):'That choice was not recorded. Nothing was changed.';storeFinish(null);
+ }).withFailureHandler(error=>{receiptChecked=false;$('finishReceiptResult').hidden=false;$('finishReceiptResult').textContent='Could not check your last choice: '+(error.message||String(error));}).kmsBackupFinishReceipt({requestId:pendingFinish.requestId});
+}
+function setMaintenanceMode(on){
+ maintenanceActive=on;$('maintenancePanel').hidden=!on;
+ maintenanceHidden.forEach(([el,hidden])=>{el.hidden=hidden;});maintenanceHidden=[];
+ if(on){
+  const cards=window.KmsMaintenance?document.querySelectorAll('main>.card'):[$('backupCard'),$('shortcutCard'),$('diagnosticsCard'),$('recoveryCheckButton').closest('.card')];
+  [...cards,$('settingsActions')].forEach(el=>{if(el.id==='maintenancePanel')return;maintenanceHidden.push([el,el.hidden]);el.hidden=true;});
+ }
+ maintenanceControls();
+}
+// Kept in sync with the server's kmsBackupPauseLine_.
+function pauseLine(v){
+ if(v.paused===null)return 'KMS cannot confirm whether it is paused for a backup or restore. Try again shortly.';
+ if(v.state==='moved')return 'KMS has moved to a restored copy. Ask the owner for the new link.';
+ if(v.state==='waiting')return v.kind==='Restore'?v.stage+'.':'A backup stopped and KMS is paused until the owner checks it. Last update '+v.updated+'.';
+ return (v.kind==='Restore'?'Restore':'Backup')+' in progress since '+v.since+'. KMS is paused. Last update '+v.updated+'.';
+}
+// Settings in Sheets that was open when a job started (or the pause lifted)
+// changes mode on the next status answer (Astra, 60a5e12 review, finding 3).
+// Unsaved settings stay on the page, read-only while paused. On the web the
+// pause ends the ordinary session, so the page shell handles it.
+let pausedEditable=null;
+function followPause(p){
+ if(window.KmsWebPage||!p)return;
+ if(p.paused===true&&!maintenanceActive){
+  pausedEditable=state.data?state.data.editable:null;if(state.data)state.data.editable=false;
+  setMaintenanceMode(true);controls();message('KMS is paused. Settings are read-only until the pause ends.'+(state.dirty?' Your unsaved changes are kept on this page.':''));
+ }else if(p.paused===false&&maintenanceActive){
+  setMaintenanceMode(false);
+  if(state.data?.maintenance||pausedEditable===null){if(!state.dirty){load();return;}message('KMS is open again. Your unsaved changes are still here; choose Reload settings to edit.');}
+  else{state.data.editable=pausedEditable;controls();message('KMS is open again.'+(state.dirty?' Your unsaved changes are still here.':''));}
+  pausedEditable=null;
+ }
+}
+function maintenanceAllowed(){
+ const p=maintenanceStatus?.pause,latest=maintenanceStatus?.latest;
+ const resumable=p?.kind==='Restore'&&latest?.status!=='Complete'&&(maintenanceStatus?.items||[]).some(item=>item.id===p.target?.job&&item.resumable);
+ return {Reconcile:['running','waiting'].includes(p?.state),Cancel:p?.state==='running'||p?.state==='waiting'&&resumable,
+  // A Complete restore whose copy is not yet published Ready is finished by
+  // Resume; Move needs the server to confirm the copy is Ready (Astra, 60a5e12).
+  Resume:p?.state==='waiting'&&(resumable||unpublished(p,latest)),Keep:p?.state==='waiting'&&p.kind==='Restore',
+  Move:p?.state==='waiting'&&p.kind==='Restore'&&latest?.status==='Complete'&&latest.purpose!=='test'&&p.copyReady===true,Undo:p?.state==='moved'};
+}
+function unpublished(p,latest){return p?.kind==='Restore'&&latest?.status==='Complete'&&p.copyReady!==true;}
+function maintenanceControls(){
+ const allowed=maintenanceAllowed();
+ $('maintenanceRefresh').disabled=backupBusy;
+ Object.entries(allowed).forEach(([name,yes])=>{const b=$('maintenance'+name);b.hidden=!yes;b.disabled=backupBusy||!maintenanceStatus?.pause?.target||!!pendingFinish;});
+ $('maintenanceRetry').hidden=!pendingFinish||!maintenanceActive;$('maintenanceRetry').disabled=backupBusy;
+}
+function renderMaintenance(){
+ if(!maintenanceActive)return;
+ const p=maintenanceStatus?.pause;
+ $('maintenancePauseLine').textContent=p?p.paused===false?'KMS is open again in this workbook.':pauseLine(p):'Checking pause status…';
+ $('maintenanceDetails').textContent=p?.paused===true?['Kind: '+p.kind,'Stage: '+p.stage,'Since: '+p.since,'Last update: '+p.updated].join(' · '):'';
+ $('maintenanceJob').textContent=maintenanceStatus?.latest?['Job status: '+(maintenanceStatus.latest.status||'Unavailable'),'Stage: '+(maintenanceStatus.latest.stage||'Unavailable')].join(' · '):'';
+ if(maintenanceStatus?.pause?.state==='waiting'&&unpublished(maintenanceStatus.pause,maintenanceStatus.latest))$('maintenanceJob').textContent+=maintenanceStatus.pause.copyReady===null?' · The restored copy could not be checked. Refresh status, or use Resume restore to finish it.':' · The restored copy has not passed its final check yet. Use Resume restore to finish it.';
+ maintenanceControls();
+}
+function lostFinish(){
+ $('maintenanceResult').textContent='The answer was lost. Sign in as usual (owner) and open Settings to see what happened.';
+}
+function maintenanceErrorCode(error){
+ if(error?.kmsCode)return error.kmsCode;
+ // Sheets' ScriptError may carry only the server's message, without kmsCode.
+ const text=String(error?.message||'');
+ if(/The pause has changed\./.test(text))return 'pauseChanged';
+ if(/this is not available now\. Refresh status\.|Only a restore waits for this choice\.|Only a complete, verified recovery restore|The restored copy has not passed its final check/.test(text))return 'pauseState';
+ if(backupBusyAnswer(error))return 'busy';
+ return /network|fetch|connection|not been confirmed|did not finish|timed? out|lost (?:answer|response)/i.test(text)?'network':'failed';
+}
+function maintenanceAction(method,payload,record,tries){
+ if(backupBusy)return;clearBackupActionError();backupBusy=true;backupControls();$('maintenanceResult').textContent=tries?'KMS is busy for a moment. Trying again…':'Processing request…';
+ KmsStatus.run().withSuccessHandler(result=>{
+  backupBusy=false;clearBackupActionError();
+  if(record){
+   if(!result?.requestId||!['kept','moved'].includes(result.outcome)){lostFinish();backupControls();return;}
+   storeFinish(null);$('maintenanceResult').textContent=finishOutcome(result);
+   if(result.outcome==='kept')maintenanceStatus=Object.assign({},maintenanceStatus,{pause:{paused:false,state:'',target:null}});
+  }
+  if(result?.pause)maintenanceStatus=Object.assign({},maintenanceStatus,result);
+  renderMaintenance();
+  backupControls();
+  // Keep and Undo end the web maintenance session; keep the receipt visible.
+  if(!(record&&result.outcome==='kept'&&window.KmsMaintenance))loadBackups();
+ }).withFailureHandler(error=>{
+  backupBusy=false;backupControls();
+  if(backupBusyAnswer(error)&&(tries||0)<3){$('maintenanceResult').textContent='KMS is busy for a moment. Trying again…';setTimeout(()=>maintenanceAction(method,payload,record,(tries||0)+1),5000);return;}
+  const code=maintenanceErrorCode(error);
+  if(record&&code==='session'&&window.KmsMaintenance){lostFinish();return;}
+  // Only a refusal known to come before anything was written ends the request.
+  // Any other error may follow a committed receipt (a timeout, or Google
+  // committing the write and then throwing), so the same request ID is kept
+  // for Try again, which returns the receipt if the choice was recorded.
+  if(record&&['pauseChanged','pauseState','request','approval','paused','notPaused','role','binding','unavailable','version'].includes(code))storeFinish(null);
+  showBackupActionError(method,payload,error);$('maintenanceResult').textContent=error.message||String(error);backupControls();
+  if(['pauseChanged','pauseState'].includes(code))loadBackups();
+ })[method](payload);
+}
+function maintenanceTarget(){const target=maintenanceStatus?.pause?.target;return target?{since:target.since,job:target.job}:null;}
+function chooseFinish(action,choice){
+ if(backupBusy||pendingFinish)return;
+ const texts={keep:'Keep using this workbook? The restore is stopped for good and KMS opens again for everyone here.',
+  move:"Move KMS to the restored copy? This workbook stays paused and shows 'KMS has moved'. Staff need the new link from you. Setting up the copy is still done in Sheets.",
+  undoMove:'Undo the move? Changes made in the restored copy since the move are NOT copied back into this workbook. KMS opens again here.'};
+ if(!confirm(texts[choice||action]))return;
+ const target=maintenanceTarget();if(!target)return;
+ storeFinish(Object.assign({requestId:backupRequestId(),action,choice:choice||'',at:Date.now()},target));retryFinish();
+}
+function retryFinish(){
+ const record=pendingFinish;if(!record)return;
+ if(window.KmsMaintenance&&window.parent.KmsWeb&&!window.parent.KmsWeb.maintenance()){lostFinish();return;}
+ const payload={requestId:record.requestId,since:record.since,job:record.job};
+ if(record.action==='undoMove')payload.understood=true;else payload.choice=record.choice;
+ maintenanceAction(record.action==='undoMove'?'kmsBackupUndoMove':'kmsBackupFinish',payload,record);
+}
+$('maintenanceRefresh').addEventListener('click',loadBackups);
+[['Reconcile','kmsBackupReconcile'],['Cancel','kmsBackupCancel'],['Resume','kmsBackupResume']].forEach(([button,method])=>{
+ $('maintenance'+button).addEventListener('click',()=>{
+  if(button==='Cancel'&&!confirm('Cancel this incomplete attempt? Verified backups stay unchanged.'))return;
+  if(button==='Resume'&&!confirm('Continue this restore from its saved checkpoint?'))return;
+  const target=maintenanceTarget();if(target)maintenanceAction(method,target);
+ });
+});
+$('maintenanceKeep').addEventListener('click',()=>chooseFinish('finish','keep'));
+$('maintenanceMove').addEventListener('click',()=>chooseFinish('finish','move'));
+$('maintenanceUndo').addEventListener('click',()=>chooseFinish('undoMove'));
+$('maintenanceRetry').addEventListener('click',retryFinish);
+function chooseRestore(purpose){
+ const item=restoreItem;$('restorePurpose').hidden=true;restoreItem=null;if(!item)return;
+ if(!confirm('Create a separate restored KMS from this backup? '+(purpose==='recovery'?'KMS pauses for everyone until you finish in maintenance. ':'KMS keeps working. ')+'The copy contains data from when the backup was captured; later saved work is not included. Wait for restoration and verification to finish before opening it.'+closeFirst('restore')))return;
+ const key='restore:'+purpose+':'+item.id;if(!backupRequests.has(key))backupRequests.set(key,backupRequestId());
+ backupAction('kmsBackupRestore',{id:item.id,requestId:backupRequests.get(key),purpose});
+}
+$('restoreTest').addEventListener('click',()=>chooseRestore('test'));
+$('restoreRecovery').addEventListener('click',()=>chooseRestore('recovery'));
+// D5: the purpose panel sits at the top of the Backup card; bring it into view and return focus on Cancel.
+function openRestorePurpose(item){restoreItem=item;const panel=$('restorePurpose');panel.hidden=false;if(typeof panel.scrollIntoView==='function')panel.scrollIntoView({block:'center',behavior:'smooth'});$('restoreTest').focus();}
+$('restorePurposeCancel').addEventListener('click',()=>{const item=restoreItem;restoreItem=null;$('restorePurpose').hidden=true;const opener=item&&[...document.querySelectorAll('#backupItems button[data-restore-id]')].find(b=>b.dataset.restoreId===String(item.id));if(opener)opener.focus();});
+let backupHistoryItems=[],backupHistoryShown=8;
+function backupDate(value){const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString():'Date unavailable';}
+function renderBackupHistory(){
+ const area=$('backupItems'),filter=$('backupHistoryFilter').value;area.replaceChildren();
+ if(!backupOwner){area.innerHTML='<p class="backup-empty">Only the workbook owner can manage backups and restores.</p>';$('backupHistoryCount').textContent='';$('backupHistoryMore').hidden=true;return;}
+ const all=backupHistoryItems,matching=all.filter(item=>filter==='verified'?item.kind==='Backup'&&item.status==='Complete':filter==='issues'?item.status==='Failed'||item.status==='Cancelled':filter==='restores'?item.kind==='Restore':true);
+ const verified=all.filter(item=>item.kind==='Backup'&&item.status==='Complete').length,issues=all.filter(item=>item.status==='Failed'||item.status==='Cancelled').length;
+ $('backupHistoryCount').textContent='· '+verified+' verified · '+issues+' failed/cancelled';
+ if(!matching.length){const empty=document.createElement('p');empty.className='backup-empty';empty.textContent=filter==='all'?'No backup attempts yet.':'No attempts in this view.';area.append(empty);}
+ matching.slice(0,backupHistoryShown).forEach(item=>{
+  const card=document.createElement('article');card.className='backup-entry';
+  const head=document.createElement('div');head.className='backup-entry-head';
+  const title=document.createElement('strong');title.textContent=item.kind==='Restore'?'Restored copy':'Full backup';
+  const badge=document.createElement('span');badge.className='backup-badge '+(item.status==='Complete'?'complete':['Failed','Cancelled'].includes(item.status)?'failed':'running');badge.textContent=item.status||'Unknown';
+  const date=document.createElement('span');date.className='backup-date';date.textContent=backupDate(item.created);
+  head.append(title,badge,date);if(item.pinned){const pin=document.createElement('span');pin.className='backup-badge';pin.textContent='Pinned';head.append(pin);}card.append(head);
+  if(item.error){const issue=document.createElement('details');issue.className='backup-issue';const summary=document.createElement('summary');summary.textContent='Why this attempt failed';const explanation=document.createElement('p');explanation.textContent=item.error.message+' '+item.error.action;issue.append(summary,explanation);card.append(issue);}
+  const actions=document.createElement('div');actions.className='actions';
+  function button(label,fn){const b=document.createElement('button');b.type='button';b.className='secondary';b.textContent=label;b.addEventListener('click',fn);actions.append(b);return b;}
+  if(item.kind==='Backup'&&item.status==='Complete'){
+   button('Restore into new copy',()=>openRestorePurpose(item)).dataset.restoreId=String(item.id);
+   button(item.pinned?'Unpin backup':'Pin backup',()=>backupAction('kmsBackupPin',{id:item.id,pinned:!item.pinned}));
+  }
+  if(item.kind==='Restore'&&item.resumable)button('Resume restore',()=>{if(confirm('Continue this restore from its saved checkpoint using the existing copies? Verification must finish before the copy can be opened.'))backupAction('kmsBackupResume',{id:item.id});});
+  if(['Capturing','Restoring'].includes(item.status)||item.resumable)button('Cancel attempt',()=>{if(confirm('Cancel this incomplete attempt? Verified backups and the working system stay unchanged.'))backupAction('kmsBackupCancel',{id:item.id});});
+  if(item.kind==='Restore'&&item.status==='Complete'&&/^[A-Za-z0-9_-]+$/.test(item.restoredBook)){const a=document.createElement('a');a.href='https://docs.google.com/spreadsheets/d/'+item.restoredBook+'/edit';a.target='_blank';a.rel='noopener';a.textContent='Open restored KMS';actions.append(a);}
+  if(actions.childNodes.length)card.append(actions);
+  const details=document.createElement('details'),summary=document.createElement('summary'),pre=document.createElement('pre');summary.textContent='Technical details';pre.textContent=JSON.stringify(item,null,2);pre.style.cssText='white-space:pre-wrap;overflow-wrap:anywhere;font-size:12px';details.append(summary,pre);card.append(details);area.append(card);
+ });
+ const more=$('backupHistoryMore');more.hidden=matching.length<=backupHistoryShown;more.textContent='Show older attempts ('+(matching.length-backupHistoryShown)+')';
+}
+function loadBackups(){
+ if(backupBusy)return;backupBusy=true;backupControls();
+ KmsStatus.run({background:true}).withSuccessHandler(data=>{
+  backupBusy=false;
+  // F: an answer with a lower status revision than one already shown is older; it is ignored.
+  if(typeof data.revision==='number'){if(data.revision<backupRevision){backupControls();return;}backupRevision=data.revision;}
+  backupOwner=data.owner;backupHistoryItems=Array.isArray(data.items)?data.items:[];maintenanceStatus=data;followPause(data.pause);renderMaintenance();backupControls();if(!maintenanceActive&&backupOwner){checkFinishReceipt();if(data.pause?.paused===false&&data.pause.attention){$('backupAttention').hidden=false;if(!backupAcknowledged){backupAcknowledged=true;KmsStatus.run({background:true}).withSuccessHandler(()=>{}).withFailureHandler(()=>{}).kmsBackupAcknowledge();}}}
+  // On the web page, while this page follows its own backup capture, KMS sends only that backup (owner decision O1).
+  if(!data.captureOnly){
+  $('backupNightly').checked=!!data.schedule?.enabled;$('backupTimeZone').value=data.schedule?.timeZone||state.data?.values.timeZone||'Europe/London';
+  $('backupBrief').textContent=data.lastVerified?'Verified '+backupDate(data.lastVerified.updated):'No verified backup yet';
+  const last=data.schedule?.lastAttempt,zone=data.schedule?.timeZone||'';
+  $('backupScheduleStatus').textContent=data.schedule?.enabled?(data.schedule.installed?'Nightly trigger installed · near 03:00 '+zone:'Trigger missing · save the schedule again')+(last?' · Last run '+last.day+': '+last.status+(last.error?' — '+last.error:''):' · First run pending'):'Off';
+  $('backupRetentionStatus').textContent='Keep three recent daily dates, four older weekly backups and pinned checkpoints. The last verified backup is always protected.'+(data.retentionSafetyTest?' Drive retention safety test passed.':' Drive retention safety test runs when the schedule is enabled.')+(data.retention?.status==='Failed'?' Retention needs attention: '+data.retention.error:'');
+  }
+  if(data.lastVerified!==undefined)backupLastVerified=data.lastVerified;
+  backupMessage(backupLatestLine(data.latest,data.activity?.observedAt));
+  renderBackupHistory();
+ }).withFailureHandler(error=>{backupBusy=false;backupControls();backupMessage('Could not check backup status: '+(error.message||String(error)));}).kmsBackupStatus();
+}
+$('backupHistoryFilter').addEventListener('change',()=>{backupHistoryShown=8;renderBackupHistory();});
+$('backupHistoryMore').addEventListener('click',()=>{backupHistoryShown+=8;renderBackupHistory();});
+let backupWasActive=false;
+const stopBackupNotice=KmsStatus.subscribeMaintenance(()=>{
+ const activity=KmsStatus.maintenance(),active=!!(activity?.capturing||activity?.restoring);
+ if(activity?.latest&&!backupBusy){const item=activity.latest;if(typeof activity.revision==='number')backupRevision=Math.max(backupRevision,activity.revision);backupMessage(backupLatestLine(item,activity.observedAt));}
+ const finished=backupWasActive&&!active,started=!backupWasActive&&active;backupWasActive=active;
+ // A job that starts while Settings is open in Sheets pauses KMS: read the status to follow it.
+ if((finished||started&&!window.KmsWebPage&&!maintenanceActive)&&backupOwner&&!backupBusy)loadBackups();
+});
+window.addEventListener('pagehide',stopBackupNotice,{once:true});
+$('backupRefresh').addEventListener('click',loadBackups);
+$('backupErrorCheck').addEventListener('click',loadBackups);
+$('backupErrorDismiss').addEventListener('click',()=>{clearBackupActionError();loadBackups();});
+// Owner decision A: a backup signs every staff member out of the web page until capture finishes, so say so first.
+function backupDuration(minutes){const m=Number(minutes)||60;return m<45?'about '+Math.max(5,Math.round(m/5)*5)+' minutes':m<=75?'about an hour':'up to an hour and a half';}
+// 6A.4 G: an open workbook or script editor makes the job recheck its files and take longer. In Sheets the owner is in the workbook, so it is closed after starting.
+function closeFirst(job){return ' '+(window.KmsWebPage?'Close the KMS workbook and the script editor on every computer first.':'After starting, close the KMS workbook and the script editor on every computer, this one included.')+' An open workbook makes the '+job+' recheck its files and take longer.';}
+function startBackup(preview){const staff=Number(preview?.staff)||0,warning=preview?staff>0?'This will sign out '+staff+' staff for '+backupDuration(preview.minutes)+'. Continue? ':'':'Anyone signed in on the KMS web page will be signed out until the backup finishes. ';
+ const followOnWeb=window.KmsWebPage?' You will also be signed out. Sign in for maintenance to check progress.':'';
+ if(!confirm(warning+'Create a full backup of saved KMS data? Unsaved form edits are not included. Saving, staff sign-in and archive maintenance pause during capture; a failed capture releases the restriction.'+followOnWeb+closeFirst('backup')))return;if(!backupRequests.has('start'))backupRequests.set('start',backupRequestId());backupAction('kmsBackupStart',{requestId:backupRequests.get('start')});}
+$('backupStart').addEventListener('click',()=>{if(state.busy||backupBusy)return;backupBusy=true;backupControls();const done=preview=>{backupBusy=false;backupControls();startBackup(preview);};KmsStatus.run().withSuccessHandler(done).withFailureHandler(()=>done(null)).kmsBackupSignOutPreview();});
+$('backupScheduleSave').addEventListener('click',()=>{const zone=$('backupTimeZone').value.trim();try{new Intl.DateTimeFormat('en',{timeZone:zone});}catch(error){backupMessage('Choose a recognised backup time zone.');return;}backupAction('kmsBackupScheduleSet',{enabled:$('backupNightly').checked,timeZone:zone});});
+$('backupRetentionPreview').addEventListener('click',()=>{if(backupBusy)return;backupBusy=true;backupControls();KmsStatus.run().withSuccessHandler(plan=>{backupBusy=false;backupControls();$('backupRetentionStatus').textContent='Retention preview: '+(plan.candidates.length?plan.candidates.map(item=>item.id).join(', ')+' would move to Drive Trash after a verified backup.':'No verified backups would be removed now.')+' Pinned and last verified copies remain.';}).withFailureHandler(error=>{backupBusy=false;backupControls();backupMessage('Retention preview failed: '+(error.message||String(error)));}).kmsBackupRetentionPreview();});
+
+function checkRecovery(){
+ $('recoveryCheckButton').disabled=true;
+ KmsStatus.run().withSuccessHandler(data=>{
+  $('recoveryCheckButton').disabled=false;const area=$('recoveryIssues');area.replaceChildren();
+  if(!data.issues.length){area.textContent='No unconfirmed saves remain.';return;}
+  data.issues.forEach(issue=>{const card=document.createElement('div'),description=document.createElement('p');
+   description.textContent=issue.method+' · target '+(issue.target||'not available')+' · '+new Date(issue.attemptedAt).toLocaleString()+(issue.photoHeld?' · uploaded photo retained':'');card.append(description);
+   if(data.owner){const choice=document.createElement('select');choice.add(new Option('Choose the outcome you verified',''));['Saved data verified','Not saved, verified'].forEach(value=>choice.add(new Option(value,value)));
+    const note=document.createElement('textarea');note.placeholder='Which record, fields and history did you inspect?';note.maxLength=2000;note.setAttribute('aria-label','Reconciliation checks for '+issue.target);
+    const button=document.createElement('button');button.textContent='Record verified outcome';button.type='button';
+    button.addEventListener('click',()=>{if(!choice.value||note.value.trim().length<20){message('Choose the verified outcome and describe your checks (at least 20 characters).',true);return;}
+     if(!confirm('Confirm you inspected '+(issue.target||'the target record')+' and its history. This records your finding and releases the save hold. It does not repeat the save or change business data.'))return;
+     button.disabled=true;KmsStatus.run().withSuccessHandler(()=>{message('Reconciliation recorded. Reload the affected record before editing it.');checkRecovery();})
+      .withFailureHandler(error=>{button.disabled=false;message('Reconciliation not confirmed: '+(error.message||String(error))+'. Check unconfirmed saves again before retrying.',true);})
+      .kmsRecoveryResolve({id:issue.id,resolution:choice.value,reason:note.value});
+    });card.append(choice,note,button);
+   }else{const hint=document.createElement('p');hint.textContent='Ask the workbook owner to inspect this attempt in Settings → Save recovery.';card.append(hint);}
+   area.append(card);
+  });
+ }).withFailureHandler(error=>{$('recoveryCheckButton').disabled=false;$('recoveryIssues').textContent=error.message||String(error);}).kmsRecoveryIssues();
+}
+$('recoveryCheckButton').addEventListener('click',checkRecovery);
+// The response-time check and desktop shortcut belong to the Sheets window only.
+if(window.KmsWebPage)$('diagnosticsCard').hidden=true;
+$('runtimeCheckButton').addEventListener('click',runRuntimeCheck);
+$('selectRuntimeResultsButton').addEventListener('click',()=>{$('runtimeCheckResults').focus();$('runtimeCheckResults').select();});
+// Optional console shortcut when the Settings frame is selected in DevTools.
+window.kmsRunRuntimeCheck=runRuntimeCheck;
+keys.forEach(key=>$(key).addEventListener('input',dirty));$('saveButton').addEventListener('click',save);$('reloadButton').addEventListener('click',load);$('closeButton').addEventListener('click',()=>{if(window.KmsWebPage)return google.script.host.close();if(!state.dirty||confirm('Close without saving settings?')){if(window.KmsRecovery)KmsRecovery.discardCurrent();google.script.host.close();}});if(window.KmsRecovery)KmsRecovery.register({ready:()=>!!state.data,label:()=> 'settings',
+ capture:()=>({data:state.data,fields:KmsRecovery.fields(keys)}),
+ restore:copy=>{render(copy.data);KmsRecovery.applyFields(copy.fields);state.busy=false;dirty();}
+});
+load();
+// A kept finish choice is checked on its own (6B A8): on a withdrawn page the
+// ordinary settings and backup reads are refused, but this check is allowed.
+if(window.KmsWebPage&&window.KmsStaffRole==='Owner')checkFinishReceipt();
+})();
+</script></body></html>
