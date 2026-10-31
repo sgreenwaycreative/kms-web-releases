@@ -63,6 +63,13 @@
    "source": "614386c355bbdfbe9292740944d14f31f7b74ffc",
    "tree": "483ce8e3d3967fd1ede53b108e456562ff4f91fc",
    "hash": "30d3366b459a6517a028bf0821acac1575a78655a32d375eccc492ce2b8b52bb"
+  },
+  {
+   "version": "0.9.0-ui6",
+   "release": 10,
+   "source": "19a8b57eac42c8c1dd37c05a01203df7a84ae2e6",
+   "tree": "9deea78eeb825ff6b13b59aca41e6a8fe847440f",
+   "hash": "8e750c53e3b0f7d57c0501e71525bfc08c92660bb45dfa96396ddf0fef8cde3e"
   }
  ]
 }
