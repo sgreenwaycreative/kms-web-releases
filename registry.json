@@ -98,6 +98,13 @@
    "source": "ea1d09a69c3bf79b66978269d60da60437a129d2",
    "tree": "bbd1b6b3fc46c60340b966c22ba178ef4ed5f919",
    "hash": "be2b7778c8db7bd83aef6a99ae2b62cef99afe0996eaeb787475c1bb598e4c3b"
+  },
+  {
+   "version": "0.9.0-ui11",
+   "release": 15,
+   "source": "d849a16bf7b334c6679c4ce2ccdf34db79d71fcf",
+   "tree": "356cead0fbf44bf2bd222c473137dacd05ef94ea",
+   "hash": "053fc73e18ff72299461c956f903bc4a823f434096734380494e94e117a46a8f"
   }
  ]
 }
