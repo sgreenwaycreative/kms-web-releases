@@ -77,6 +77,13 @@
    "source": "4d3e11b2bf7d9c4a6f2eb6a6eff179c27706359b",
    "tree": "fd00ac24438f151557c7a42c080f8f1bf2c2401a",
    "hash": "b2c1b007a0179e7f3fa85a9dc97c882d72f99c094b4afff1fa89b2fd9946f601"
+  },
+  {
+   "version": "0.9.0-ui8",
+   "release": 12,
+   "source": "ec643e2038e71fd97859c6eed9b15232564b36e2",
+   "tree": "483ccbe3daab6c5a119645a763257783c1f33af4",
+   "hash": "55ff76a0eada8ae9e2b72f3f0b22d81754d4a4d7c494586bdde7e6f09ec3e1cb"
   }
  ]
 }
