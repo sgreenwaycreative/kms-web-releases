@@ -154,6 +154,13 @@
    "source": "6e5fa8ab0a7d11bc4c3b0a91d40fcd013454a1d6",
    "tree": "458e20f5bceded5a8fd3aef2d4abc3831e267667",
    "hash": "f6a5425daca60cd186dd270891c23636a3526e846773ccecb9c229842ffa5d27"
+  },
+  {
+   "version": "0.9.0-ui19",
+   "release": 23,
+   "source": "4dfca2686679fa4f15cff41a65c96474ef7b3e33",
+   "tree": "a7f13e70887e8f8c3e3d944c3537980e5c6341cb",
+   "hash": "733a14ef32b744c892bd029a2b391705b9097b83fea39735b51c66e77d57cdee"
   }
  ]
 }
