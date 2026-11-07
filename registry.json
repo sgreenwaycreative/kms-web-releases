@@ -182,6 +182,13 @@
    "source": "94414f1af7a6e76acc11f2d0b4e34f8101f062f5",
    "tree": "2ee957791e5cf587103bb7a885d5a2cb62baf0e2",
    "hash": "deaf4c5bd0cabb9d0244fe0cf93f4e6a0d5a09ea2e6bcc46709248c271783096"
+  },
+  {
+   "version": "0.9.0-ui23",
+   "release": 27,
+   "source": "ccdae8ed29504e31c5e101d793fff3d5f76746cd",
+   "tree": "450ace43e5a82414bc129f1822140c212ae566db",
+   "hash": "bbd768c888aaa553584774f4b7dc4b7100e3f36bff952405da3ccaa26618dc19"
   }
  ]
 }
