@@ -196,6 +196,13 @@
    "source": "283828dd1ef63af49d1fafb19b27e096dcc38d3e",
    "tree": "ca859d8a734e00dcbc99c32bcea36e2adf4997d6",
    "hash": "91c734ab4b9e873091106c408a69d63673922aac47a790f4e972689f95058983"
+  },
+  {
+   "version": "0.9.0-ui25",
+   "release": 29,
+   "source": "f2e7986e79b6ba4ae13fd59efd16c8493c9d9b5b",
+   "tree": "42f6ca2d74477ff0834bf71120c28284e483a676",
+   "hash": "1a55d3e1cf8f1c787217fa28cdb3cf1263de984b716a9f7793dddd129b8b692e"
   }
  ]
 }
